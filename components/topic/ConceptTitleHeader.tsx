@@ -12,18 +12,27 @@ import { createPortal } from "react-dom";
 import type { ConceptHeaderActionProps } from "@/components/topic/conceptFooterActionsContext";
 import type { ChromeCopy } from "@/lib/nav";
 import { CopyConceptLinkButton } from "./CopyConceptLinkButton";
+import { ConceptDepthToggle } from "./ConceptDepthToggle";
 import { TopicBookmarkButton } from "./TopicBookmarkButton";
+import {
+  CONCEPT_DETAIL_TOOLBAR_ICON,
+  conceptDetailToolbarIconSize,
+} from "./conceptDetailToolbarIcon";
 
-const HEADER_GRID =
-  "grid grid-cols-1 items-start gap-x-2 gap-y-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-3";
+const DETAIL_TOOLBAR =
+  "concept-detail-toolbar shrink-0 border-b border-yellow-200/70 bg-yellow-50 px-4 py-2 max-sm:rounded-t-none sm:rounded-t-[calc(0.75rem-1px)] dark:border-yellow-800/70 dark:bg-yellow-950";
 
-const DETAIL_HEADER = `concept-detail-toolbar sm:sticky sm:top-[var(--handbook-sticky-inset,0px)] sm:z-10 ${HEADER_GRID} rounded-t-[calc(0.75rem-1px)] border-b border-yellow-200 bg-yellow-50 px-4 py-2.5 max-sm:rounded-t-none dark:border-yellow-800 dark:bg-yellow-950`;
+const DETAIL_TOOLBAR_ACTIONS_ROW =
+  "flex min-h-8 w-full items-center justify-between gap-2";
+
+const DETAIL_TITLE_CLASS =
+  "m-0 min-w-0 text-pretty text-[1.375rem] font-semibold leading-snug tracking-tight text-zinc-900 sm:text-2xl sm:leading-snug dark:text-zinc-50";
 
 const INDEX_HEADER =
   "flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800";
 
 const TITLE_CLASS =
-  "col-start-1 row-start-1 min-w-0 w-full text-pretty text-xl font-semibold leading-7 tracking-tight text-zinc-900 sm:text-2xl sm:leading-8 dark:text-zinc-50";
+  "min-w-0 w-full text-pretty text-xl font-semibold leading-7 tracking-tight text-zinc-900 sm:text-2xl sm:leading-8 dark:text-zinc-50";
 
 const INDEX_TITLE_CLASS =
   "min-w-0 flex-[1_1_10rem] text-pretty text-xl font-semibold leading-7 tracking-tight text-zinc-900 sm:text-2xl sm:leading-8 dark:text-zinc-50";
@@ -31,31 +40,27 @@ const INDEX_TITLE_CLASS =
 const TITLE_TOGGLE_CLASS =
   "w-full cursor-pointer border-0 bg-transparent p-0 text-left font-inherit text-inherit";
 
-const ACTIONS_CLASS =
-  "col-start-1 row-start-2 flex w-full shrink-0 items-center justify-start gap-1 sm:col-start-2 sm:row-start-1 sm:w-auto sm:justify-end sm:justify-self-end sm:gap-1.5";
-
 const INDEX_ACTIONS_CLASS =
   "ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5";
 
 const NAV_GROUP = "inline-flex shrink-0 items-center gap-1";
 
-const NAV_BTN_DETAIL =
-  "inline-flex size-11 touch-manipulation cursor-pointer items-center justify-center gap-1 rounded-full border border-amber-200/80 bg-white/95 px-0 text-[13px] font-medium text-zinc-700 shadow-sm ring-1 ring-amber-100/50 transition-colors hover:bg-amber-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 sm:size-8 sm:h-8 sm:min-h-8 sm:w-auto sm:min-w-0 sm:rounded-md sm:px-2.5 dark:border-amber-900/50 dark:bg-zinc-950/95 dark:text-zinc-200 dark:ring-amber-950/40 dark:hover:bg-amber-950/50 dark:focus-visible:ring-amber-500/40";
+const NAV_BTN_DETAIL = `${CONCEPT_DETAIL_TOOLBAR_ICON} size-7`;
 
-const NAV_BTN_DETAIL_COMPACT =
-  "inline-flex size-9 touch-manipulation cursor-pointer items-center justify-center gap-1 rounded-md border border-amber-200/80 bg-white/95 px-0 text-[13px] font-medium text-zinc-700 shadow-sm ring-1 ring-amber-100/50 transition-colors hover:bg-amber-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 dark:border-amber-900/50 dark:bg-zinc-950/95 dark:text-zinc-200 dark:ring-amber-950/40 dark:hover:bg-amber-950/50 dark:focus-visible:ring-amber-500/40";
+const NAV_BTN_DETAIL_COMPACT = `${CONCEPT_DETAIL_TOOLBAR_ICON} size-7`;
+
+const DETAIL_UTILITY_ICON = `${CONCEPT_DETAIL_TOOLBAR_ICON} ${conceptDetailToolbarIconSize("md")}`;
 
 const NAV_BTN_INDEX =
   "inline-flex size-11 touch-manipulation cursor-pointer items-center justify-center gap-1 rounded-full border border-zinc-200 bg-white px-0 text-[13px] font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 sm:size-8 sm:h-8 sm:min-h-8 sm:w-auto sm:min-w-0 sm:rounded-md sm:px-2.5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500/40";
 
-const NAV_ICON =
-  "size-3.5 shrink-0 text-zinc-500 sm:size-3.5 sm:text-zinc-400 dark:text-zinc-400 sm:dark:text-zinc-500";
-
-const ACTION_DIVIDER_DETAIL =
-  "mx-0.5 h-6 w-px shrink-0 bg-amber-200/70 dark:bg-amber-900/50";
+const NAV_ICON = "size-4 shrink-0 text-current";
 
 const ACTION_DIVIDER_INDEX =
   "mx-0.5 h-6 w-px shrink-0 bg-zinc-200 dark:bg-zinc-700";
+
+const DETAIL_TOOLBAR_CLUSTER =
+  "inline-flex shrink-0 flex-wrap items-center justify-end gap-0.5";
 
 function ConceptNavControl({
   href,
@@ -139,7 +144,6 @@ function ConceptNavGroup({
               strokeLinejoin="round"
             />
           </svg>
-          <span className="hidden sm:inline">{chrome.back}</span>
         </ConceptNavControl>
       ) : null}
       {showNext ? (
@@ -149,7 +153,6 @@ function ConceptNavGroup({
           label={chrome.next}
           className={btnClass}
         >
-          <span className="hidden sm:inline">{chrome.next}</span>
           <svg aria-hidden="true" viewBox="0 0 24 24" className={NAV_ICON}>
             <path
               d="M9 18l6-6-6-6"
@@ -231,7 +234,8 @@ function ConceptTitleHeading({
     title
   );
 
-  const titleBase = variant === "detail" ? TITLE_CLASS : INDEX_TITLE_CLASS;
+  const titleBase =
+    variant === "detail" ? DETAIL_TITLE_CLASS : INDEX_TITLE_CLASS;
   const className = `${titleBase} ${clampClass}`;
 
   if (level === "h1") {
@@ -250,7 +254,7 @@ function ConceptTitleHeading({
 }
 
 const DETAIL_ACTIONS_DOCK =
-  "flex min-h-11 touch-manipulation items-center justify-center border-t border-yellow-200 bg-yellow-50 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-1px_0_rgba(0,0,0,0.04)] dark:border-yellow-800 dark:bg-yellow-950 dark:shadow-[0_-1px_0_rgba(255,255,255,0.06)]";
+  "flex min-h-11 touch-manipulation items-center justify-center bg-yellow-50 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] dark:bg-yellow-950";
 
 export function ConceptDetailActionsFooter(props: ConceptHeaderActionProps) {
   const navOpen = useHandbookMobileNavOpen();
@@ -339,13 +343,73 @@ export function ConceptHeaderActions({
   showBookmark = false,
   showShare = false,
   conceptId,
-}: ConceptHeaderActionProps & { compact?: boolean }) {
-  const dividerClass =
-    variant === "detail" ? ACTION_DIVIDER_DETAIL : ACTION_DIVIDER_INDEX;
+  hasOptionalDepth = false,
+}: ConceptHeaderActionProps & {
+  compact?: boolean;
+  hasOptionalDepth?: boolean;
+}) {
+  const dividerClass = ACTION_DIVIDER_INDEX;
   const navVariant = compact ? "footer" : variant;
+  const wrapClass =
+    variant === "detail" && !compact
+      ? DETAIL_TOOLBAR_CLUSTER
+      : "flex items-center justify-center gap-1";
+
+  const showDepthInToolbar = variant === "detail" && !compact;
+
+  const depthChrome =
+    showDepthInToolbar && hasOptionalDepth ? (
+      <ConceptDepthToggle chrome={chrome} />
+    ) : hasOptionalDepth && !showDepthInToolbar ? (
+      <ConceptDepthToggle chrome={chrome} />
+    ) : null;
+
+  const utilityIconClass =
+    variant === "detail" ? DETAIL_UTILITY_ICON : undefined;
+
+  const utilityActions = (
+    <>
+      {showShare ? (
+        <CopyConceptLinkButton
+          conceptId={conceptId}
+          chrome={chrome}
+          size="md"
+          concealed={false}
+          className={utilityIconClass}
+        />
+      ) : null}
+      {showBookmark ? (
+        <TopicBookmarkButton
+          title={title}
+          chrome={chrome}
+          conceptId={conceptId}
+          size="md"
+          className={utilityIconClass}
+        />
+      ) : null}
+    </>
+  );
+
+  if (variant === "detail" && !compact) {
+    return (
+      <div className={wrapClass}>
+        <ConceptNavGroup
+          showBack={showBack}
+          backHref={backHref}
+          onBack={onBack}
+          showNext={showNext}
+          nextHref={nextHref}
+          onNext={onNext}
+          chrome={chrome}
+          variant={navVariant}
+        />
+        {(showShare || showBookmark) && utilityActions}
+      </div>
+    );
+  }
 
   return (
-    <div className="flex items-center justify-center gap-1">
+    <div className={wrapClass}>
       <ConceptNavGroup
         showBack={showBack}
         backHref={backHref}
@@ -356,27 +420,42 @@ export function ConceptHeaderActions({
         chrome={chrome}
         variant={navVariant}
       />
-      {showBack || showNext ? (
-        showShare || showBookmark ? (
-          <span className={dividerClass} aria-hidden="true" />
-        ) : null
+      {variant === "index" &&
+      (showBack || showNext) &&
+      (showShare || showBookmark) ? (
+        <span className={dividerClass} aria-hidden="true" />
       ) : null}
-      {showShare ? (
-        <CopyConceptLinkButton
-          conceptId={conceptId}
-          chrome={chrome}
-          size="md"
-          concealed={false}
-        />
-      ) : null}
-      {showBookmark ? (
-        <TopicBookmarkButton
-          title={title}
-          chrome={chrome}
-          conceptId={conceptId}
-          size="md"
-        />
-      ) : null}
+      {utilityActions}
+      {depthChrome}
+    </div>
+  );
+}
+
+export function ConceptDetailTitle({
+  title,
+  chrome,
+  toolbarAbove = true,
+  scrollsWithBody = false,
+}: {
+  title: string;
+  chrome: ChromeCopy;
+  /** False when the yellow toolbar row is omitted (title is the top chrome). */
+  toolbarAbove?: boolean;
+  /** Title lives in the scroll pane (only the toolbar stays fixed above). */
+  scrollsWithBody?: boolean;
+}) {
+  const bandClass = toolbarAbove
+    ? `concept-detail-title concept-detail-title--under-toolbar bg-yellow-50 px-4 dark:bg-yellow-950${scrollsWithBody ? " concept-detail-title--in-scroll" : " shrink-0"}`
+    : `concept-detail-title concept-detail-title--solo border-b border-yellow-200/70 bg-yellow-50 px-4 dark:border-yellow-800/70 dark:bg-yellow-950 max-sm:rounded-t-none sm:rounded-t-[calc(0.75rem-1px)]${scrollsWithBody ? " concept-detail-title--in-scroll" : " shrink-0"}`;
+
+  return (
+    <div className={bandClass}>
+      <ConceptTitleHeading
+        title={title}
+        chrome={chrome}
+        level="h2"
+        variant="detail"
+      />
     </div>
   );
 }
@@ -395,11 +474,13 @@ export function ConceptTitleHeader({
   showShare = false,
   conceptId,
   hideActionsOnMobile = false,
+  hasOptionalDepth = false,
 }: {
   title: string;
   chrome: ChromeCopy;
   variant?: "index" | "detail";
   hideActionsOnMobile?: boolean;
+  hasOptionalDepth?: boolean;
   showBack?: boolean;
   backHref?: string | null;
   onBack?: () => void;
@@ -426,13 +507,40 @@ export function ConceptTitleHeader({
   };
   const hasActions = showBack || showNext || showBookmark || showShare;
   const headingLevel = variant === "detail" ? "h2" : "h1";
-  const actionsBase = variant === "index" ? INDEX_ACTIONS_CLASS : ACTIONS_CLASS;
-  const actionsClass = hideActionsOnMobile
-    ? `${actionsBase} max-sm:hidden`
-    : actionsBase;
+  const indexActionsClass = INDEX_ACTIONS_CLASS;
+  const hideChromeOnMobile = hideActionsOnMobile
+    ? "hidden sm:contents"
+    : "contents";
+
+  if (variant === "detail") {
+    const showToolbar = hasActions || hasOptionalDepth;
+
+    if (!showToolbar) {
+      return null;
+    }
+
+    return (
+      <div className={DETAIL_TOOLBAR}>
+        <div
+          className={`${DETAIL_TOOLBAR_ACTIONS_ROW}${hasOptionalDepth && !hasActions ? " justify-end" : ""}`}
+        >
+          {hasActions ? (
+            <div className={hideChromeOnMobile}>
+              <ConceptHeaderActions {...actionProps} hasOptionalDepth={false} />
+            </div>
+          ) : null}
+          {hasOptionalDepth ? (
+            <div className={hasActions ? "ml-auto shrink-0" : undefined}>
+              <ConceptDepthToggle chrome={chrome} />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={variant === "detail" ? DETAIL_HEADER : INDEX_HEADER}>
+    <div className={INDEX_HEADER}>
       <ConceptTitleHeading
         title={title}
         chrome={chrome}
@@ -440,7 +548,7 @@ export function ConceptTitleHeader({
         variant={variant}
       />
       {hasActions ? (
-        <span className={actionsClass}>
+        <span className={indexActionsClass}>
           <ConceptHeaderActions {...actionProps} />
         </span>
       ) : null}

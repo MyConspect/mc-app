@@ -1,5 +1,9 @@
 export type { SlotKind } from "./slots";
 export {
+  hasConceptOptionalDepth,
+  CONCEPT_DEPTH_OPTIONAL_MARKER,
+} from "./slots";
+export {
   assertCatalogFilesExist,
   loadFileOutline,
   loadHubPage,

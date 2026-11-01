@@ -11,20 +11,27 @@ const COPIED_MS = 2000;
 const CONCEALED_CLASS =
   "opacity-0 group-hover:opacity-100 group-open:opacity-100 group-focus-within:opacity-100";
 
+const DEFAULT_BTN_CLASS =
+  "concept-copy-link inline-flex shrink-0 cursor-pointer items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:focus-visible:ring-zinc-500";
+
 export function CopyConceptLinkButton({
   conceptId,
   chrome,
   size = "md",
   concealed = true,
+  className,
 }: {
   conceptId?: string;
   chrome: ChromeCopy;
   size?: "md" | "lg";
   concealed?: boolean;
+  className?: string;
 }) {
   const pathname = usePathname() ?? "/";
   const [copied, setCopied] = useState(false);
-  const sizeClass = size === "lg" ? "size-9" : "size-7";
+  const buttonClass = className
+    ? className
+    : `${DEFAULT_BTN_CLASS} ${size === "lg" ? "size-9" : "size-7"}`;
 
   const onCopy = useCallback(
     async (event: MouseEvent<HTMLButtonElement>) => {
@@ -46,7 +53,7 @@ export function CopyConceptLinkButton({
   return (
     <button
       type="button"
-      className={`concept-copy-link inline-flex ${sizeClass} shrink-0 cursor-pointer items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:focus-visible:ring-zinc-500 ${concealed ? CONCEALED_CLASS : ""}`}
+      className={`concept-copy-link ${buttonClass} ${concealed ? CONCEALED_CLASS : ""}`.trim()}
       aria-label={copied ? chrome.copiedLink : chrome.copyLink}
       title={copied ? chrome.copiedLink : chrome.copyLink}
       onClick={onCopy}

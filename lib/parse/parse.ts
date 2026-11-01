@@ -4,7 +4,11 @@ import { hrefForFile } from "@/lib/catalog";
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/locales";
 import { withLocale } from "@/lib/i18n/paths";
 import { highlightMarkdownFences } from "./highlight";
-import { structureConceptBody, stripAnswerSections } from "./slots";
+import {
+  structureConceptBody,
+  stripAnswerSections,
+  hasConceptOptionalDepth,
+} from "./slots";
 
 export type InterviewSection = "questions" | "tasks";
 
@@ -23,6 +27,7 @@ export type Concept = {
   readonly titleSearchText?: string;
   readonly interviewSection?: InterviewSection;
   readonly group?: string;
+  readonly hasOptionalDepth?: boolean;
 };
 
 export type ConceptBlock = {
@@ -283,6 +288,7 @@ async function collectConcepts(
         html,
         searchText,
         ...(block.group ? { group: block.group } : {}),
+        ...(hasConceptOptionalDepth(body) ? { hasOptionalDepth: true } : {}),
       }),
     );
   });
@@ -885,6 +891,13 @@ function stripLeadingConceptPreamble(body: string): {
     if (anchor) {
       preamble += anchor[0];
       rest = rest.slice(anchor[0].length);
+      continue;
+    }
+
+    const comment = rest.match(/^<!--[\s\S]*?-->\s*/);
+    if (comment) {
+      preamble += comment[0];
+      rest = rest.slice(comment[0].length);
       continue;
     }
 

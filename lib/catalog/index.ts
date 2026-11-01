@@ -3383,6 +3383,13 @@ const TOPICS_BASE: Topic[] = [
     track: "other",
   },
   {
+    slug: "bash",
+    file: "18_bash.md",
+    title: "Bash",
+    blurb: "Shell fundamentals: scripts, tests, loops, and pipelines.",
+    track: "other",
+  },
+  {
     slug: "ai",
     file: "0_ai.md",
     title: "Workflow",

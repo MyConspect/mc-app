@@ -133,4 +133,8 @@ export type ChromeCopy = {
   readonly collapseConceptTitle: string;
   readonly interviewQuestions: string;
   readonly interviewTasks: string;
+  readonly conceptDepthMode: string;
+  readonly conceptDepthHint: string;
+  readonly conceptDepthQuick: string;
+  readonly conceptDepthDetailed: string;
 };

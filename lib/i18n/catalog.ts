@@ -661,6 +661,8 @@ const RU_BLURBS: Readonly<Record<string, string>> = {
   "Q&A and leftover tooling notes that still sit outside subject interviews.":
     "Вопросы/ответы и оставшиеся заметки по тулингу вне subject-интервью.",
   "Q&A and shell appendix.": "Вопросы/ответы и shell-приложение.",
+  "Shell fundamentals: scripts, tests, loops, and pipelines.":
+    "Основы shell: скрипты, проверки, циклы и конвейеры.",
   "Q&A and type challenges.": "Вопросы/ответы и type challenges.",
   "Q&A for build and CI.": "Вопросы/ответы по build и CI.",
   "Q&A for Cursor skills, rules, plugins, and slash commands.":

@@ -9,11 +9,13 @@ export function TopicBookmarkButton({
   chrome,
   conceptId,
   size = "lg",
+  className,
 }: {
   title: string;
   chrome: ChromeCopy;
   conceptId?: string;
   size?: "md" | "lg";
+  className?: string;
 }) {
   const pathname = usePathname() ?? "/";
 
@@ -24,6 +26,7 @@ export function TopicBookmarkButton({
       conceptId={conceptId}
       chrome={chrome}
       size={size}
+      className={className}
     />
   );
 }
