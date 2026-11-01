@@ -48,6 +48,10 @@ const EN: ChromeCopy = {
   collapseConceptTitle: "Show less",
   interviewQuestions: "Questions",
   interviewTasks: "Tasks",
+  conceptDepthMode: "Concept detail level",
+  conceptDepthHint: "Show essentials or full notes",
+  conceptDepthQuick: "Quick",
+  conceptDepthDetailed: "Detailed",
 };
 
 const RU: ChromeCopy = {
@@ -97,6 +101,10 @@ const RU: ChromeCopy = {
   collapseConceptTitle: "Свернуть",
   interviewQuestions: "Вопросы",
   interviewTasks: "Задачи",
+  conceptDepthMode: "Уровень детализации",
+  conceptDepthHint: "Суть или полный конспект",
+  conceptDepthQuick: "Кратко",
+  conceptDepthDetailed: "Подробно",
 };
 
 const BY_LOCALE: Record<Locale, ChromeCopy> = {

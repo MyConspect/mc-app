@@ -1,4 +1,5 @@
 import type { SlotKind } from "@/lib/parse";
+import { slotIconSvg } from "@/lib/parse/slot-icons";
 
 export function ConceptSlotLabel({
   kind,
@@ -10,37 +11,17 @@ export function ConceptSlotLabel({
   if (kind === "intro") {
     return null;
   }
-
-  if (kind === "tradeoffs") {
-    return (
-      <h4 className="concept-slot__heading concept-slot__heading--tradeoffs">
-        <span
-          className="concept-slot__badge concept-slot__badge--pro"
-          aria-hidden="true"
-        >
-          +
-        </span>
-        <span className="concept-slot__title">{label}</span>
-        <span
-          className="concept-slot__badge concept-slot__badge--con"
-          aria-hidden="true"
-        >
-          −
-        </span>
-      </h4>
-    );
-  }
-
-  if (kind === "key" || kind === "advices" || kind === "traps") {
-    return (
-      <h4 className={`concept-slot__heading concept-slot__heading--${kind}`}>
-        <span className="concept-slot__title">{label}</span>
-      </h4>
-    );
-  }
+  const icon = slotIconSvg(kind);
 
   return (
     <h4 className="concept-slot__heading">
+      {icon ? (
+        <span
+          className="concept-slot__icon"
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{ __html: icon }}
+        />
+      ) : null}
       <span className="concept-slot__title">{label}</span>
     </h4>
   );

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { HANDBOOK_MAIN_ID } from "@/constants";
+import { handbookScrollContainer } from "@/components/topic/utils/conceptScroll";
 
 const SCROLL_THRESHOLD = 240;
 
@@ -11,24 +11,40 @@ export function ScrollToTopButton({ label }: { label: string }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const main = document.getElementById(HANDBOOK_MAIN_ID);
-    if (!(main instanceof HTMLElement)) {
-      return;
-    }
+    let scroller: HTMLElement | null = null;
 
     const onScroll = () => {
-      setVisible(main.scrollTop > SCROLL_THRESHOLD);
+      if (scroller) {
+        setVisible(scroller.scrollTop > SCROLL_THRESHOLD);
+      }
     };
 
-    onScroll();
-    main.addEventListener("scroll", onScroll, { passive: true });
-    return () => main.removeEventListener("scroll", onScroll);
+    const bind = () => {
+      const next = handbookScrollContainer();
+      if (!(next instanceof HTMLElement) || next === scroller) {
+        return;
+      }
+      scroller?.removeEventListener("scroll", onScroll);
+      scroller = next;
+      scroller.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+    };
+
+    bind();
+    window.addEventListener("hashchange", bind);
+    const raf = window.requestAnimationFrame(bind);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("hashchange", bind);
+      scroller?.removeEventListener("scroll", onScroll);
+    };
   }, [pathname]);
 
   const scrollToTop = useCallback(() => {
-    const main = document.getElementById(HANDBOOK_MAIN_ID);
-    if (main instanceof HTMLElement) {
-      main.scrollTo({ top: 0, behavior: "smooth" });
+    const scroller = handbookScrollContainer();
+    if (scroller instanceof HTMLElement) {
+      scroller.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, []);
 

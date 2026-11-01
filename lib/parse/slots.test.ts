@@ -126,3 +126,69 @@ test("structureConceptBody renders bullet lists in case slots", async () => {
 
   assert.match(html, /<ul>[\s\S]*<li>[\s\S]*First item/);
 });
+
+test("structureConceptBody omits anchor-only intro slot", async () => {
+  const html = await structureConceptBody(
+    `<a name="route-handlers"></a>
+
+**Definition:** Short answer.`,
+    renderFragment,
+  );
+
+  assert.doesNotMatch(html, /slot-intro/);
+  assert.match(html, /slot-definition/);
+});
+
+test("structureConceptBody wraps post-how slots when concept-depth optional", async () => {
+  const html = await structureConceptBody(
+    `<!-- concept-depth:optional -->
+
+**Definition:** Short.
+
+**How it works:**
+
+- Step one
+
+**When to use:**
+
+- Case A`,
+    renderFragment,
+  );
+
+  assert.match(html, /slot-definition/);
+  assert.match(html, /slot-how/);
+  assert.match(html, /concept-depth-quick/);
+  assert.match(html, /slot-cases/);
+  assert.doesNotMatch(html, /concept-depth-detailed/);
+  assert.match(html, /concept-depth-quick[\s\S]*slot-cases/);
+});
+
+test("structureConceptBody puts only Detailed slot in concept-depth-detailed", async () => {
+  const html = await structureConceptBody(
+    `<!-- concept-depth:optional -->
+
+**Definition:** Short.
+
+**How it works:**
+
+- Step one
+
+**Detailed:**
+
+1. First block
+
+**When to use:**
+
+- Case A`,
+    renderFragment,
+  );
+
+  assert.match(html, /concept-depth-detailed/);
+  const detailed = html.slice(html.indexOf("concept-depth-detailed"));
+  assert.match(detailed, /First block/);
+  assert.doesNotMatch(detailed, /When to use/);
+  const quickEnd = html.indexOf("concept-depth-detailed");
+  const quick = html.slice(html.indexOf("concept-depth-quick"), quickEnd);
+  assert.match(quick, /When to use/);
+  assert.match(quick, /Step one/);
+});

@@ -29,6 +29,18 @@ export function handbookMain() {
   return scroller instanceof HTMLElement ? scroller : null;
 }
 
+export function conceptDetailBodyScroll(): HTMLElement | null {
+  const node = document.querySelector<HTMLElement>(
+    "article.concept-detail-article .concept-detail-body-scroll",
+  );
+  return node;
+}
+
+/** Where handbook reading scroll happens (concept body pane, or main column). */
+export function handbookScrollContainer(): HTMLElement | null {
+  return conceptDetailBodyScroll() ?? handbookMain();
+}
+
 export function conceptPinTarget(element: HTMLElement): HTMLElement {
   if (element instanceof HTMLDetailsElement) {
     const summary = element.querySelector(":scope > summary");
@@ -64,7 +76,7 @@ export function compensateScrollForLayout(
   element: HTMLElement,
   viewportTop: number,
 ) {
-  const scroller = handbookMain();
+  const scroller = handbookScrollContainer();
   if (!scroller) {
     return;
   }

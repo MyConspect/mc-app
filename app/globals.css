@@ -24,21 +24,36 @@
   --path-guide: #fef08a;
   --chrome-surface: #ffffff;
   --chrome-inline: 1rem;
-  --pro-marker: #1d4ed8;
-  --pro-marker-bg: #dbeafe;
-  --con-marker: #ca8a04;
-  --con-marker-bg: #fef9c3;
+  --pro-marker: var(--slot-accent-cases);
+  --pro-marker-bg: var(--slot-accent-bg-cases);
+  --con-marker: var(--slot-accent-avoid);
+  --con-marker-bg: var(--slot-accent-bg-avoid);
   --slot-accent-default: #52525b;
+  --slot-accent-bg-default: #f4f4f5;
   --slot-accent-definition: #2563eb;
+  --slot-accent-bg-definition: #dbeafe;
   --slot-accent-how: #7c3aed;
+  --slot-accent-bg-how: #ede9fe;
   --slot-accent-cases: #16a34a;
+  --slot-accent-bg-cases: #dcfce7;
   --slot-accent-avoid: #e11d48;
+  --slot-accent-bg-avoid: #ffe4e6;
   --slot-accent-example: #0891b2;
+  --slot-accent-bg-example: #cffafe;
   --slot-accent-thoughts: #d97706;
+  --slot-accent-bg-thoughts: #fef3c7;
   --slot-accent-sources: #64748b;
+  --slot-accent-bg-sources: #f1f5f9;
   --slot-accent-key: #16a34a;
+  --slot-accent-bg-key: #dcfce7;
   --slot-accent-advices: #ca8a04;
-  --slot-accent-traps: #eab308;
+  --slot-accent-bg-advices: #fef9c3;
+  --slot-accent-traps: #d97706;
+  --slot-accent-bg-traps: #ffedd5;
+  --slot-accent-tradeoffs: #c2410c;
+  --slot-accent-bg-tradeoffs: #ffedd5;
+  --slot-accent-detailed: #4f46e5;
+  --slot-accent-bg-detailed: #e0e7ff;
   color-scheme: light;
 }
 
@@ -64,21 +79,36 @@
   --path-ring: #854d0e;
   --path-guide: #a16207;
   --chrome-surface: #09090b;
-  --pro-marker: #93c5fd;
-  --pro-marker-bg: #1e3a5f;
-  --con-marker: #fde047;
-  --con-marker-bg: #422006;
+  --pro-marker: var(--slot-accent-cases);
+  --pro-marker-bg: var(--slot-accent-bg-cases);
+  --con-marker: var(--slot-accent-avoid);
+  --con-marker-bg: var(--slot-accent-bg-avoid);
   --slot-accent-default: #a1a1aa;
+  --slot-accent-bg-default: #27272a;
   --slot-accent-definition: #60a5fa;
+  --slot-accent-bg-definition: #1e3a5f;
   --slot-accent-how: #c4b5fd;
+  --slot-accent-bg-how: #2e1065;
   --slot-accent-cases: #4ade80;
+  --slot-accent-bg-cases: #14532d;
   --slot-accent-avoid: #fb7185;
+  --slot-accent-bg-avoid: #4c0519;
   --slot-accent-example: #22d3ee;
+  --slot-accent-bg-example: #164e63;
   --slot-accent-thoughts: #fbbf24;
+  --slot-accent-bg-thoughts: #422006;
   --slot-accent-sources: #94a3b8;
+  --slot-accent-bg-sources: #1e293b;
   --slot-accent-key: #4ade80;
+  --slot-accent-bg-key: #14532d;
   --slot-accent-advices: #facc15;
-  --slot-accent-traps: #fde047;
+  --slot-accent-bg-advices: #422006;
+  --slot-accent-traps: #fdba74;
+  --slot-accent-bg-traps: #431407;
+  --slot-accent-tradeoffs: #fdba74;
+  --slot-accent-bg-tradeoffs: #431407;
+  --slot-accent-detailed: #a5b4fc;
+  --slot-accent-bg-detailed: #1e1b4b;
 }
 
 @media (min-width: 64rem) {
@@ -141,8 +171,143 @@ body {
   scroll-margin-top: var(--handbook-sticky-inset, 0px);
 }
 
-.concept-detail-toolbar {
+.concept-detail-toolbar,
+.concept-detail-title {
   scroll-margin-top: var(--handbook-sticky-inset, 0px);
+}
+
+/* Concept detail: toolbar stays fixed; title + body scroll together. */
+#handbook-main:has(article.concept-detail-article) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#handbook-main:has(article.concept-detail-article) > main {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: 0;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  #handbook-main:has(article.concept-detail-article) > main {
+    padding-top: 1.25rem;
+  }
+}
+
+article.concept-detail-article .concept-detail-body-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+article.concept-detail-article .concept-detail-title h2 {
+  margin: 0;
+}
+
+article.concept-detail-article .concept-detail-title--under-toolbar {
+  padding-top: 1rem;
+  padding-bottom: 0.375rem;
+}
+
+article.concept-detail-article .concept-detail-title--solo {
+  padding-top: 0.75rem;
+  padding-bottom: 0;
+}
+
+article.concept-detail-article .concept-detail-title--under-toolbar-from-sm {
+  padding-top: 0.75rem;
+  padding-bottom: 0;
+}
+
+@media (min-width: 640px) {
+  article.concept-detail-article .concept-detail-title--under-toolbar-from-sm {
+    padding-top: 1rem;
+    padding-bottom: 0.375rem;
+  }
+}
+
+article.concept-detail-article .concept-body.concept-body--detail-top {
+  gap: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+article.concept-detail-article
+  .concept-body.concept-body--detail-top
+  > .concept-slot:first-child
+  > .concept-slot__heading,
+article.concept-detail-article
+  .concept-body.concept-body--detail-top
+  > .concept-depth-quick:first-child
+  > .concept-slot:first-child
+  > .concept-slot__heading,
+article.concept-detail-article
+  .concept-body.concept-body--detail-top
+  > .concept-depth-detailed:first-child
+  > .concept-slot:first-child
+  > .concept-slot__heading {
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+}
+
+article.concept-detail-article .concept-detail-body-scroll .concept-slot,
+article.concept-detail-article
+  .concept-detail-body-scroll
+  .concept-body
+  > .concept-slot:first-child,
+article.concept-detail-article
+  .concept-detail-body-scroll
+  .concept-body
+  > .concept-depth-quick
+  > .concept-slot:first-child,
+article.concept-detail-article
+  .concept-detail-body-scroll
+  .concept-body
+  > .concept-depth-detailed
+  > .concept-slot:first-child,
+article.concept-detail-article
+  .concept-detail-body-scroll
+  .concept-body
+  > .concept-part:first-child
+  > .concept-slot:first-child {
+  margin-top: 0.75rem;
+  padding: 0.9rem 0.95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  background-clip: padding-box;
+}
+
+article.concept-detail-article
+  .concept-detail-body-scroll
+  .concept-slot__heading {
+  margin: 0 0 0.5rem;
+}
+
+article.concept-detail-article
+  .concept-detail-body-scroll
+  .concept-slot__body
+  > :where(p, ul, ol, table, pre, blockquote, .md-code) {
+  margin: 0;
+}
+
+article.concept-detail-article
+  .concept-detail-body-scroll
+  .concept-slot__body
+  > :where(p, ul, ol, table, pre, blockquote, .md-code)
+  + :where(p, ul, ol, table, pre, blockquote, .md-code) {
+  margin-top: 0.65rem;
+}
+
+article.concept-detail-article
+  .concept-detail-body-scroll
+  .concept-part
+  + .concept-part {
+  border-top: 0;
 }
 
 @media (max-width: 767px) {
@@ -201,6 +366,16 @@ html[data-concept-hash] nav.concept-list {
   visibility: hidden;
 }
 
+html[data-concept-depth="quick"] .concept-depth-detailed,
+article[data-concept-depth="quick"] .concept-depth-detailed {
+  display: none !important;
+}
+
+html[data-concept-depth="detailed"] .concept-depth-quick,
+article[data-concept-depth="detailed"] .concept-depth-quick {
+  display: none !important;
+}
+
 .concept-body {
   display: flex;
   flex-direction: column;
@@ -214,13 +389,85 @@ html[data-concept-hash] nav.concept-list {
   margin-top: 0;
 }
 
+.concept-body > .concept-part:first-child > .concept-slot:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.concept-part {
+  margin: 0;
+  padding: 0;
+}
+
 .concept-slot {
   --slot-accent: var(--slot-accent-default);
+  --slot-accent-bg: var(--slot-accent-bg-default);
   margin: 0;
-  padding: 0.85rem 0 0;
+  padding: 1.35rem 0 0;
   border: 0;
   border-top: 1px solid var(--border);
   background: transparent;
+}
+
+.slot-definition {
+  --slot-accent: var(--slot-accent-definition);
+  --slot-accent-bg: var(--slot-accent-bg-definition);
+}
+
+.slot-how {
+  --slot-accent: var(--slot-accent-how);
+  --slot-accent-bg: var(--slot-accent-bg-how);
+}
+
+.slot-detailed {
+  --slot-accent: var(--slot-accent-detailed);
+  --slot-accent-bg: var(--slot-accent-bg-detailed);
+}
+
+.slot-cases {
+  --slot-accent: var(--slot-accent-cases);
+  --slot-accent-bg: var(--slot-accent-bg-cases);
+}
+
+.slot-avoid,
+.slot-pitfalls {
+  --slot-accent: var(--slot-accent-avoid);
+  --slot-accent-bg: var(--slot-accent-bg-avoid);
+}
+
+.slot-tradeoffs {
+  --slot-accent: var(--slot-accent-tradeoffs);
+  --slot-accent-bg: var(--slot-accent-bg-tradeoffs);
+}
+
+.slot-example {
+  --slot-accent: var(--slot-accent-example);
+  --slot-accent-bg: var(--slot-accent-bg-example);
+}
+
+.slot-thoughts {
+  --slot-accent: var(--slot-accent-thoughts);
+  --slot-accent-bg: var(--slot-accent-bg-thoughts);
+}
+
+.slot-sources {
+  --slot-accent: var(--slot-accent-sources);
+  --slot-accent-bg: var(--slot-accent-bg-sources);
+}
+
+.slot-key {
+  --slot-accent: var(--slot-accent-key);
+  --slot-accent-bg: var(--slot-accent-bg-key);
+}
+
+.slot-advices {
+  --slot-accent: var(--slot-accent-advices);
+  --slot-accent-bg: var(--slot-accent-bg-advices);
+}
+
+.slot-traps {
+  --slot-accent: var(--slot-accent-traps);
+  --slot-accent-bg: var(--slot-accent-bg-traps);
 }
 
 .concept-slot:first-child {
@@ -250,78 +497,44 @@ html[data-concept-hash] nav.concept-list {
 .concept-slot__heading {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.55rem;
-  font-size: 0.9375rem;
-  font-weight: 700;
+  gap: 0.55rem;
+  margin: 0 0 0.65rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-size: 0.95rem;
+  font-weight: 650;
   line-height: 1.3;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: -0.015em;
+  text-transform: none;
   color: var(--foreground);
 }
 
-.concept-slot__heading::before {
-  content: "";
-  flex-shrink: 0;
-  width: 1.125rem;
-  height: 1.125rem;
-  border-radius: 0.2rem;
-  background: var(--slot-accent);
+.concept-slot__heading::before,
+.concept-slot__heading::after {
+  content: none;
 }
 
-.concept-slot__body {
-  min-width: 0;
-}
-
-.slot-definition {
-  --slot-accent: var(--slot-accent-definition);
-}
-
-.slot-how {
-  --slot-accent: var(--slot-accent-how);
-}
-
-.slot-cases {
-  --slot-accent: var(--slot-accent-cases);
-}
-
-.slot-avoid {
-  --slot-accent: var(--slot-accent-avoid);
-}
-
-.concept-slot__heading--tradeoffs::before {
-  display: none;
-}
-
-.concept-slot__badge {
+.concept-slot__icon {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 1.125rem;
-  height: 1.125rem;
-  border-radius: 0.2rem;
-  font-size: 0.875rem;
-  font-weight: 800;
-  line-height: 1;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
+  background: var(--slot-accent-bg);
+  color: var(--slot-accent);
 }
 
-.concept-slot__badge--pro {
-  background: var(--pro-marker-bg);
-  color: var(--pro-marker);
+.concept-slot__icon svg {
+  width: 0.95rem;
+  height: 0.95rem;
 }
 
-.concept-slot__badge--con {
-  background: var(--con-marker-bg);
-  color: var(--con-marker);
-}
-
-.slot-example {
-  --slot-accent: var(--slot-accent-example);
-}
-
-.slot-thoughts {
-  --slot-accent: var(--slot-accent-thoughts);
+.concept-slot__body {
+  min-width: 0;
 }
 
 .slot-thoughts .concept-slot__body {
@@ -330,24 +543,7 @@ html[data-concept-hash] nav.concept-list {
 
 .slot-sources {
   --slot-accent: var(--slot-accent-sources);
-  padding-top: 1rem;
-  border-top: 2px solid var(--border);
-}
-
-.slot-key {
-  --slot-accent: var(--slot-accent-key);
-}
-
-.slot-advices {
-  --slot-accent: var(--slot-accent-advices);
-}
-
-.slot-traps {
-  --slot-accent: var(--slot-accent-traps);
-}
-
-.slot-extra {
-  --slot-accent: var(--slot-accent-sources);
+  --slot-accent-bg: var(--slot-accent-bg-sources);
 }
 
 .concept-slot__body > *:first-child {
@@ -399,8 +595,20 @@ html[data-concept-hash] nav.concept-list {
 .pros-cons {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin: 0;
+  gap: 0.75rem 1.5rem;
+  margin: 0.15rem 0 0;
+}
+
+.pros-cons__col {
+  min-width: 0;
+}
+
+.pros-cons__label {
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--foreground);
 }
 
 @media (max-width: 36rem) {
@@ -450,6 +658,11 @@ html[data-concept-hash] nav.concept-list {
   color: var(--con-marker);
 }
 
+.concept-slot__body > hr,
+.slot-sources hr {
+  display: none;
+}
+
 .slot-definition .concept-slot__body p,
 .slot-sources .concept-slot__body p {
   margin: 0;
@@ -494,6 +707,17 @@ html[data-concept-hash] nav.concept-list {
   margin: 1.25rem 0 0.5rem;
   font-weight: 600;
   color: var(--foreground);
+}
+
+.concept-body h4.concept-slot__heading {
+  margin: 0 0 0.65rem;
+}
+
+.concept-slot__body > h4 {
+  margin: 1.15rem 0 0.45rem;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
 .concept-body p,

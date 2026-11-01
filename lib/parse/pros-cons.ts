@@ -9,6 +9,11 @@ function extractCells(row: string): string[] {
   return cells;
 }
 
+const COLUMN_LABEL = {
+  pro: "Pluses",
+  con: "Minuses",
+} as const;
+
 function renderList(kind: "pro" | "con", items: readonly string[]): string {
   if (items.length === 0) {
     return "";
@@ -18,7 +23,7 @@ function renderList(kind: "pro" | "con", items: readonly string[]): string {
     .map((item) => `<li class="pros-cons__item">${item}</li>`)
     .join("");
 
-  return `<ul class="pros-cons__list pros-cons__list--${kind}">${listItems}</ul>`;
+  return `<div class="pros-cons__col"><p class="pros-cons__label">${COLUMN_LABEL[kind]}</p><ul class="pros-cons__list pros-cons__list--${kind}">${listItems}</ul></div>`;
 }
 
 export function isProsConsTable(table: string): boolean {

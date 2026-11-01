@@ -325,8 +325,11 @@ function SearchModeIcon({
     case "titles":
       return (
         <svg aria-hidden="true" viewBox="0 0 24 24" className={className}>
+          <circle cx="4.75" cy="7" r="2" fill="currentColor" />
+          <circle cx="4.75" cy="12" r="2" fill="currentColor" />
+          <circle cx="4.75" cy="17" r="2" fill="currentColor" />
           <path
-            d="M5 7h14M5 12h14M5 17h9"
+            d="M9.5 7H19.5M9.5 12H19.5M9.5 17H15.5"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.75"

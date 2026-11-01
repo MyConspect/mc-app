@@ -24,7 +24,7 @@ import { highlightQueryInHtml } from "@/components/search/utils/highlightQueryIn
 import { setHashIfChanged, setHashOnPath } from "@/components/nav/utils/hash";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { CopyConceptLinkButton } from "./CopyConceptLinkButton";
-import { handbookMain } from "@/components/topic/utils/conceptScroll";
+import { handbookScrollContainer } from "@/components/topic/utils/conceptScroll";
 import { chromeFor } from "@/lib/i18n/chrome";
 import { localeFromPathname } from "@/lib/i18n/paths";
 import { nextConceptHash } from "@/lib/nav/conceptHash";
@@ -32,8 +32,12 @@ import type { ChromeCopy } from "@/lib/nav";
 import type { Concept } from "@/lib/parse";
 import {
   ConceptDetailActionsFooter,
+  ConceptDetailTitle,
   ConceptTitleHeader,
 } from "./ConceptTitleHeader";
+import { useConceptDepth } from "./ConceptDepthToggle";
+import { useConceptBodyDepth } from "./useConceptBodyDepth";
+import type { ConceptDepthPreference } from "@/components/nav/utils/uiStorage";
 import { PageTitleHeader } from "./PageTitleHeader";
 import { useCodeCopyButtons } from "./hooks/useCodeCopyButtons";
 import { useConceptKeyboardNav } from "./hooks/useConceptKeyboardNav";
@@ -92,9 +96,9 @@ function groupConcepts(
 }
 
 function scrollMainToTop() {
-  const main = handbookMain();
-  if (main) {
-    main.scrollTop = 0;
+  const scroller = handbookScrollContainer();
+  if (scroller) {
+    scroller.scrollTop = 0;
   }
 }
 
@@ -247,7 +251,7 @@ const CONCEPT_LIST_CARD =
   "concept-list overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 
 const CONCEPT_DETAIL_CARD =
-  "concept-list group relative -mx-4 rounded-xl border border-yellow-200 bg-yellow-50 max-sm:rounded-none max-sm:border-x-0 max-sm:border-t-0 sm:mx-0 dark:border-yellow-800 dark:bg-yellow-950";
+  "concept-detail-article concept-list group relative -mx-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white max-sm:rounded-none sm:mx-0 dark:border-zinc-800 dark:bg-zinc-900";
 
 function ConceptIndexList({
   concepts,
@@ -322,6 +326,13 @@ function ConceptIndexRow({
   );
 }
 
+function conceptHasOptionalDepth(concept: Concept): boolean {
+  return (
+    concept.hasOptionalDepth === true ||
+    concept.html.includes("concept-depth-detailed")
+  );
+}
+
 function ConceptDetail({
   concept,
   notesQuery,
@@ -340,6 +351,8 @@ function ConceptDetail({
     });
 
   const headerVariant: "index" | "detail" = asPageTitle ? "index" : "detail";
+  const hasOptionalDepth = conceptHasOptionalDepth(concept);
+  const conceptDepth = useConceptDepth();
   const actionProps = {
     title: concept.title,
     chrome,
@@ -354,16 +367,39 @@ function ConceptDetail({
     showShare: true,
     conceptId: concept.id,
   };
+  const hasDetailToolbarActions =
+    showBack || showNext || actionProps.showBookmark || actionProps.showShare;
 
   return (
-    <article id={concept.id} className={CONCEPT_DETAIL_CARD}>
+    <article
+      id={concept.id}
+      className={CONCEPT_DETAIL_CARD}
+      {...(hasOptionalDepth ? { "data-concept-depth": conceptDepth } : {})}
+    >
       <ConceptTitleHeader {...actionProps} hideActionsOnMobile />
-      <ConceptBody
-        html={concept.html}
-        query={notesQuery}
-        chrome={chrome}
-        compactTop
-      />
+      <div
+        className="concept-detail-body-scroll min-h-0 flex-1 overscroll-y-contain"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
+        {headerVariant === "detail" ? (
+          <ConceptDetailTitle
+            title={concept.title}
+            chrome={chrome}
+            toolbarAbove={hasDetailToolbarActions}
+            toolbarAboveFromSm={hasDetailToolbarActions}
+            scrollsWithBody
+            hasOptionalDepth={hasOptionalDepth}
+          />
+        ) : null}
+        <ConceptBody
+          html={concept.html}
+          query={notesQuery}
+          chrome={chrome}
+          compactTop
+          conceptDepth={conceptDepth}
+          hasOptionalDepth={hasOptionalDepth}
+        />
+      </div>
       <ConceptDetailActionsFooter {...actionProps} />
     </article>
   );
@@ -374,20 +410,27 @@ const ConceptBody = memo(function ConceptBody({
   query,
   chrome,
   compactTop = false,
+  conceptDepth,
+  hasOptionalDepth = false,
 }: {
   html: string;
   query: string;
   chrome: ChromeCopy;
   compactTop?: boolean;
+  conceptDepth: ConceptDepthPreference;
+  hasOptionalDepth?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useCodeCopyButtons(ref, chrome, html);
+  useConceptBodyDepth(ref, conceptDepth, hasOptionalDepth, html);
 
   return (
     <div
       ref={ref}
       className={
-        compactTop ? "concept-body px-4 pb-5" : "concept-body px-4 pb-5 pt-1"
+        compactTop
+          ? "concept-body concept-body--detail-top px-4 pb-5"
+          : "concept-body px-4 pb-5 pt-1"
       }
       dangerouslySetInnerHTML={{ __html: highlightQueryInHtml(html, query) }}
     />

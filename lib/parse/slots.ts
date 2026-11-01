@@ -3,9 +3,18 @@ import { transformMarkdownTables } from "./table-scroll";
 import { behaviorSlotLabel } from "@/lib/i18n/behaviorQuestions";
 import type { Locale } from "@/lib/i18n/locales";
 
+/** Notes flag: Quick keeps the full concept; only **Detailed:** goes in the Detailed pane. */
+export const CONCEPT_DEPTH_OPTIONAL_MARKER =
+  /<!--\s*concept-depth:optional\s*-->/;
+
+export function hasConceptOptionalDepth(markdown: string): boolean {
+  return CONCEPT_DEPTH_OPTIONAL_MARKER.test(markdown);
+}
+
 export type SlotKind =
   | "definition"
   | "how"
+  | "detailed"
   | "cases"
   | "avoid"
   | "tradeoffs"
@@ -33,6 +42,7 @@ const SLOT_DISPLAY: Record<
 > = {
   definition: "Definition",
   how: "How it works",
+  detailed: "Detailed",
   cases: "When to use",
   avoid: "When not to use",
   tradeoffs: "Pluses and minuses",
@@ -51,6 +61,7 @@ const SLOT_ORDER: Record<SlotKind, number> = {
   advices: 16,
   definition: 10,
   how: 20,
+  detailed: 25,
   cases: 30,
   avoid: 32,
   pitfalls: 35,
@@ -156,6 +167,9 @@ function classifyMarker(rawLabel: string): SlotKind {
   }
   if (label === "how it works") {
     return "how";
+  }
+  if (label === "detailed") {
+    return "detailed";
   }
   if (label.startsWith("when not to use")) {
     return "avoid";
@@ -299,6 +313,15 @@ function splitByMarkers(
 
 type ConceptSection = { kind: SlotKind; rawLabel: string; body: string };
 
+function isDetailedDepthSlot(section: ConceptSection): boolean {
+  if (section.kind === "detailed") {
+    return true;
+  }
+  return (
+    section.kind === "extra" && normalizeLabel(section.rawLabel) === "detailed"
+  );
+}
+
 function pitfallsMarkdown(section: ConceptSection): string {
   const title = stripMdLabel(section.rawLabel);
   const body = section.body.trim();
@@ -385,6 +408,7 @@ function splitBySubheadings(markdown: string): ConceptPart[] {
 function sectionsForMarkdown(
   markdown: string,
   hideAnswers = false,
+  preserveDocumentOrder = false,
 ): ConceptSection[] {
   const sections = mergeDuplicateKinds(
     mergePitfallsIntoCases(splitByMarkers(markdown)),
@@ -393,7 +417,7 @@ function sectionsForMarkdown(
       !isSkippedSlot(section.rawLabel) &&
       !(hideAnswers && isAnswerSlotLabel(section.rawLabel)),
   );
-  return orderSectionsForRender(sections);
+  return preserveDocumentOrder ? sections : orderSectionsForRender(sections);
 }
 
 function wrapPart(heading: string, slotsHtml: string): string {
@@ -458,6 +482,15 @@ function orderSectionsForRender(sections: ConceptSection[]): ConceptSection[] {
   return [...sections].sort((a, b) => SLOT_ORDER[a.kind] - SLOT_ORDER[b.kind]);
 }
 
+/** Intro slot that only carries a legacy in-body anchor (concept id is on `<article>`). */
+function isAnchorOnlyIntroHtml(kind: SlotKind, bodyHtml: string): boolean {
+  if (kind !== "intro") {
+    return false;
+  }
+  const trimmed = bodyHtml.replace(/<!--[\s\S]*?-->/g, "").trim();
+  return /^<p>\s*<a\b[^>]*>\s*<\/a>\s*<\/p>\s*$/i.test(trimmed);
+}
+
 function wrapSlot(
   kind: SlotKind,
   rawLabel: string,
@@ -484,6 +517,9 @@ async function renderSections(
       const bodyHtml = transformMarkdownTables(
         await renderFragment(section.body),
       );
+      if (isAnchorOnlyIntroHtml(section.kind, bodyHtml)) {
+        return "";
+      }
       return wrapSlot(section.kind, section.rawLabel, bodyHtml, locale);
     }),
   );
@@ -503,21 +539,53 @@ export async function structureConceptBody(
   const hideAnswers = options.hideAnswers ?? false;
   const locale = options.locale;
   const source = hideAnswers ? stripAnswerSections(markdown) : markdown;
-  const parts = splitBySubheadings(source);
+  if (!source.trim()) {
+    return "";
+  }
+
+  const optionalDepth = hasConceptOptionalDepth(source);
+  const cleanedSource = optionalDepth
+    ? source.replace(CONCEPT_DEPTH_OPTIONAL_MARKER, "").trim()
+    : source;
+  const parts = splitBySubheadings(cleanedSource);
   if (parts.length === 0) {
     return "";
   }
 
   const renderedParts = await Promise.all(
     parts.map(async (part) => {
-      const slotsHtml = await renderSections(
-        sectionsForMarkdown(part.markdown, hideAnswers),
-        renderFragment,
-        locale,
+      const sections = sectionsForMarkdown(part.markdown, hideAnswers);
+      const { quick, detailed } = splitSectionsForConceptDepth(
+        sections,
+        optionalDepth,
       );
-      return wrapPart(part.heading, slotsHtml);
+      const quickHtml =
+        optionalDepth && quick.length > 0
+          ? `<div class="concept-depth-quick">${await renderSections(quick, renderFragment, locale)}</div>`
+          : await renderSections(quick, renderFragment, locale);
+      const detailedHtml =
+        detailed.length > 0
+          ? `<div class="concept-depth-detailed">${await renderSections(
+              detailed,
+              renderFragment,
+              locale,
+            )}</div>`
+          : "";
+      return wrapPart(part.heading, `${quickHtml}${detailedHtml}`);
     }),
   );
 
   return renderedParts.filter(Boolean).join("\n");
+}
+
+function splitSectionsForConceptDepth(
+  sections: ConceptSection[],
+  optionalDepth: boolean,
+): { quick: ConceptSection[]; detailed: ConceptSection[] } {
+  if (!optionalDepth) {
+    return { quick: sections, detailed: [] };
+  }
+  const quick = sections.filter((section) => !isDetailedDepthSlot(section));
+  const detailed = sections.filter((section) => isDetailedDepthSlot(section));
+  return { quick, detailed };
 }

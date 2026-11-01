@@ -98,7 +98,7 @@ type ParsedEntry = {
   readonly promise: Promise<ParsedTopic>;
 };
 
-const PARSE_LOGIC_REVISION = 27;
+const PARSE_LOGIC_REVISION = 34;
 
 type ParseCache = {
   markdown: Map<string, StoredRead>;
