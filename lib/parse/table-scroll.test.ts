@@ -17,5 +17,7 @@ test("transformMarkdownTables still converts pros/cons tables", () => {
 </table>`;
   const out = transformMarkdownTables(html);
   assert.match(out, /class="pros-cons"/);
+  assert.match(out, /pros-cons__label">Pluses/);
+  assert.match(out, /pros-cons__label">Minuses/);
   assert.doesNotMatch(out, /table-scroll/);
 });

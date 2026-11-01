@@ -20,13 +20,13 @@ import {
 } from "./conceptDetailToolbarIcon";
 
 const DETAIL_TOOLBAR =
-  "concept-detail-toolbar shrink-0 border-b border-yellow-200/70 bg-yellow-50 px-4 py-2 max-sm:rounded-t-none sm:rounded-t-[calc(0.75rem-1px)] dark:border-yellow-800/70 dark:bg-yellow-950";
+  "concept-detail-toolbar shrink-0 border-b border-zinc-200 bg-white px-4 py-2.5 max-sm:rounded-t-none sm:rounded-t-[calc(0.75rem-1px)] sm:py-3 dark:border-zinc-800 dark:bg-zinc-900";
 
 const DETAIL_TOOLBAR_ACTIONS_ROW =
   "flex min-h-8 w-full items-center justify-between gap-2";
 
 const DETAIL_TITLE_CLASS =
-  "m-0 min-w-0 text-pretty text-[1.375rem] font-semibold leading-snug tracking-tight text-zinc-900 sm:text-2xl sm:leading-snug dark:text-zinc-50";
+  "m-0 min-w-0 flex-1 text-pretty text-[1.375rem] font-semibold leading-snug tracking-tight text-zinc-900 sm:text-2xl sm:leading-snug dark:text-zinc-50";
 
 const INDEX_HEADER =
   "flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800";
@@ -254,7 +254,7 @@ function ConceptTitleHeading({
 }
 
 const DETAIL_ACTIONS_DOCK =
-  "flex min-h-11 touch-manipulation items-center justify-center bg-yellow-50 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] dark:bg-yellow-950";
+  "flex min-h-11 touch-manipulation items-center justify-center border-t border-zinc-200 bg-white px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] dark:border-zinc-800 dark:bg-zinc-900";
 
 export function ConceptDetailActionsFooter(props: ConceptHeaderActionProps) {
   const navOpen = useHandbookMobileNavOpen();
@@ -431,31 +431,52 @@ export function ConceptHeaderActions({
   );
 }
 
+const DETAIL_TITLE_ROW =
+  "flex w-full items-start justify-between gap-x-2 gap-y-2 sm:items-center";
+
 export function ConceptDetailTitle({
   title,
   chrome,
   toolbarAbove = true,
+  toolbarAboveFromSm = false,
   scrollsWithBody = false,
+  hasOptionalDepth = false,
 }: {
   title: string;
   chrome: ChromeCopy;
-  /** False when the yellow toolbar row is omitted (title is the top chrome). */
+  /** False when the toolbar row is omitted (title is the top chrome). */
   toolbarAbove?: boolean;
+  /** Toolbar is hidden below `sm` (mobile dock); title uses solo spacing until `sm`. */
+  toolbarAboveFromSm?: boolean;
   /** Title lives in the scroll pane (only the toolbar stays fixed above). */
   scrollsWithBody?: boolean;
+  hasOptionalDepth?: boolean;
 }) {
-  const bandClass = toolbarAbove
-    ? `concept-detail-title concept-detail-title--under-toolbar bg-yellow-50 px-4 dark:bg-yellow-950${scrollsWithBody ? " concept-detail-title--in-scroll" : " shrink-0"}`
-    : `concept-detail-title concept-detail-title--solo border-b border-yellow-200/70 bg-yellow-50 px-4 dark:border-yellow-800/70 dark:bg-yellow-950 max-sm:rounded-t-none sm:rounded-t-[calc(0.75rem-1px)]${scrollsWithBody ? " concept-detail-title--in-scroll" : " shrink-0"}`;
+  const scrollClass = scrollsWithBody
+    ? " concept-detail-title--in-scroll"
+    : " shrink-0";
+  const base = `concept-detail-title bg-white px-4 dark:bg-zinc-900${scrollClass}`;
+
+  let bandClass: string;
+  if (toolbarAboveFromSm) {
+    bandClass = `${base} concept-detail-title--under-toolbar-from-sm`;
+  } else if (toolbarAbove) {
+    bandClass = `${base} concept-detail-title--under-toolbar`;
+  } else {
+    bandClass = `${base} concept-detail-title--solo border-b border-zinc-200 dark:border-zinc-800 max-sm:rounded-t-none sm:rounded-t-[calc(0.75rem-1px)]`;
+  }
 
   return (
     <div className={bandClass}>
-      <ConceptTitleHeading
-        title={title}
-        chrome={chrome}
-        level="h2"
-        variant="detail"
-      />
+      <div className={DETAIL_TITLE_ROW}>
+        <ConceptTitleHeading
+          title={title}
+          chrome={chrome}
+          level="h2"
+          variant="detail"
+        />
+        {hasOptionalDepth ? <ConceptDepthToggle chrome={chrome} /> : null}
+      </div>
     </div>
   );
 }
@@ -474,13 +495,11 @@ export function ConceptTitleHeader({
   showShare = false,
   conceptId,
   hideActionsOnMobile = false,
-  hasOptionalDepth = false,
 }: {
   title: string;
   chrome: ChromeCopy;
   variant?: "index" | "detail";
   hideActionsOnMobile?: boolean;
-  hasOptionalDepth?: boolean;
   showBack?: boolean;
   backHref?: string | null;
   onBack?: () => void;
@@ -513,27 +532,20 @@ export function ConceptTitleHeader({
     : "contents";
 
   if (variant === "detail") {
-    const showToolbar = hasActions || hasOptionalDepth;
-
-    if (!showToolbar) {
+    if (!hasActions) {
       return null;
     }
 
+    const toolbarClass = hideActionsOnMobile
+      ? `${DETAIL_TOOLBAR} hidden sm:block`
+      : DETAIL_TOOLBAR;
+
     return (
-      <div className={DETAIL_TOOLBAR}>
-        <div
-          className={`${DETAIL_TOOLBAR_ACTIONS_ROW}${hasOptionalDepth && !hasActions ? " justify-end" : ""}`}
-        >
-          {hasActions ? (
-            <div className={hideChromeOnMobile}>
-              <ConceptHeaderActions {...actionProps} hasOptionalDepth={false} />
-            </div>
-          ) : null}
-          {hasOptionalDepth ? (
-            <div className={hasActions ? "ml-auto shrink-0" : undefined}>
-              <ConceptDepthToggle chrome={chrome} />
-            </div>
-          ) : null}
+      <div className={toolbarClass}>
+        <div className={DETAIL_TOOLBAR_ACTIONS_ROW}>
+          <div className={hideChromeOnMobile}>
+            <ConceptHeaderActions {...actionProps} hasOptionalDepth={false} />
+          </div>
         </div>
       </div>
     );

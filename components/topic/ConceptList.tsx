@@ -251,7 +251,7 @@ const CONCEPT_LIST_CARD =
   "concept-list overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 
 const CONCEPT_DETAIL_CARD =
-  "concept-detail-article concept-list group relative -mx-4 flex min-h-0 flex-1 flex-col rounded-xl bg-yellow-50 max-sm:rounded-none sm:mx-0 dark:bg-yellow-950";
+  "concept-detail-article concept-list group relative -mx-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white max-sm:rounded-none sm:mx-0 dark:border-zinc-800 dark:bg-zinc-900";
 
 function ConceptIndexList({
   concepts,
@@ -367,6 +367,8 @@ function ConceptDetail({
     showShare: true,
     conceptId: concept.id,
   };
+  const hasDetailToolbarActions =
+    showBack || showNext || actionProps.showBookmark || actionProps.showShare;
 
   return (
     <article
@@ -374,11 +376,7 @@ function ConceptDetail({
       className={CONCEPT_DETAIL_CARD}
       {...(hasOptionalDepth ? { "data-concept-depth": conceptDepth } : {})}
     >
-      <ConceptTitleHeader
-        {...actionProps}
-        hideActionsOnMobile
-        hasOptionalDepth={hasOptionalDepth}
-      />
+      <ConceptTitleHeader {...actionProps} hideActionsOnMobile />
       <div
         className="concept-detail-body-scroll min-h-0 flex-1 overscroll-y-contain"
         style={{ WebkitOverflowScrolling: "touch" }}
@@ -387,14 +385,10 @@ function ConceptDetail({
           <ConceptDetailTitle
             title={concept.title}
             chrome={chrome}
-            toolbarAbove={
-              showBack ||
-              showNext ||
-              hasOptionalDepth ||
-              actionProps.showBookmark ||
-              actionProps.showShare
-            }
+            toolbarAbove={hasDetailToolbarActions}
+            toolbarAboveFromSm={hasDetailToolbarActions}
             scrollsWithBody
+            hasOptionalDepth={hasOptionalDepth}
           />
         ) : null}
         <ConceptBody

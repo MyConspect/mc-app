@@ -64,22 +64,28 @@ const CONCEPT_SECTIONS: {
     label: "Pluses and minuses",
     body: (
       <div className="pros-cons">
-        <ul className="pros-cons__list pros-cons__list--pro">
-          <li className="pros-cons__item">
-            Component model scales from widgets to full apps.
-          </li>
-          <li className="pros-cons__item">
-            Large ecosystem, DevTools, and hiring pool.
-          </li>
-        </ul>
-        <ul className="pros-cons__list pros-cons__list--con">
-          <li className="pros-cons__item">
-            Not batteries-included — router and data layer are extra choices.
-          </li>
-          <li className="pros-cons__item">
-            Learning curve: hooks, concurrent features, RSC mental model.
-          </li>
-        </ul>
+        <div className="pros-cons__col">
+          <p className="pros-cons__label">Pluses</p>
+          <ul className="pros-cons__list pros-cons__list--pro">
+            <li className="pros-cons__item">
+              Component model scales from widgets to full apps.
+            </li>
+            <li className="pros-cons__item">
+              Large ecosystem, DevTools, and hiring pool.
+            </li>
+          </ul>
+        </div>
+        <div className="pros-cons__col">
+          <p className="pros-cons__label">Minuses</p>
+          <ul className="pros-cons__list pros-cons__list--con">
+            <li className="pros-cons__item">
+              Not batteries-included — router and data layer are extra choices.
+            </li>
+            <li className="pros-cons__item">
+              Learning curve: hooks, concurrent features, RSC mental model.
+            </li>
+          </ul>
+        </div>
       </div>
     ),
   },

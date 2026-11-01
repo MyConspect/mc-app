@@ -91,18 +91,14 @@ export function Breadcrumbs({
                     }
                     queueHandbookHref(href);
                   }}
-                  className="cursor-pointer rounded-md px-1.5 py-0.5 font-medium text-zinc-500 transition-colors hover:bg-yellow-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-yellow-950/60 dark:hover:text-zinc-50"
+                  className="cursor-pointer rounded-md px-1.5 py-0.5 font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
                 >
                   {item.label}
                 </Link>
               ) : (
                 <span
                   aria-current={isLast ? "page" : undefined}
-                  className={
-                    isLast
-                      ? "rounded-md bg-yellow-50 px-1.5 py-0.5 font-medium text-zinc-900 ring-1 ring-yellow-200 dark:bg-yellow-950 dark:text-zinc-50 dark:ring-yellow-800"
-                      : "px-1.5 py-0.5 font-medium text-zinc-900 dark:text-zinc-50"
-                  }
+                  className="px-1.5 py-0.5 font-medium text-zinc-900 dark:text-zinc-50"
                 >
                   {item.label}
                 </span>
