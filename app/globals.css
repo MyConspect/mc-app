@@ -307,7 +307,17 @@ article.concept-detail-article
   .concept-detail-body-scroll
   .concept-part
   + .concept-part {
+  margin-top: 0.625rem;
+  padding-top: 0;
   border-top: 0;
+}
+
+article.concept-detail-article
+  .concept-detail-body-scroll
+  .concept-part
+  + .concept-part
+  > .concept-part__title {
+  margin-top: 0;
 }
 
 @media (max-width: 767px) {

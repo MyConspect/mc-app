@@ -60,11 +60,11 @@ Set `NEXT_PUBLIC_SITE_URL` (no trailing slash) for absolute sitemap and robots U
 
 Notes live in **mc-content** (`en/` + `ru/` at repo root, or the same under `resources/`). Set these **environment variables** on [Vercel](https://vercel.com/docs/projects/environment-variables) (Production + Preview) and as [GitHub Actions secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions) when CI must clone notes:
 
-| Variable              | Required | Purpose                                                                 |
-| --------------------- | -------- | ----------------------------------------------------------------------- |
+| Variable              | Required | Purpose                                                                    |
+| --------------------- | -------- | -------------------------------------------------------------------------- |
 | `RESOURCES_GIT_URL`   | Yes      | HTTPS clone URL, e.g. `https://github.com/radomir-radionov/mc-content.git` |
-| `RESOURCES_GIT_TOKEN` | No       | PAT with repo read access — only if the notes repo is private           |
-| `RESOURCES_GIT_REF`   | No       | Branch or tag (default `main`)                                          |
+| `RESOURCES_GIT_TOKEN` | No       | PAT with repo read access — only if the notes repo is private              |
+| `RESOURCES_GIT_REF`   | No       | Branch or tag (default `main`)                                             |
 
 `prebuild` / `predev` run `tsx scripts/ensure-resources.ts`: if `resources/en/` already has markdown (your machine), nothing is downloaded; otherwise the script shallow-clones the notes repo.
 

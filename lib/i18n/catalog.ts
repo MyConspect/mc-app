@@ -364,6 +364,23 @@ const RU_BLURBS: Readonly<Record<string, string>> = {
     "Router, Pinia, Vite, производительность и миграция.",
   "Server rendering, hydration, and Vue 3.5+ features.":
     "Серверный рендеринг, гидратация и возможности Vue 3.5+.",
+  "Angular platform hub (hidden nav).": "Angular — hub (скрыт в навигации).",
+  "Components, templates, lifecycle, and data binding.":
+    "Компоненты, шаблоны, lifecycle и data binding.",
+  "Change detection, NgZone, DI, AOT, and Ivy.":
+    "Change detection, NgZone, DI, AOT и Ivy.",
+  "Router, forms, HttpClient, RxJS, and patterns.":
+    "Router, формы, HttpClient, RxJS и паттерны.",
+  "Angular interview Q&A and RU cheatsheet index.":
+    "Angular — интервью и RU-индекс вопросов.",
+  "Platform, components, templates, and modules.":
+    "Платформа, компоненты, шаблоны и модули.",
+  "Change detection, Zone.js, DI, and compilation.":
+    "Change detection, Zone.js, DI и компиляция.",
+  "Router, forms, HttpClient, and architecture patterns.":
+    "Router, формы, HttpClient и архитектурные паттерны.",
+  "Angular interview Q&A (sidebar-hidden subject).":
+    "Angular — интервью (скрытый блок сайдбара).",
   "useFetch, useAsyncData, and server routes.":
     "useFetch, useAsyncData и server routes.",
   "useFetch, useAsyncData, caching, and server routes.":

@@ -423,11 +423,15 @@ const TrackGroup = memo(function TrackGroup({
   const showLeafConcepts = isLeafTrack && !group.leafTopic?.hideSidebarConcepts;
   const hasSidebarChildren =
     group.entries.length > 0 || Boolean(group.hubTopic) || showLeafConcepts;
-  const { onNavigate, goToPath } = useSidebarChrome();
-  const { stackPathPins } = useSidebarHighlight();
+  const {
+    onNavigate,
+    goToPath,
+    pathname: committedPathname,
+  } = useSidebarChrome();
+  const { stackPathPins, highlightPathname } = useSidebarHighlight();
   const { patchFold } = useScopedSidebarFold();
-  const trackActive = isActiveHref(pathname, group.href);
-  const onThisTrack = isActiveTrack(pathname, group.href);
+  const trackActive = isActiveHref(highlightPathname, group.href);
+  const onThisTrack = isActiveTrack(highlightPathname, group.href);
   const trackOpen = searching || (hasSidebarChildren && isTrackOpen(group.id));
   const onPath =
     !searching && rootSectionId === activeRootSectionId && onThisTrack;
@@ -454,7 +458,7 @@ const TrackGroup = memo(function TrackGroup({
     <HighlightedText
       text={group.title}
       query={query}
-      className="min-w-0 flex-1"
+      className="min-w-0 flex-1 truncate"
     />
   );
   const chevron = hasSidebarChildren ? <NavChevron open={trackOpen} /> : null;
@@ -498,13 +502,13 @@ const TrackGroup = memo(function TrackGroup({
           data-nav-id={group.id}
           data-nav-path={pinPath ? "true" : undefined}
           onClick={(event) => {
-            pinNavForHref(event.currentTarget, pathname, navigateHref);
+            pinNavForHref(event.currentTarget, committedPathname, navigateHref);
             if (!hasSidebarChildren) {
               onNavigate?.();
             }
-            if (pathname === navigateHref && window.location.hash) {
+            if (committedPathname === navigateHref && window.location.hash) {
               event.preventDefault();
-              applySameDocumentHref(pathname, "", pathname);
+              applySameDocumentHref(committedPathname, "", committedPathname);
               queueHandbookHref(navigateHref);
               return;
             }
@@ -516,7 +520,7 @@ const TrackGroup = memo(function TrackGroup({
                 sectionKey: null,
               });
             }
-            followHandbookHref(navigateHref, pathname, goToPath);
+            followHandbookHref(navigateHref, committedPathname, goToPath);
             if (hasSidebarChildren) {
               ensureTrackOpen(group.id);
             }
