@@ -66,11 +66,21 @@ Notes live in **mc-content** (`en/` + `ru/` at repo root, or the same under `res
 | `RESOURCES_GIT_TOKEN` | No       | PAT with repo read access — only if the notes repo is private        |
 | `RESOURCES_GIT_REF`   | No       | Branch or tag (default `main`)                                       |
 
+For **GitHub Actions production deploy** (`.github/workflows/ci.yml` `deploy` job on `main`), also add [repository secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions):
+
+| Secret              | Required | Purpose                                                                 |
+| ------------------- | -------- | ----------------------------------------------------------------------- |
+| `VERCEL_TOKEN`      | Yes      | [Vercel account token](https://vercel.com/account/tokens) with deploy access |
+| `VERCEL_ORG_ID`     | Yes      | Team ID — **myconspect** uses `team_rQid9ofaphV3xSDDgz4HNRBa`         |
+| `VERCEL_PROJECT_ID` | Yes      | Project ID — **myconspect** uses `prj_l3xAcgdWkUfVoouKCs0zd1ZLNARW`   |
+
+After `check` passes on a push to `main`, the workflow runs `vercel build --prod` and `vercel deploy --prebuilt --prod`. This works even when the Vercel **Git** integration is mislinked after an org transfer. Once Git deploys reliably again, you can remove the `deploy` job to avoid duplicate production builds.
+
 `prebuild` / `predev` run `tsx scripts/ensure-resources.ts`: if `resources/en/` already has markdown (your machine), nothing is downloaded; otherwise the script shallow-clones the notes repo.
 
 GitHub Actions:
 
-- `.github/workflows/ci.yml` — `npm ci`, lint, tests, `check-order`, production build, and Cypress sidebar E2E (Chrome) on push and PRs to `main` / `dev` (needs the secrets above)
+- `.github/workflows/ci.yml` — `npm ci`, lint, tests, `check-order`, production build, Cypress sidebar E2E on push and PRs to `main` / `dev`; on **push to `main`**, deploys production to Vercel after `check` (needs `VERCEL_*` secrets below)
 - `.github/workflows/check-conspect.yml` — scheduled source URL audit (same secrets)
 
 Production and preview deploys run automatically through the [Vercel GitHub integration](https://vercel.com/docs/git/vercel-for-github): push to **`MyConspect/mc-app`** `main` ships production; pull requests get preview URLs. Install the [Vercel GitHub App](https://github.com/apps/vercel) on the **MyConspect** org with access to **mc-app** if the project is not already connected.
