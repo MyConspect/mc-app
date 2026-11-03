@@ -50,8 +50,7 @@ export function ContentBreadcrumbs({
     location.hash,
     chrome.home,
     chrome.instructions,
-    conceptActions?.variant,
-    conceptActions?.title,
+    conceptActions,
   ]);
   const barRef = useRef<HTMLDivElement>(null);
 

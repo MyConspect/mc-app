@@ -10,10 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import type { ConceptHeaderActionProps } from "@/components/topic/conceptFooterActionsContext";
-import {
-  BookmarkButton,
-  useIsBookmarked,
-} from "@/components/nav/ui/BookmarkButton";
+import { useIsBookmarked } from "@/components/nav/ui/BookmarkButton";
 import type { ChromeCopy } from "@/lib/nav";
 import { usePathname } from "next/navigation";
 import { CopyConceptLinkButton } from "./CopyConceptLinkButton";
@@ -38,9 +35,6 @@ const DETAIL_TITLE_ROW =
   "flex w-full items-start justify-between gap-x-2 gap-y-2";
 
 const INDEX_HEADER = "flex flex-wrap items-start gap-x-2 gap-y-1";
-
-const TITLE_CLASS =
-  "min-w-0 w-full text-pretty text-xl font-semibold leading-7 tracking-tight text-zinc-900 sm:text-2xl sm:leading-8 dark:text-zinc-50";
 
 const INDEX_TITLE_CLASS =
   "min-w-0 flex-[1_1_10rem] text-pretty text-xl font-semibold leading-7 tracking-tight text-zinc-900 sm:text-2xl sm:leading-8 dark:text-zinc-50";
@@ -443,7 +437,6 @@ export function ConceptHeaderActions({
   }
 
   const dividerClass = ACTION_DIVIDER_INDEX;
-  const navVariant = variant;
   const wrapClass =
     variant === "detail"
       ? DETAIL_TOOLBAR_CLUSTER
