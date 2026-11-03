@@ -60,12 +60,17 @@ const NAV_BTN_DETAIL = `${CONCEPT_DETAIL_TOOLBAR_ICON} size-7`;
 
 const NAV_BTN_DETAIL_COMPACT = `${CONCEPT_DETAIL_TOOLBAR_ICON} size-7`;
 
+/** Mobile concept dock — uniform 44px circular tap targets. */
+const DOCK_ACTION_BTN = `${CONCEPT_DETAIL_TOOLBAR_ICON} size-11 min-h-11 min-w-11 shrink-0 [&_svg]:size-5`;
+
 const DETAIL_UTILITY_ICON = `${CONCEPT_DETAIL_TOOLBAR_ICON} ${conceptDetailToolbarIconSize("md")}`;
 
 const NAV_BTN_INDEX =
   "inline-flex size-11 touch-manipulation cursor-pointer items-center justify-center gap-1 rounded-full border border-zinc-200 bg-white px-0 text-[13px] font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 sm:size-8 sm:h-8 sm:min-h-8 sm:w-auto sm:min-w-0 sm:rounded-md sm:px-2.5 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500/40";
 
 const NAV_ICON = "size-4 shrink-0 text-current";
+
+const NAV_ICON_DOCK = "size-5 shrink-0 text-current";
 
 const ACTION_DIVIDER_INDEX =
   "mx-0.5 h-6 w-px shrink-0 bg-zinc-200 dark:bg-zinc-700";
@@ -119,18 +124,22 @@ function ConceptNavGroup({
   nextHref: string | null;
   onNext?: () => void;
   chrome: ChromeCopy;
-  variant: "index" | "detail" | "footer";
+  variant: "index" | "detail" | "footer" | "dock";
 }) {
   if (!showBack && !showNext) {
     return null;
   }
 
   const btnClass =
-    variant === "footer"
-      ? NAV_BTN_DETAIL_COMPACT
-      : variant === "detail"
-        ? NAV_BTN_DETAIL
-        : NAV_BTN_INDEX;
+    variant === "dock"
+      ? DOCK_ACTION_BTN
+      : variant === "footer"
+        ? NAV_BTN_DETAIL_COMPACT
+        : variant === "detail"
+          ? NAV_BTN_DETAIL
+          : NAV_BTN_INDEX;
+
+  const iconClass = variant === "dock" ? NAV_ICON_DOCK : NAV_ICON;
 
   return (
     <div
@@ -145,7 +154,7 @@ function ConceptNavGroup({
           label={chrome.back}
           className={btnClass}
         >
-          <svg aria-hidden="true" viewBox="0 0 24 24" className={NAV_ICON}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" className={iconClass}>
             <path
               d="M15 18l-6-6 6-6"
               fill="none"
@@ -164,7 +173,7 @@ function ConceptNavGroup({
           label={chrome.next}
           className={btnClass}
         >
-          <svg aria-hidden="true" viewBox="0 0 24 24" className={NAV_ICON}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" className={iconClass}>
             <path
               d="M9 18l6-6-6-6"
               fill="none"
@@ -275,7 +284,7 @@ function ConceptTitleHeading({
 }
 
 const DETAIL_ACTIONS_DOCK =
-  "flex min-h-11 touch-manipulation items-center justify-center border-t border-zinc-200 bg-white px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] dark:border-zinc-800 dark:bg-zinc-900";
+  "flex min-h-[3.5rem] touch-manipulation items-center justify-center border-t border-zinc-200 bg-white px-4 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-zinc-800 dark:bg-zinc-900";
 
 export function ConceptDetailActionsFooter(props: ConceptHeaderActionProps) {
   const navOpen = useHandbookMobileNavOpen();
@@ -342,7 +351,7 @@ export function ConceptDetailActionsFooter(props: ConceptHeaderActionProps) {
     <>
       <div
         className="shrink-0 sm:hidden"
-        style={{ height: "var(--handbook-concept-dock-h, 2.75rem)" }}
+        style={{ height: "var(--handbook-concept-dock-h, 3.5rem)" }}
         aria-hidden="true"
       />
       {dock}
@@ -371,10 +380,72 @@ export function ConceptHeaderActions({
   hasOptionalDepth?: boolean;
   segment?: "all" | "nav" | "utilities";
 }) {
+  if (compact) {
+    const iconClass = NAV_ICON_DOCK;
+    return (
+      <div className="flex w-full items-center justify-center gap-2">
+        {showBack ? (
+          <ConceptNavControl
+            href={backHref}
+            onActivate={onBack}
+            label={chrome.back}
+            className={DOCK_ACTION_BTN}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" className={iconClass}>
+              <path
+                d="M15 18l-6-6 6-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </ConceptNavControl>
+        ) : null}
+        {showNext ? (
+          <ConceptNavControl
+            href={nextHref}
+            onActivate={onNext}
+            label={chrome.next}
+            className={DOCK_ACTION_BTN}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" className={iconClass}>
+              <path
+                d="M9 18l6-6-6-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </ConceptNavControl>
+        ) : null}
+        {showShare ? (
+          <CopyConceptLinkButton
+            conceptId={conceptId}
+            chrome={chrome}
+            concealed={false}
+            className={DOCK_ACTION_BTN}
+          />
+        ) : null}
+        {showBookmark ? (
+          <TopicBookmarkButton
+            title={title}
+            chrome={chrome}
+            conceptId={conceptId}
+            className={DOCK_ACTION_BTN}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
   const dividerClass = ACTION_DIVIDER_INDEX;
-  const navVariant = compact ? "footer" : variant;
+  const navVariant = variant;
   const wrapClass =
-    variant === "detail" && !compact
+    variant === "detail"
       ? DETAIL_TOOLBAR_CLUSTER
       : "flex items-center justify-center gap-1";
 
@@ -422,7 +493,7 @@ export function ConceptHeaderActions({
       nextHref={nextHref}
       onNext={onNext}
       chrome={chrome}
-      variant={navVariant}
+      variant={variant === "detail" ? "detail" : "index"}
     />
   );
 
@@ -474,6 +545,12 @@ export function ConceptDetailTitle({
   afterTopicPageTitle = false,
   showShare = false,
   showBookmark = false,
+  showBack = false,
+  backHref = null,
+  onBack,
+  showNext = false,
+  nextHref = null,
+  onNext,
   conceptId,
   insidePanel = false,
 }: {
@@ -489,12 +566,19 @@ export function ConceptDetailTitle({
   afterTopicPageTitle?: boolean;
   showShare?: boolean;
   showBookmark?: boolean;
+  showBack?: boolean;
+  backHref?: string | null;
+  onBack?: () => void;
+  showNext?: boolean;
+  nextHref?: string | null;
+  onNext?: () => void;
   conceptId?: string;
   /** Title row is the header inside the bordered concept panel. */
   insidePanel?: boolean;
 }) {
   const soloTitleBand = !toolbarAbove && !toolbarAboveFromSm;
-  const showTitleUtilities = soloTitleBand && (showShare || showBookmark);
+  const showTitleActions =
+    soloTitleBand && (showShare || showBookmark || showBack || showNext);
 
   const scrollClass = scrollsWithBody
     ? " concept-detail-title--in-scroll"
@@ -526,16 +610,23 @@ export function ConceptDetailTitle({
           variant="detail"
         />
         <div className="ml-auto flex shrink-0 self-start items-center gap-0.5">
-          {showTitleUtilities ? (
-            <ConceptHeaderActions
-              title={title}
-              chrome={chrome}
-              variant="detail"
-              segment="utilities"
-              showShare={showShare}
-              showBookmark={showBookmark}
-              conceptId={conceptId}
-            />
+          {showTitleActions ? (
+            <div className="hidden shrink-0 self-start sm:flex sm:items-center sm:gap-0.5">
+              <ConceptHeaderActions
+                title={title}
+                chrome={chrome}
+                variant="detail"
+                showBack={showBack}
+                backHref={backHref}
+                onBack={onBack}
+                showNext={showNext}
+                nextHref={nextHref}
+                onNext={onNext}
+                showShare={showShare}
+                showBookmark={showBookmark}
+                conceptId={conceptId}
+              />
+            </div>
           ) : null}
           {hasOptionalDepth ? <ConceptDepthToggle chrome={chrome} /> : null}
         </div>
