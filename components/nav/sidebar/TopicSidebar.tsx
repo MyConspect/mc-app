@@ -260,7 +260,6 @@ export const TopicSidebar = memo(function TopicSidebar({
                   group={group}
                   query={query}
                   mode={mode}
-                  pathname={pathname}
                   searching={searching}
                   first={first}
                 />
@@ -278,7 +277,6 @@ export const TopicSidebar = memo(function TopicSidebar({
                   group={group}
                   query={query}
                   mode={mode}
-                  pathname={pathname}
                   searching={false}
                   first={first}
                 />
@@ -405,7 +403,6 @@ const TrackGroup = memo(function TrackGroup({
   group,
   query,
   mode,
-  pathname,
   searching,
   first,
 }: {
@@ -414,7 +411,6 @@ const TrackGroup = memo(function TrackGroup({
   group: NavGroup;
   query: string;
   mode: SearchMode;
-  pathname: string;
   searching: boolean;
   first: { pathname: string; hash: string } | null;
 }) {
