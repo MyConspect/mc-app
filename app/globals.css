@@ -187,53 +187,55 @@ body {
   min-width: 1.5rem;
 }
 
-/* Concept detail: toolbar stays fixed; title + body scroll together. */
-#handbook-main:has(article.concept-detail-article) {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden !important;
-}
+/* Concept detail (mobile): nested scroll; desktop keeps #handbook-main as scroller. */
+@media (max-width: 639px) {
+  #handbook-main:has(article.concept-detail-article) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+  }
 
-#handbook-main:has(article.concept-detail-article) > main {
-  display: flex;
-  min-height: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-  overflow: hidden;
-  padding-top: 0;
-  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
-}
+  #handbook-main:has(article.concept-detail-article) > main {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+    padding-top: 0;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  }
 
-#handbook-main:has(article.concept-detail-article)
-  > main
-  .handbook-intro-concept-pane,
-#handbook-main:has(article.concept-detail-article) > main.handbook-topic-main,
-#handbook-main:has(article.concept-detail-article)
-  > main.handbook-subject-main {
-  min-height: 0;
-  flex: 1 1 auto;
-}
+  #handbook-main:has(article.concept-detail-article)
+    > main
+    .handbook-intro-concept-pane,
+  #handbook-main:has(article.concept-detail-article) > main.handbook-topic-main,
+  #handbook-main:has(article.concept-detail-article)
+    > main.handbook-subject-main {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
 
-#handbook-main:has(article.concept-detail-article)
-  > main
-  .handbook-intro-concept-pane
-  > article.concept-detail-article,
-#handbook-main:has(article.concept-detail-article)
-  > main.handbook-topic-main
-  > article.concept-detail-article {
-  min-height: 0;
-  flex: 1 1 auto;
+  #handbook-main:has(article.concept-detail-article)
+    > main
+    .handbook-intro-concept-pane
+    > article.concept-detail-article,
+  #handbook-main:has(article.concept-detail-article)
+    > main.handbook-topic-main
+    > article.concept-detail-article {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  article.concept-detail-article .concept-detail-body-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }
 
 @media (min-width: 640px) {
   #handbook-main:has(article.concept-detail-article) > main {
     padding-top: 1.25rem;
   }
-}
-
-article.concept-detail-article .concept-detail-body-scroll {
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 article.concept-detail-article .concept-detail-title h2 {
