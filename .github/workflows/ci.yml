@@ -75,7 +75,7 @@ jobs:
       - name: Build for production
         run: vercel build --prod
       - name: Deploy to production
-        run: vercel deploy --prebuilt --prod
+        run: vercel deploy --prebuilt --prod --archive=tgz
 
   e2e:
     runs-on: ubuntu-latest

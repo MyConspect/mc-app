@@ -68,11 +68,11 @@ Notes live in **mc-content** (`en/` + `ru/` at repo root, or the same under `res
 
 For **GitHub Actions production deploy** (`.github/workflows/ci.yml` `deploy` job on `main`), also add [repository secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions):
 
-| Secret              | Required | Purpose                                                                 |
-| ------------------- | -------- | ----------------------------------------------------------------------- |
+| Secret              | Required | Purpose                                                                      |
+| ------------------- | -------- | ---------------------------------------------------------------------------- |
 | `VERCEL_TOKEN`      | Yes      | [Vercel account token](https://vercel.com/account/tokens) with deploy access |
-| `VERCEL_ORG_ID`     | Yes      | Team ID — **myconspect** uses `team_rQid9ofaphV3xSDDgz4HNRBa`         |
-| `VERCEL_PROJECT_ID` | Yes      | Project ID — **myconspect** uses `prj_l3xAcgdWkUfVoouKCs0zd1ZLNARW`   |
+| `VERCEL_ORG_ID`     | Yes      | Team ID — **myconspect** uses `team_rQid9ofaphV3xSDDgz4HNRBa`                |
+| `VERCEL_PROJECT_ID` | Yes      | Project ID — **myconspect** uses `prj_l3xAcgdWkUfVoouKCs0zd1ZLNARW`          |
 
 `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` are already configured on **MyConspect/mc-app**. Create **`VERCEL_TOKEN`** at [vercel.com/account/tokens](https://vercel.com/account/tokens), then:
 
@@ -80,7 +80,7 @@ For **GitHub Actions production deploy** (`.github/workflows/ci.yml` `deploy` jo
 gh secret set VERCEL_TOKEN --repo MyConspect/mc-app
 ```
 
-After `check` passes on a push to `main`, the workflow runs `vercel build --prod` and `vercel deploy --prebuilt --prod`. This works even when the Vercel **Git** integration is mislinked after an org transfer. Once Git deploys reliably again, you can remove the `deploy` job to avoid duplicate production builds.
+After `check` passes on a push to `main`, the workflow runs `vercel build --prod` and `vercel deploy --prebuilt --prod --archive=tgz`. The **`--archive=tgz`** flag is required on Hobby: a plain prebuilt upload ships thousands of traced files (~3.6GB for this app) and hits Vercel’s **`api-upload-free`** limit (5000 files / 24h). This works even when the Vercel **Git** integration is mislinked after an org transfer. Once Git deploys reliably again, you can remove the `deploy` job to avoid duplicate production builds.
 
 `prebuild` / `predev` run `tsx scripts/ensure-resources.ts`: if `resources/en/` already has markdown (your machine), nothing is downloaded; otherwise the script shallow-clones the notes repo.
 
@@ -103,4 +103,6 @@ Production and preview deploys run automatically through the [Vercel GitHub inte
 2. GitHub → **MyConspect** org → **GitHub Apps** → **Vercel** — grant access to **mc-app**.
 3. Redeploy latest **`main`** once (Deployments → Redeploy, or an empty push).
 
-**Fix (auto deploy today):** merge the `deploy` job on `main` and set **`VERCEL_TOKEN`** (see above). Production ships from GitHub Actions after `check` passes; Cypress failures on `main` do not block deploy.
+**Fix (auto deploy today):** merge the `deploy` job on `main` and set **`VERCEL_TOKEN`** (see above). Production ships from GitHub Actions after `check` passes; Cypress failures on `main` do not block deploy. Deploy must use **`vercel deploy --prebuilt --prod --archive=tgz`** (already in `ci.yml` on `dev`).
+
+**If deploy logs show `api-upload-free`:** stop retrying `vercel deploy --prebuilt --prod` without `--archive=tgz`; wait until the 24h window resets, then redeploy with `--archive=tgz` or re-run the **`deploy`** job on `main`.
