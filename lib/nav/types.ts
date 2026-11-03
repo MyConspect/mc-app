@@ -79,6 +79,8 @@ export type NavRootSection = {
 export type Crumb = {
   readonly label: string;
   readonly href?: string;
+  /** Scroll to a concept group heading on the current topic page (not a route link). */
+  readonly sectionScrollId?: string;
 };
 
 export type HashCrumb = {

@@ -25,8 +25,12 @@ function compactSectionItems(sections: readonly ClusterSection[]) {
   }));
 }
 
-function multiItemSection({ cluster, items }: ClusterSection) {
-  const showHeading = cluster.title.trim().length > 0;
+function multiItemSection(
+  { cluster, items }: ClusterSection,
+  suppressClusterHeading: boolean,
+) {
+  const showHeading =
+    !suppressClusterHeading && cluster.title.trim().length > 0;
   return (
     <section key={cluster.id} id={cluster.id} className="scroll-mt-24">
       {showHeading ? (
@@ -41,7 +45,13 @@ function multiItemSection({ cluster, items }: ClusterSection) {
   );
 }
 
-function ClusterBlocks({ sections }: { sections: readonly ClusterSection[] }) {
+function ClusterBlocks({
+  sections,
+  suppressClusterHeadings = false,
+}: {
+  sections: readonly ClusterSection[];
+  suppressClusterHeadings?: boolean;
+}) {
   if (isCompactSectionList(sections)) {
     return <CardGrid items={compactSectionItems(sections)} />;
   }
@@ -69,7 +79,7 @@ function ClusterBlocks({ sections }: { sections: readonly ClusterSection[] }) {
       continue;
     }
     flushSingleBatch();
-    blocks.push(multiItemSection(section));
+    blocks.push(multiItemSection(section, suppressClusterHeadings));
   }
   flushSingleBatch();
 
@@ -81,6 +91,7 @@ export function ClusterCardSections({
   groupedSections,
   rootSections,
   afterRootSections,
+  suppressClusterHeadings = false,
 }: {
   sections?: readonly ClusterSection[];
   rootSections?: readonly ClusterSection[];
@@ -93,6 +104,7 @@ export function ClusterCardSections({
     };
     readonly clusters: readonly ClusterSection[];
   }[];
+  suppressClusterHeadings?: boolean;
 }) {
   if (
     groupedSections?.length ||
@@ -100,10 +112,13 @@ export function ClusterCardSections({
     afterRootSections?.length
   ) {
     return (
-      <div className="catalog-sections mt-8 space-y-4">
+      <div className="catalog-sections space-y-4">
         {rootSections?.length ? (
           <div className="space-y-6 sm:space-y-10">
-            <ClusterBlocks sections={rootSections} />
+            <ClusterBlocks
+              sections={rootSections}
+              suppressClusterHeadings={suppressClusterHeadings}
+            />
           </div>
         ) : null}
         {groupedSections?.map(({ section, clusters }) => (
@@ -122,14 +137,20 @@ export function ClusterCardSections({
                   No topics yet.
                 </p>
               ) : (
-                <ClusterBlocks sections={clusters} />
+                <ClusterBlocks
+                  sections={clusters}
+                  suppressClusterHeadings={suppressClusterHeadings}
+                />
               )}
             </div>
           </details>
         ))}
         {afterRootSections?.length ? (
           <div className="space-y-6 sm:space-y-10">
-            <ClusterBlocks sections={afterRootSections} />
+            <ClusterBlocks
+              sections={afterRootSections}
+              suppressClusterHeadings={suppressClusterHeadings}
+            />
           </div>
         ) : null}
       </div>
@@ -140,8 +161,11 @@ export function ClusterCardSections({
   const compact = isCompactSectionList(flatSections);
 
   return (
-    <div className={compact ? "mt-8" : "mt-8 space-y-6 sm:space-y-10"}>
-      <ClusterBlocks sections={flatSections} />
+    <div className={compact ? undefined : "space-y-6 sm:space-y-10"}>
+      <ClusterBlocks
+        sections={flatSections}
+        suppressClusterHeadings={suppressClusterHeadings}
+      />
     </div>
   );
 }

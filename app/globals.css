@@ -176,11 +176,22 @@ body {
   scroll-margin-top: var(--handbook-sticky-inset, 0px);
 }
 
+.handbook-breadcrumb-bar {
+  box-sizing: border-box;
+}
+
+.handbook-breadcrumb-bar__nav [role="group"] button {
+  width: 1.5rem;
+  height: 1.5rem;
+  min-height: 1.5rem;
+  min-width: 1.5rem;
+}
+
 /* Concept detail: toolbar stays fixed; title + body scroll together. */
 #handbook-main:has(article.concept-detail-article) {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 #handbook-main:has(article.concept-detail-article) > main {
@@ -191,6 +202,27 @@ body {
   overflow: hidden;
   padding-top: 0;
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
+#handbook-main:has(article.concept-detail-article)
+  > main
+  .handbook-intro-concept-pane,
+#handbook-main:has(article.concept-detail-article) > main.handbook-topic-main,
+#handbook-main:has(article.concept-detail-article)
+  > main.handbook-subject-main {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+#handbook-main:has(article.concept-detail-article)
+  > main
+  .handbook-intro-concept-pane
+  > article.concept-detail-article,
+#handbook-main:has(article.concept-detail-article)
+  > main.handbook-topic-main
+  > article.concept-detail-article {
+  min-height: 0;
+  flex: 1 1 auto;
 }
 
 @media (min-width: 640px) {
@@ -452,7 +484,7 @@ article.concept-detail-article
 }
 
 html[data-concept-hash] nav.concept-list {
-  visibility: hidden;
+  display: none;
 }
 
 html[data-concept-depth="quick"] .concept-depth-detailed,

@@ -17,6 +17,7 @@ import {
 import type { ChromeCopy } from "@/lib/nav";
 import { usePathname } from "next/navigation";
 import { CopyConceptLinkButton } from "./CopyConceptLinkButton";
+import { conceptGroupSectionDomId } from "@/lib/nav/conceptGroupSection";
 import { ConceptDepthToggle } from "./ConceptDepthToggle";
 import { TopicBookmarkButton } from "./TopicBookmarkButton";
 import {
@@ -33,7 +34,10 @@ const DETAIL_TOOLBAR_ACTIONS_ROW =
 const DETAIL_TITLE_CLASS =
   "m-0 min-w-0 flex-1 text-pretty text-[1.375rem] font-semibold leading-snug tracking-tight text-zinc-900 sm:text-2xl sm:leading-snug dark:text-zinc-50";
 
-const INDEX_HEADER = "flex flex-wrap items-center gap-x-2 gap-y-1";
+const DETAIL_TITLE_ROW =
+  "flex w-full items-start justify-between gap-x-2 gap-y-2";
+
+const INDEX_HEADER = "flex flex-wrap items-start gap-x-2 gap-y-1";
 
 const TITLE_CLASS =
   "min-w-0 w-full text-pretty text-xl font-semibold leading-7 tracking-tight text-zinc-900 sm:text-2xl sm:leading-8 dark:text-zinc-50";
@@ -45,7 +49,10 @@ const TITLE_TOGGLE_CLASS =
   "w-full cursor-pointer border-0 bg-transparent p-0 text-left font-inherit text-inherit";
 
 const INDEX_ACTIONS_CLASS =
-  "ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5";
+  "ml-auto flex shrink-0 self-start items-center gap-1 sm:gap-1.5";
+
+const GROUP_SECTION_HEADER_ROW =
+  "concept-group-section-header group -mx-4 mb-[10px] flex flex-wrap items-start gap-x-2 gap-y-1 px-[18px] py-2 transition-colors hover:bg-yellow-50 focus-within:bg-yellow-50 sm:-mx-6 dark:hover:bg-yellow-950/60 dark:focus-within:bg-yellow-950/60 [&_h2]:transition-colors [&_h2]:text-zinc-900 hover:[&_h2]:text-yellow-950 focus-within:[&_h2]:text-yellow-950 dark:[&_h2]:text-zinc-50 dark:hover:[&_h2]:text-yellow-50 dark:focus-within:[&_h2]:text-yellow-50";
 
 const NAV_GROUP = "inline-flex shrink-0 items-center gap-1";
 
@@ -178,11 +185,13 @@ function ConceptTitleHeading({
   chrome,
   level,
   variant,
+  onTitleActivate,
 }: {
   title: string;
   chrome: ChromeCopy;
   level: "h1" | "h2";
   variant: "index" | "detail";
+  onTitleActivate?: () => void;
 }) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [expandedTitle, setExpandedTitle] = useState<string | null>(null);
@@ -222,7 +231,15 @@ function ConceptTitleHeading({
     : chrome.expandConceptTitle;
   const showToggle = truncated || expanded;
 
-  const inner = showToggle ? (
+  const inner = onTitleActivate ? (
+    <button
+      type="button"
+      className={TITLE_TOGGLE_CLASS}
+      onClick={onTitleActivate}
+    >
+      {title}
+    </button>
+  ) : showToggle ? (
     <button
       type="button"
       className={TITLE_TOGGLE_CLASS}
@@ -447,9 +464,6 @@ export function ConceptHeaderActions({
   );
 }
 
-const DETAIL_TITLE_ROW =
-  "flex w-full items-start justify-between gap-x-2 gap-y-2 sm:items-center";
-
 export function ConceptDetailTitle({
   title,
   chrome,
@@ -511,7 +525,7 @@ export function ConceptDetailTitle({
           level="h2"
           variant="detail"
         />
-        <div className="ml-auto flex shrink-0 items-center gap-0.5">
+        <div className="ml-auto flex shrink-0 self-start items-center gap-0.5">
           {showTitleUtilities ? (
             <ConceptHeaderActions
               title={title}
@@ -628,7 +642,10 @@ export function ConceptGroupSectionHeader({
   const saved = useIsBookmarked(pathname);
 
   return (
-    <div className={`${INDEX_HEADER} group mb-[10px]`}>
+    <div
+      id={conceptGroupSectionDomId(title)}
+      className={`${GROUP_SECTION_HEADER_ROW} scroll-mt-[var(--handbook-sticky-inset,0px)]`}
+    >
       <ConceptTitleHeading
         title={title}
         chrome={chrome}
@@ -642,7 +659,7 @@ export function ConceptGroupSectionHeader({
             : `${INDEX_ACTIONS_CLASS} pointer-events-none max-sm:pointer-events-auto group-hover:pointer-events-auto group-focus-within:pointer-events-auto`
         }
       >
-        <CopyConceptLinkButton chrome={chrome} size="md" />
+        <CopyConceptLinkButton chrome={chrome} size="md" concealed />
         <TopicBookmarkButton
           title={title}
           chrome={chrome}

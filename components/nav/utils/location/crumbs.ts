@@ -18,6 +18,7 @@ import {
 } from "@/lib/nav";
 import { navSubjectClusters } from "@/lib/nav/subjectClusters";
 import { hashIdFrom } from "@/lib/nav/navUtils";
+import { conceptGroupSectionDomId } from "@/lib/nav/conceptGroupSection";
 import {
   homeHref,
   localeFromPathname,
@@ -148,6 +149,21 @@ export function crumbsForPath(
                   ...clusterCrumbs,
                 ];
               }
+            }
+            const conceptTopic = topicForConceptInSubject(
+              entry.subject,
+              hashId,
+            );
+            if (conceptTopic) {
+              return withConcept(
+                home,
+                [
+                  { label: group.title, href: group.href },
+                  { label: entry.subject.title, href: entry.subject.href },
+                ],
+                conceptTopic,
+                hashId,
+              );
             }
             return [
               home,
@@ -324,8 +340,11 @@ function withConcept(
   const crumbs = [home, ...trail];
   if (concept) {
     const tail: Crumb[] = [];
-    if (concept.group && concept.group !== concept.title) {
-      tail.push({ label: concept.group });
+    if (concept.group) {
+      tail.push({
+        label: concept.group,
+        sectionScrollId: conceptGroupSectionDomId(concept.group),
+      });
     }
     tail.push({ label: concept.title });
     return [...crumbs, ...tail];
@@ -345,4 +364,21 @@ function conceptById(
     return undefined;
   }
   return concepts.find((concept) => concept.id === id);
+}
+
+function topicForConceptInSubject(
+  subject: NavSubject,
+  hashId: string,
+): NavTopic | undefined {
+  if (!hashId) {
+    return undefined;
+  }
+  for (const cluster of navSubjectClusters(subject)) {
+    for (const topic of cluster.topics) {
+      if (conceptById(topic.concepts, hashId)) {
+        return topic;
+      }
+    }
+  }
+  return undefined;
 }

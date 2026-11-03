@@ -10,6 +10,7 @@ import {
 } from "react";
 import { usePathname } from "next/navigation";
 import { useHandbookLocation } from "@/components/nav/hooks/useHandbookLocation";
+import Link from "next/link";
 import {
   HighlightedText,
   useSearchMode,
@@ -217,20 +218,27 @@ export function ConceptList({
   }
 
   return (
-    <div className="space-y-8 max-sm:pt-5">
-      {groups.map((group) => (
-        <section key={group.key}>
-          {group.label ? (
-            <ConceptGroupSectionHeader title={group.label} chrome={chrome} />
-          ) : null}
-          <ConceptIndexList
-            concepts={group.concepts}
-            query={query}
-            chrome={chrome}
-            pathname={pathname}
-          />
-        </section>
-      ))}
+    <div className="space-y-8">
+      {groups.map((group) => {
+        if (group.concepts.length === 0 && !group.label) {
+          return null;
+        }
+        return (
+          <section key={group.key}>
+            {group.label ? (
+              <ConceptGroupSectionHeader title={group.label} chrome={chrome} />
+            ) : null}
+            {group.concepts.length > 0 ? (
+              <ConceptIndexList
+                concepts={group.concepts}
+                query={query}
+                chrome={chrome}
+                pathname={pathname}
+              />
+            ) : null}
+          </section>
+        );
+      })}
     </div>
   );
 }
@@ -254,7 +262,7 @@ function ConceptIndexList({
 }) {
   return (
     <nav aria-label={chrome.topicsNav} className={CONCEPT_LIST_CARD}>
-      <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 [&>li:first-child>button]:pt-2">
+      <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 [&>li:first-child>a]:pt-2">
         {concepts.map((concept) => (
           <ConceptIndexRow
             key={concept.id}
@@ -269,6 +277,9 @@ function ConceptIndexList({
   );
 }
 
+const CONCEPT_INDEX_LINK =
+  "concept-index-link flex min-h-11 w-full touch-manipulation cursor-pointer items-center gap-2 px-4 py-3 text-left text-base font-medium text-[var(--link)] no-underline hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:focus-visible:ring-zinc-500/40";
+
 function ConceptIndexRow({
   concept,
   query,
@@ -281,16 +292,20 @@ function ConceptIndexRow({
   pathname: string;
 }) {
   const saved = useIsBookmarked(pathname, concept.id);
+  const conceptHref = `${pathname}#${concept.id}`;
 
   return (
     <li className="group relative transition-colors hover:bg-yellow-50 dark:hover:bg-yellow-950/60">
-      <button
-        type="button"
-        onClick={() => setHashOnPath(pathname, concept.id, false)}
-        className="flex min-h-11 w-full touch-manipulation cursor-pointer items-center gap-2 px-4 py-3 text-left text-base font-medium text-zinc-900 dark:text-zinc-50"
+      <Link
+        href={conceptHref}
+        className={CONCEPT_INDEX_LINK}
+        onClick={(event) => {
+          event.preventDefault();
+          setHashOnPath(pathname, concept.id, false);
+        }}
       >
         <HighlightedText text={concept.title} query={query} />
-      </button>
+      </Link>
       <div
         className={
           saved

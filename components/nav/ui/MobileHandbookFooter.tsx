@@ -34,6 +34,7 @@ export function MobileHandbookFooter({
             locale={locale}
             onInstructionsClick={onNavigate}
             languageVariant="select"
+            parts="all"
           />
           <span
             className="mx-1 h-5 w-px shrink-0 bg-zinc-200 dark:bg-zinc-700"

@@ -156,6 +156,133 @@ test("Node.js hub does not treat a same-named cluster hash as the current page",
   ]);
 });
 
+test("subject index includes open concept in breadcrumbs", () => {
+  const subjectGroups: readonly NavGroup[] = [
+    {
+      id: "frontend",
+      title: "Frontend",
+      href: "/frontend",
+      entries: [
+        {
+          kind: "subject",
+          subject: {
+            slug: "core",
+            href: "/frontend/core",
+            title: "Core",
+            blurb: "",
+            clusters: [
+              {
+                id: "platform",
+                title: "Platform",
+                href: "/frontend/core#platform",
+                topics: [
+                  {
+                    slug: "core-browser-platform",
+                    href: "/frontend/core-browser-platform",
+                    title: "Browser platform",
+                    blurb: "",
+                    concepts: [
+                      {
+                        id: "navigation-and-fetching",
+                        title: "Navigation and fetching",
+                        group: "Browser work principles",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ];
+  assert.deepEqual(
+    crumbsForPath(
+      subjectGroups,
+      "/frontend/core",
+      "#navigation-and-fetching",
+      labels,
+    ).map((item) => item.label),
+    [
+      "Home",
+      "Frontend",
+      "Core",
+      "Browser work principles",
+      "Navigation and fetching",
+    ],
+  );
+  const groupCrumb = crumbsForPath(
+    subjectGroups,
+    "/frontend/core",
+    "#navigation-and-fetching",
+    labels,
+  )[3];
+  assert.equal(
+    groupCrumb?.sectionScrollId,
+    "concept-group-browser-work-principles",
+  );
+  assert.equal(groupCrumb?.href, undefined);
+});
+
+test("subject index repeats group label when overview concept shares the group title", () => {
+  const subjectGroups: readonly NavGroup[] = [
+    {
+      id: "frontend",
+      title: "Frontend",
+      href: "/frontend",
+      entries: [
+        {
+          kind: "subject",
+          subject: {
+            slug: "core",
+            href: "/frontend/core",
+            title: "Core",
+            blurb: "",
+            clusters: [
+              {
+                id: "platform",
+                title: "Platform",
+                href: "/frontend/core#platform",
+                topics: [
+                  {
+                    slug: "core-browser-platform",
+                    href: "/frontend/core-browser-platform",
+                    title: "Browser platform",
+                    blurb: "",
+                    concepts: [
+                      {
+                        id: "browser-work-principles",
+                        title: "Browser work principles",
+                        group: "Browser work principles",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ];
+  assert.deepEqual(
+    crumbsForPath(
+      subjectGroups,
+      "/frontend/core",
+      "#browser-work-principles",
+      labels,
+    ).map((item) => item.label),
+    [
+      "Home",
+      "Frontend",
+      "Core",
+      "Browser work principles",
+      "Browser work principles",
+    ],
+  );
+});
+
 test("Core cluster hash on the hub does not nest under Core", () => {
   assert.deepEqual(trail("/backend/nodejs", "#core"), [
     "Home",
@@ -759,12 +886,9 @@ test("flatNav subject omits cluster from breadcrumbs", () => {
     ["Home", "AI", "SDLC"],
   );
   assert.deepEqual(
-    crumbsForPath(
-      aiSdlcGroups,
-      "/ai/special-sdlc-principles",
-      "",
-      labels,
-    ).map((item) => item.label),
+    crumbsForPath(aiSdlcGroups, "/ai/special-sdlc-principles", "", labels).map(
+      (item) => item.label,
+    ),
     ["Home", "AI", "SDLC", "Principles"],
   );
 });

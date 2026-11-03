@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Breadcrumbs } from "@/components/catalog/Breadcrumbs";
-import { ConceptHeaderActions } from "@/components/topic/ConceptTitleHeader";
 import { useConceptFooterActions } from "@/components/topic/conceptFooterActionsContext";
 import { HANDBOOK_STICKY_INSET_VAR } from "@/components/topic/utils/conceptScroll";
 import { HANDBOOK_MAIN_ID } from "@/constants";
@@ -10,8 +9,22 @@ import type { ChromeCopy, NavGroup } from "@/lib/nav";
 import { useHandbookLocation } from "../hooks/useHandbookLocation";
 import { crumbsForPath } from "../utils/location";
 
-const BREADCRUMB_BAR_DIVIDER =
-  "mx-0.5 hidden h-5 w-px shrink-0 bg-zinc-200 sm:block dark:bg-zinc-700";
+const BREADCRUMB_BAR_HEIGHT_CLASS =
+  "handbook-breadcrumb-bar h-[40px] max-h-[40px] min-h-[40px]";
+
+function crumbsWithOpenConcept(
+  crumbs: ReturnType<typeof crumbsForPath>,
+  conceptTitle: string | undefined,
+): ReturnType<typeof crumbsForPath> {
+  if (!conceptTitle) {
+    return crumbs;
+  }
+  const last = crumbs[crumbs.length - 1];
+  if (last?.label === conceptTitle) {
+    return crumbs;
+  }
+  return [...crumbs, { label: conceptTitle }];
+}
 
 export function ContentBreadcrumbs({
   groups,
@@ -22,14 +35,25 @@ export function ContentBreadcrumbs({
 }) {
   const { location } = useHandbookLocation();
   const conceptActions = useConceptFooterActions();
-  const crumbs = crumbsForPath(groups, location.pathname, location.hash, {
-    home: chrome.home,
-    instructions: chrome.instructions,
-  });
+  const crumbs = useMemo(() => {
+    const trail = crumbsForPath(groups, location.pathname, location.hash, {
+      home: chrome.home,
+      instructions: chrome.instructions,
+    });
+    if (conceptActions?.variant !== "detail") {
+      return trail;
+    }
+    return crumbsWithOpenConcept(trail, conceptActions.title);
+  }, [
+    groups,
+    location.pathname,
+    location.hash,
+    chrome.home,
+    chrome.instructions,
+    conceptActions?.variant,
+    conceptActions?.title,
+  ]);
   const barRef = useRef<HTMLDivElement>(null);
-  const showNavInBreadcrumb =
-    conceptActions !== null &&
-    (conceptActions.showBack || conceptActions.showNext);
 
   useEffect(() => {
     const main = document.getElementById(HANDBOOK_MAIN_ID);
@@ -54,7 +78,7 @@ export function ContentBreadcrumbs({
       observer.disconnect();
       main.style.removeProperty(HANDBOOK_STICKY_INSET_VAR);
     };
-  }, [location.pathname, location.hash, showNavInBreadcrumb]);
+  }, [location.pathname, location.hash]);
 
   if (crumbs.length < 2) {
     return null;
@@ -63,19 +87,11 @@ export function ContentBreadcrumbs({
   return (
     <div
       ref={barRef}
-      className="sticky top-0 z-[1] border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950"
+      className={`${BREADCRUMB_BAR_HEIGHT_CLASS} sticky top-0 z-[1] box-border overflow-hidden border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950`}
     >
-      <div className="flex w-full min-w-0 items-center gap-1 overflow-x-auto overscroll-x-contain px-[18px] py-2 sm:gap-2">
-        {showNavInBreadcrumb ? (
-          <div className="hidden shrink-0 sm:block">
-            <ConceptHeaderActions {...conceptActions} segment="nav" />
-          </div>
-        ) : null}
-        {showNavInBreadcrumb ? (
-          <span className={BREADCRUMB_BAR_DIVIDER} aria-hidden="true" />
-        ) : null}
+      <div className="handbook-breadcrumb-bar__row flex h-full w-full min-w-0 items-center gap-1 overflow-x-auto overscroll-x-contain px-[18px] sm:gap-2">
         <div className="min-w-0 flex-1">
-          <Breadcrumbs items={crumbs} compact />
+          <Breadcrumbs items={crumbs} compact inBar />
         </div>
       </div>
     </div>
