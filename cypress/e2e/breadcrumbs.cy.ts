@@ -28,7 +28,7 @@ describe("handbook breadcrumbs", () => {
 
   it("keeps Node.js current on the hub when the URL has an HTTP cluster hash", () => {
     cy.visit("/en/backend/nodejs#http");
-    cy.contains("h1", "Node.js");
+    cy.contains("h1", "HTTP");
     cy.get("nav[aria-label='Breadcrumb'] li")
       .last()
       .should("contain", "Node.js");
