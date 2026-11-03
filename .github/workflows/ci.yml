@@ -47,6 +47,20 @@ jobs:
       RESOURCES_GIT_REF: ${{ secrets.RESOURCES_GIT_REF }}
     steps:
       - uses: actions/checkout@v4
+      - name: Require Vercel secrets
+        run: |
+          missing=
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing GitHub secret $name (see README CI/CD)."
+              missing=1
+            fi
+          done
+          if [ -n "$missing" ]; then exit 1; fi
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       - uses: actions/setup-node@v4
         with:
           node-version: "20"

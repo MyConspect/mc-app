@@ -74,6 +74,12 @@ For **GitHub Actions production deploy** (`.github/workflows/ci.yml` `deploy` jo
 | `VERCEL_ORG_ID`     | Yes      | Team ID — **myconspect** uses `team_rQid9ofaphV3xSDDgz4HNRBa`         |
 | `VERCEL_PROJECT_ID` | Yes      | Project ID — **myconspect** uses `prj_l3xAcgdWkUfVoouKCs0zd1ZLNARW`   |
 
+`VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` are already configured on **MyConspect/mc-app**. Create **`VERCEL_TOKEN`** at [vercel.com/account/tokens](https://vercel.com/account/tokens), then:
+
+```bash
+gh secret set VERCEL_TOKEN --repo MyConspect/mc-app
+```
+
 After `check` passes on a push to `main`, the workflow runs `vercel build --prod` and `vercel deploy --prebuilt --prod`. This works even when the Vercel **Git** integration is mislinked after an org transfer. Once Git deploys reliably again, you can remove the `deploy` job to avoid duplicate production builds.
 
 `prebuild` / `predev` run `tsx scripts/ensure-resources.ts`: if `resources/en/` already has markdown (your machine), nothing is downloaded; otherwise the script shallow-clones the notes repo.
@@ -91,10 +97,10 @@ Production and preview deploys run automatically through the [Vercel GitHub inte
 
 **Root cause (stale Git link after repo move):** `mc-app` lives under **`MyConspect/mc-app`**, but Vercel can still be linked to the pre-transfer owner (`radomir-radionov/mc-app`). The stored `link.org` in project settings may not match the org that receives pushes. Webhooks from **MyConspect** then never start a build, even though `productionBranch` is still `main` and CI on GitHub succeeds.
 
-**Fix:**
+**Fix (Git integration):**
 
 1. Vercel → **myconspect** → **Settings → Git** — connected repository must be **`MyConspect/mc-app`**, production branch **`main`** (disconnect and reconnect if the owner is wrong).
 2. GitHub → **MyConspect** org → **GitHub Apps** → **Vercel** — grant access to **mc-app**.
 3. Redeploy latest **`main`** once (Deployments → Redeploy, or an empty push).
 
-GitHub CI failing (e.g. Cypress on `main`) does not by itself stop Vercel unless you enabled deployment checks that wait on those workflows.
+**Fix (auto deploy today):** merge the `deploy` job on `main` and set **`VERCEL_TOKEN`** (see above). Production ships from GitHub Actions after `check` passes; Cypress failures on `main` do not block deploy.
