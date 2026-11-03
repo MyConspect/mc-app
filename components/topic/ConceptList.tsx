@@ -385,6 +385,12 @@ function ConceptDetail({
           hasOptionalDepth={hasOptionalDepth}
           showShare
           showBookmark
+          showBack={showBack}
+          backHref={prevHref}
+          onBack={goBack}
+          showNext={showNext}
+          nextHref={nextHref}
+          onNext={goNext}
           conceptId={concept.id}
         />
         <ConceptBody
