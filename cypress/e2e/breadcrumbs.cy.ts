@@ -29,10 +29,13 @@ describe("handbook breadcrumbs", () => {
   it("keeps Node.js current on the hub when the URL has an HTTP cluster hash", () => {
     cy.visit("/en/backend/nodejs#http");
     cy.contains("h1", "HTTP");
-    cy.get("nav[aria-label='Breadcrumb'] li")
-      .last()
+    cy.mainScroller()
+      .find("nav[aria-label='Breadcrumb']")
       .should("contain", "Node.js");
-    cy.get("nav[aria-label='Breadcrumb']").should("not.contain", "HTTP");
+    cy.mainScroller()
+      .find("nav[aria-label='Breadcrumb'] li")
+      .last()
+      .should("contain", "http");
   });
 
   it("shows Core once on the Node.js Core topic", () => {

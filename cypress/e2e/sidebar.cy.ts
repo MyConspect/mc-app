@@ -395,9 +395,13 @@ describe("handbook sidebar", () => {
   it("navigates concepts with Back and Next on mobile", () => {
     cy.viewport(390, 844);
     cy.visit("/en/frontend/html-structure#basic-html-document-structure");
-    cy.conceptNavButton("Next").click({ force: true });
+    cy.get('.concept-detail-dock button[aria-label="Next"]').click({
+      force: true,
+    });
     cy.location("hash").should("eq", "#doctype");
-    cy.conceptNavButton("Back").click({ force: true });
+    cy.get('.concept-detail-dock button[aria-label="Back"]').click({
+      force: true,
+    });
     cy.location("hash").should("eq", "#basic-html-document-structure");
   });
 
@@ -420,7 +424,7 @@ describe("handbook sidebar", () => {
 
   it("does not show Back on behavior questions topic index", () => {
     cy.viewport(390, 844);
-    cy.visit("/en/behavior/behavior-questions");
+    cy.visit("/en/behavior");
     cy.contains("button", "Tell me about yourself").should("be.visible");
     cy.conceptNavButton("Back").should("not.exist");
     cy.conceptNavButton("Next").should("not.exist");
