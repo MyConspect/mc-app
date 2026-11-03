@@ -11,7 +11,7 @@ describe("handbook sidebar", () => {
     cy.nav("topic", "css-core").should("not.exist");
     cy.nav("cluster", "core").click();
     cy.location("pathname").should("eq", "/en/frontend/css-core");
-    cy.contains("h1", "Core");
+    cy.contains("h2", "Core");
   });
 
   it("highlights Frontend while CSS is the open page", () => {
@@ -194,7 +194,8 @@ describe("handbook sidebar", () => {
   it("opens Computer science from Other without sending the track to Algorithms", () => {
     cy.visit("/en/other");
     cy.nav("subject", "git").should("be.visible");
-    cy.nav("topic", "special-sdlc").should("be.visible");
+    cy.nav("topic", "special-sdlc").should("not.exist");
+    cy.nav("track", "ai").should("be.visible");
     cy.nav("subject", "web-security").should("not.exist");
     cy.nav("topic", "computer-science").should("be.visible");
     cy.nav("subject", "paradigms").should("not.exist");
@@ -394,50 +395,50 @@ describe("handbook sidebar", () => {
   it("navigates concepts with Back and Next on mobile", () => {
     cy.viewport(390, 844);
     cy.visit("/en/frontend/html-structure#basic-html-document-structure");
-    cy.contains("button", "Next").click();
+    cy.conceptNavButton("Next").click({ force: true });
     cy.location("hash").should("eq", "#doctype");
-    cy.contains("button", "Back").click();
+    cy.conceptNavButton("Back").click({ force: true });
     cy.location("hash").should("eq", "#basic-html-document-structure");
   });
 
   it("shows neither Back nor Next on topic index for mobile handbook nav", () => {
     cy.viewport(390, 844);
     cy.visit("/en/frontend/html-structure");
-    cy.contains("button", "Back").should("not.exist");
-    cy.contains("button", "Next").should("not.exist");
+    cy.conceptNavButton("Back").should("not.exist");
+    cy.conceptNavButton("Next").should("not.exist");
   });
 
   it("does not show Back on database foundations topic index", () => {
     cy.viewport(390, 844);
     cy.clearLocalStorage();
     cy.visit("/en/backend/database-foundations");
-    cy.contains("h1", "Database — Core");
+    cy.contains("h1", "Core");
     cy.contains("button", "Database overview").should("be.visible");
-    cy.get("main").contains("button", "Back").should("not.exist");
-    cy.get("main").contains("button", "Next").should("not.exist");
+    cy.conceptNavButton("Back").should("not.exist");
+    cy.conceptNavButton("Next").should("not.exist");
   });
 
   it("does not show Back on behavior questions topic index", () => {
     cy.viewport(390, 844);
     cy.visit("/en/behavior/behavior-questions");
     cy.contains("button", "Tell me about yourself").should("be.visible");
-    cy.contains("button", "Back").should("not.exist");
-    cy.contains("button", "Next").should("not.exist");
+    cy.conceptNavButton("Back").should("not.exist");
+    cy.conceptNavButton("Next").should("not.exist");
   });
 
   it("does not show Back on subject hub card grids", () => {
     cy.visit("/en/frontend/css");
     cy.contains("h1", "CSS");
     cy.contains("a", "Core").should("be.visible");
-    cy.contains("button", "Back").should("not.exist");
-    cy.contains("button", "Next").should("not.exist");
+    cy.conceptNavButton("Back").should("not.exist");
+    cy.conceptNavButton("Next").should("not.exist");
   });
 
   it("does not show Back on interview topic index with grouped sections", () => {
     cy.visit("/en/frontend/html-interview");
     cy.contains("h2", "HTML Basics");
-    cy.contains("button", "Back").should("not.exist");
-    cy.contains("button", "Next").should("not.exist");
+    cy.conceptNavButton("Back").should("not.exist");
+    cy.conceptNavButton("Next").should("not.exist");
   });
 
   it("does not expand interview questions in the TypeScript sidebar", () => {

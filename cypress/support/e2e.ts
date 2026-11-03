@@ -49,6 +49,10 @@ function mainScroller() {
   return cy.get("#handbook-main");
 }
 
+function conceptNavButton(label: "Back" | "Next") {
+  return cy.get(`button[aria-label="${label}"]`);
+}
+
 function sidebarHydrated() {
   cy.get("#handbook-sidebar [data-nav]").should(($nodes) => {
     const names = Object.getOwnPropertyNames($nodes[0]);
@@ -75,6 +79,9 @@ declare global {
       desktopSearchMode(
         mode: "titles" | "notes",
       ): Chainable<JQuery<HTMLElement>>;
+      conceptNavButton(
+        label: "Back" | "Next",
+      ): Chainable<JQuery<HTMLElement>>;
     }
   }
 }
@@ -85,6 +92,7 @@ Cypress.Commands.add("sidebar", sidebar);
 Cypress.Commands.add("pointerOn", pointerOn);
 Cypress.Commands.add("mainScroller", mainScroller);
 Cypress.Commands.add("desktopSearchMode", desktopSearchMode);
+Cypress.Commands.add("conceptNavButton", conceptNavButton);
 
 Cypress.Commands.overwrite("visit", (originalFn, url, options) => {
   originalFn(url, options);
