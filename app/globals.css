@@ -214,8 +214,87 @@ article.concept-detail-article .concept-detail-title--under-toolbar {
 }
 
 article.concept-detail-article .concept-detail-title--solo {
-  padding-top: 0.75rem;
+  padding-top: 0.5rem;
   padding-bottom: 0;
+}
+
+article.concept-detail-article .concept-detail-panel {
+  margin-top: 0.75rem;
+  padding: 0.9rem 0.95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  background-clip: padding-box;
+}
+
+article.concept-detail-article .concept-detail-title--in-panel {
+  padding: 0;
+  background: transparent;
+}
+
+article.concept-detail-article .concept-detail-title--in-panel h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body--hide-slot-heading
+  > .concept-slot:first-child
+  > .concept-slot__heading,
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body--hide-slot-heading
+  > .concept-depth-quick:first-child
+  > .concept-slot:first-child
+  > .concept-slot__heading,
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body--hide-slot-heading
+  > .concept-depth-detailed:first-child
+  > .concept-slot:first-child
+  > .concept-slot__heading {
+  display: none;
+}
+
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body
+  > .concept-slot:first-child,
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body
+  > .concept-depth-quick:first-child
+  > .concept-slot:first-child,
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body
+  > .concept-depth-detailed:first-child
+  > .concept-slot:first-child {
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body.concept-body--detail-top {
+  margin-top: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  article.concept-detail-article .concept-detail-title--solo {
+    padding-top: 0.625rem;
+  }
+}
+
+article.concept-detail-article .concept-detail-title--after-topic-page {
+  padding-top: 0;
 }
 
 article.concept-detail-article .concept-detail-title--under-toolbar-from-sm {

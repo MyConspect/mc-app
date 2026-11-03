@@ -20,14 +20,18 @@ export function CopyConceptLinkButton({
   size = "md",
   concealed = true,
   className,
+  sharePathname,
 }: {
   conceptId?: string;
   chrome: ChromeCopy;
   size?: "md" | "lg";
   concealed?: boolean;
   className?: string;
+  /** When set, copy this path instead of the current page URL. */
+  sharePathname?: string;
 }) {
   const pathname = usePathname() ?? "/";
+  const linkPath = sharePathname ?? pathname;
   const [copied, setCopied] = useState(false);
   const buttonClass = className
     ? className
@@ -38,8 +42,8 @@ export function CopyConceptLinkButton({
       event.preventDefault();
       event.stopPropagation();
       const url = conceptId
-        ? conceptShareUrl(window.location.origin, pathname, conceptId)
-        : pageShareUrl(window.location.origin, pathname);
+        ? conceptShareUrl(window.location.origin, linkPath, conceptId)
+        : pageShareUrl(window.location.origin, linkPath);
       const ok = await copyText(url);
       if (!ok) {
         return;
@@ -47,7 +51,7 @@ export function CopyConceptLinkButton({
       setCopied(true);
       window.setTimeout(() => setCopied(false), COPIED_MS);
     },
-    [conceptId, pathname],
+    [conceptId, linkPath],
   );
 
   return (

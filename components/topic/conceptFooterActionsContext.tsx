@@ -61,7 +61,7 @@ function useConceptFooterActionsContext() {
 }
 
 export function useConceptFooterActions() {
-  return useConceptFooterActionsContext().actions;
+  return useContext(ConceptFooterActionsContext)?.actions ?? null;
 }
 
 function conceptFooterActionsActive(props: ConceptHeaderActionProps) {

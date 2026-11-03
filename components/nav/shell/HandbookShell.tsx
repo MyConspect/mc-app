@@ -29,6 +29,7 @@ import { localeFromPathname } from "@/lib/i18n/paths";
 import { SidebarNavChrome } from "../sidebar/SidebarNavChrome";
 import { TopicSidebar } from "../sidebar/TopicSidebar";
 import { ContentBreadcrumbs } from "../ui/ContentBreadcrumbs";
+import { ConceptFooterActionsProvider } from "@/components/topic/conceptFooterActionsContext";
 import { HandbookBusyIndicator } from "../ui/HandbookBusyIndicator";
 import { ScrollToTopButton } from "../ui/ScrollToTopButton";
 import {
@@ -297,10 +298,12 @@ export function HandbookShell({
                 touchAction: "manipulation",
               }}
             >
-              <ContentBreadcrumbs groups={groups} chrome={chrome} />
-              <HandbookNavGroupsProvider groups={groups}>
-                {children}
-              </HandbookNavGroupsProvider>
+              <ConceptFooterActionsProvider>
+                <ContentBreadcrumbs groups={groups} chrome={chrome} />
+                <HandbookNavGroupsProvider groups={groups}>
+                  {children}
+                </HandbookNavGroupsProvider>
+              </ConceptFooterActionsProvider>
               <ScrollToTopButton label={chrome.scrollToTop} />
             </div>
           </div>

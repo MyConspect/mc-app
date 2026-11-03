@@ -172,9 +172,9 @@ export default async function TopicPage({
         : clusterSections;
     return (
       <main className="w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
-        <PageTitleHeader title={subject.title} />
+        {!introLoaded ? <PageTitleHeader title={subject.title} /> : null}
         {introLoaded ? (
-          <div className="mt-8 max-w-3xl">
+          <div className="max-w-3xl">
             {introLoaded.usedFallback ? (
               <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
                 {FALLBACK_NOTE_BADGE[locale]}
@@ -182,7 +182,6 @@ export default async function TopicPage({
             ) : null}
             <ConceptList
               concepts={introLoaded.parsed.concepts}
-              topicTitle={introLoaded.parsed.title}
               emptyMessage="No concepts were parsed from this topic."
               groupInterviewSections={introLoaded.parsed.concepts.some(
                 (concept) => Boolean(concept.group),
@@ -237,9 +236,6 @@ export default async function TopicPage({
     loaded.topic,
     groupedHubConcepts ?? loaded.parsed.concepts,
   );
-  const pageTitle = isInterviewTasksTopic(loaded.topic)
-    ? loaded.topic.title
-    : loaded.parsed.title;
   const groupConceptSections =
     groupedHubConcepts !== undefined ||
     pageConcepts.some((concept) => Boolean(concept.group)) ||
@@ -255,7 +251,6 @@ export default async function TopicPage({
       <TopicNavConceptsProvider concepts={pageConcepts}>
         <ConceptList
           concepts={pageConcepts}
-          topicTitle={pageTitle}
           emptyMessage="No concepts were parsed from this topic."
           groupInterviewSections={groupConceptSections}
         />

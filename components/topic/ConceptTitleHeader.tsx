@@ -10,7 +10,12 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import type { ConceptHeaderActionProps } from "@/components/topic/conceptFooterActionsContext";
+import {
+  BookmarkButton,
+  useIsBookmarked,
+} from "@/components/nav/ui/BookmarkButton";
 import type { ChromeCopy } from "@/lib/nav";
+import { usePathname } from "next/navigation";
 import { CopyConceptLinkButton } from "./CopyConceptLinkButton";
 import { ConceptDepthToggle } from "./ConceptDepthToggle";
 import { TopicBookmarkButton } from "./TopicBookmarkButton";
@@ -28,8 +33,7 @@ const DETAIL_TOOLBAR_ACTIONS_ROW =
 const DETAIL_TITLE_CLASS =
   "m-0 min-w-0 flex-1 text-pretty text-[1.375rem] font-semibold leading-snug tracking-tight text-zinc-900 sm:text-2xl sm:leading-snug dark:text-zinc-50";
 
-const INDEX_HEADER =
-  "flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800";
+const INDEX_HEADER = "flex flex-wrap items-center gap-x-2 gap-y-1";
 
 const TITLE_CLASS =
   "min-w-0 w-full text-pretty text-xl font-semibold leading-7 tracking-tight text-zinc-900 sm:text-2xl sm:leading-8 dark:text-zinc-50";
@@ -334,6 +338,7 @@ export function ConceptHeaderActions({
   chrome,
   variant,
   compact = false,
+  segment = "all",
   showBack = false,
   backHref = null,
   onBack,
@@ -347,6 +352,7 @@ export function ConceptHeaderActions({
 }: ConceptHeaderActionProps & {
   compact?: boolean;
   hasOptionalDepth?: boolean;
+  segment?: "all" | "nav" | "utilities";
 }) {
   const dividerClass = ACTION_DIVIDER_INDEX;
   const navVariant = compact ? "footer" : variant;
@@ -390,19 +396,38 @@ export function ConceptHeaderActions({
     </>
   );
 
+  const navGroup = (
+    <ConceptNavGroup
+      showBack={showBack}
+      backHref={backHref}
+      onBack={onBack}
+      showNext={showNext}
+      nextHref={nextHref}
+      onNext={onNext}
+      chrome={chrome}
+      variant={navVariant}
+    />
+  );
+
+  if (segment === "nav") {
+    return navGroup;
+  }
+
+  if (segment === "utilities") {
+    if (!showShare && !showBookmark) {
+      return null;
+    }
+    return (
+      <div className="inline-flex shrink-0 items-center gap-0.5">
+        {utilityActions}
+      </div>
+    );
+  }
+
   if (variant === "detail" && !compact) {
     return (
       <div className={wrapClass}>
-        <ConceptNavGroup
-          showBack={showBack}
-          backHref={backHref}
-          onBack={onBack}
-          showNext={showNext}
-          nextHref={nextHref}
-          onNext={onNext}
-          chrome={chrome}
-          variant={navVariant}
-        />
+        {navGroup}
         {(showShare || showBookmark) && utilityActions}
       </div>
     );
@@ -410,16 +435,7 @@ export function ConceptHeaderActions({
 
   return (
     <div className={wrapClass}>
-      <ConceptNavGroup
-        showBack={showBack}
-        backHref={backHref}
-        onBack={onBack}
-        showNext={showNext}
-        nextHref={nextHref}
-        onNext={onNext}
-        chrome={chrome}
-        variant={navVariant}
-      />
+      {navGroup}
       {variant === "index" &&
       (showBack || showNext) &&
       (showShare || showBookmark) ? (
@@ -441,6 +457,11 @@ export function ConceptDetailTitle({
   toolbarAboveFromSm = false,
   scrollsWithBody = false,
   hasOptionalDepth = false,
+  afterTopicPageTitle = false,
+  showShare = false,
+  showBookmark = false,
+  conceptId,
+  insidePanel = false,
 }: {
   title: string;
   chrome: ChromeCopy;
@@ -451,19 +472,34 @@ export function ConceptDetailTitle({
   /** Title lives in the scroll pane (only the toolbar stays fixed above). */
   scrollsWithBody?: boolean;
   hasOptionalDepth?: boolean;
+  afterTopicPageTitle?: boolean;
+  showShare?: boolean;
+  showBookmark?: boolean;
+  conceptId?: string;
+  /** Title row is the header inside the bordered concept panel. */
+  insidePanel?: boolean;
 }) {
+  const soloTitleBand = !toolbarAbove && !toolbarAboveFromSm;
+  const showTitleUtilities = soloTitleBand && (showShare || showBookmark);
+
   const scrollClass = scrollsWithBody
     ? " concept-detail-title--in-scroll"
     : " shrink-0";
-  const base = `concept-detail-title bg-white px-4 dark:bg-zinc-900${scrollClass}`;
+  const base = insidePanel
+    ? "concept-detail-title"
+    : `concept-detail-title bg-white px-4 dark:bg-zinc-900${scrollClass}`;
 
   let bandClass: string;
   if (toolbarAboveFromSm) {
     bandClass = `${base} concept-detail-title--under-toolbar-from-sm`;
   } else if (toolbarAbove) {
     bandClass = `${base} concept-detail-title--under-toolbar`;
+  } else if (insidePanel) {
+    bandClass = `${base} concept-detail-title--in-panel`;
   } else {
-    bandClass = `${base} concept-detail-title--solo border-b border-zinc-200 dark:border-zinc-800 max-sm:rounded-t-none sm:rounded-t-[calc(0.75rem-1px)]`;
+    bandClass = `${base} concept-detail-title--solo max-sm:rounded-t-none sm:rounded-t-[calc(0.75rem-1px)]${
+      afterTopicPageTitle ? " concept-detail-title--after-topic-page" : ""
+    }`;
   }
 
   return (
@@ -475,7 +511,20 @@ export function ConceptDetailTitle({
           level="h2"
           variant="detail"
         />
-        {hasOptionalDepth ? <ConceptDepthToggle chrome={chrome} /> : null}
+        <div className="ml-auto flex shrink-0 items-center gap-0.5">
+          {showTitleUtilities ? (
+            <ConceptHeaderActions
+              title={title}
+              chrome={chrome}
+              variant="detail"
+              segment="utilities"
+              showShare={showShare}
+              showBookmark={showBookmark}
+              conceptId={conceptId}
+            />
+          ) : null}
+          {hasOptionalDepth ? <ConceptDepthToggle chrome={chrome} /> : null}
+        </div>
       </div>
     </div>
   );
@@ -564,6 +613,43 @@ export function ConceptTitleHeader({
           <ConceptHeaderActions {...actionProps} />
         </span>
       ) : null}
+    </div>
+  );
+}
+
+export function ConceptGroupSectionHeader({
+  title,
+  chrome,
+}: {
+  title: string;
+  chrome: ChromeCopy;
+}) {
+  const pathname = usePathname() ?? "/";
+  const saved = useIsBookmarked(pathname);
+
+  return (
+    <div className={`${INDEX_HEADER} group mb-[10px]`}>
+      <ConceptTitleHeading
+        title={title}
+        chrome={chrome}
+        level="h2"
+        variant="index"
+      />
+      <span
+        className={
+          saved
+            ? INDEX_ACTIONS_CLASS
+            : `${INDEX_ACTIONS_CLASS} pointer-events-none max-sm:pointer-events-auto group-hover:pointer-events-auto group-focus-within:pointer-events-auto`
+        }
+      >
+        <CopyConceptLinkButton chrome={chrome} size="md" />
+        <TopicBookmarkButton
+          title={title}
+          chrome={chrome}
+          size="md"
+          revealOnHover
+        />
+      </span>
     </div>
   );
 }

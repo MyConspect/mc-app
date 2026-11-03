@@ -33,12 +33,12 @@ import type { Concept } from "@/lib/parse";
 import {
   ConceptDetailActionsFooter,
   ConceptDetailTitle,
-  ConceptTitleHeader,
+  ConceptGroupSectionHeader,
 } from "./ConceptTitleHeader";
+import { ConceptFooterActionsRegistrar } from "./conceptFooterActionsContext";
 import { useConceptDepth } from "./ConceptDepthToggle";
 import { useConceptBodyDepth } from "./useConceptBodyDepth";
 import type { ConceptDepthPreference } from "@/components/nav/utils/uiStorage";
-import { PageTitleHeader } from "./PageTitleHeader";
 import { useCodeCopyButtons } from "./hooks/useCodeCopyButtons";
 import { useConceptKeyboardNav } from "./hooks/useConceptKeyboardNav";
 import { useHandbookTopicNav } from "./hooks/useHandbookTopicNav";
@@ -106,12 +106,10 @@ export function ConceptList({
   concepts,
   emptyMessage,
   groupInterviewSections = false,
-  topicTitle,
 }: {
   concepts: readonly Concept[];
   emptyMessage: string;
   groupInterviewSections?: boolean;
-  topicTitle?: string;
 }) {
   const query = useSearchQuery();
   const mode = useSearchMode();
@@ -204,7 +202,6 @@ export function ConceptList({
         concept={concept}
         notesQuery={notesQuery}
         chrome={chrome}
-        asPageTitle
       />
     );
   }
@@ -219,27 +216,18 @@ export function ConceptList({
     );
   }
 
-  const firstUngroupedIndex = groups.findIndex((group) => group.label === null);
-
   return (
     <div className="space-y-8 max-sm:pt-5">
-      {groups.map((group, index) => (
+      {groups.map((group) => (
         <section key={group.key}>
           {group.label ? (
-            <h2 className="mb-3 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-              {group.label}
-            </h2>
+            <ConceptGroupSectionHeader title={group.label} chrome={chrome} />
           ) : null}
           <ConceptIndexList
             concepts={group.concepts}
             query={query}
             chrome={chrome}
             pathname={pathname}
-            topicTitle={
-              group.label === null && index === firstUngroupedIndex
-                ? topicTitle
-                : undefined
-            }
           />
         </section>
       ))}
@@ -258,18 +246,15 @@ function ConceptIndexList({
   query,
   chrome,
   pathname,
-  topicTitle,
 }: {
   concepts: readonly Concept[];
   query: string;
   chrome: ChromeCopy;
   pathname: string;
-  topicTitle?: string;
 }) {
   return (
     <nav aria-label={chrome.topicsNav} className={CONCEPT_LIST_CARD}>
-      {topicTitle ? <PageTitleHeader title={topicTitle} /> : null}
-      <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+      <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 [&>li:first-child>button]:pt-2">
         {concepts.map((concept) => (
           <ConceptIndexRow
             key={concept.id}
@@ -337,12 +322,10 @@ function ConceptDetail({
   concept,
   notesQuery,
   chrome,
-  asPageTitle = false,
 }: {
   concept: Concept;
   notesQuery: string;
   chrome: ChromeCopy;
-  asPageTitle?: boolean;
 }) {
   const { showBack, showNext, goBack, goNext, prevHref, nextHref } =
     useHandbookTopicNav({
@@ -350,13 +333,12 @@ function ConceptDetail({
       conceptId: concept.id,
     });
 
-  const headerVariant: "index" | "detail" = asPageTitle ? "index" : "detail";
   const hasOptionalDepth = conceptHasOptionalDepth(concept);
   const conceptDepth = useConceptDepth();
   const actionProps = {
     title: concept.title,
     chrome,
-    variant: headerVariant,
+    variant: "detail" as const,
     showBack,
     backHref: prevHref,
     onBack: goBack,
@@ -367,8 +349,6 @@ function ConceptDetail({
     showShare: true,
     conceptId: concept.id,
   };
-  const hasDetailToolbarActions =
-    showBack || showNext || actionProps.showBookmark || actionProps.showShare;
 
   return (
     <article
@@ -376,21 +356,22 @@ function ConceptDetail({
       className={CONCEPT_DETAIL_CARD}
       {...(hasOptionalDepth ? { "data-concept-depth": conceptDepth } : {})}
     >
-      <ConceptTitleHeader {...actionProps} hideActionsOnMobile />
+      <ConceptFooterActionsRegistrar {...actionProps} />
       <div
         className="concept-detail-body-scroll min-h-0 flex-1 overscroll-y-contain"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        {headerVariant === "detail" ? (
-          <ConceptDetailTitle
-            title={concept.title}
-            chrome={chrome}
-            toolbarAbove={hasDetailToolbarActions}
-            toolbarAboveFromSm={hasDetailToolbarActions}
-            scrollsWithBody
-            hasOptionalDepth={hasOptionalDepth}
-          />
-        ) : null}
+        <ConceptDetailTitle
+          title={concept.title}
+          chrome={chrome}
+          toolbarAbove={false}
+          toolbarAboveFromSm={false}
+          scrollsWithBody
+          hasOptionalDepth={hasOptionalDepth}
+          showShare
+          showBookmark
+          conceptId={concept.id}
+        />
         <ConceptBody
           html={concept.html}
           query={notesQuery}

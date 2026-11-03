@@ -131,7 +131,7 @@ export default async function TrackPage({
                 {FALLBACK_NOTE_BADGE[locale]}
               </p>
             ) : null}
-            <div className="mt-8 max-w-3xl">
+            <div className="max-w-3xl">
               <ConceptList
                 concepts={hub.parsed.concepts}
                 emptyMessage="No concepts were parsed from this track hub."
@@ -164,7 +164,6 @@ export default async function TrackPage({
         ) : null}
         <ConceptList
           concepts={concepts}
-          topicTitle={behaviorPageTitle(locale, loaded.parsed.title)}
           emptyMessage="No concepts were parsed from this topic."
           groupInterviewSections={isInterviewTopic(leaf)}
         />
