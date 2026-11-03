@@ -17,17 +17,20 @@ import {
   type Crumb,
   type HashCrumb,
 } from "@/lib/nav";
+import { scrollToConceptGroupSection } from "@/components/topic/utils/scrollToConceptGroupSection";
 
 export function Breadcrumbs({
   items,
   pageHref,
   hashCrumbs = [],
   compact = false,
+  inBar = false,
 }: {
   items: readonly Crumb[];
   pageHref?: string;
   hashCrumbs?: readonly HashCrumb[];
   compact?: boolean;
+  inBar?: boolean;
 }) {
   const hash = useSyncExternalStore(subscribeHash, getHash, getServerHash);
   const trail =
@@ -45,7 +48,13 @@ export function Breadcrumbs({
   return (
     <nav
       aria-label={CHROME.breadcrumbs}
-      className={compact ? "min-w-0" : "mb-6"}
+      className={
+        compact
+          ? inBar
+            ? "handbook-breadcrumb-trail min-w-0"
+            : "min-w-0"
+          : "mb-6"
+      }
     >
       <ol
         className={
@@ -56,9 +65,16 @@ export function Breadcrumbs({
       >
         {trail.map((item, index) => {
           const isLast = index === trail.length - 1;
+          const sectionScrollId = item.sectionScrollId;
+          const isSectionScroll = Boolean(sectionScrollId) && !isLast;
+          const sectionScrollBarClass =
+            "cursor-pointer px-1.5 py-0 text-left font-medium leading-5 text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50";
+          const sectionScrollClass =
+            "cursor-pointer px-1.5 py-0.5 text-left font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50";
+
           return (
             <li
-              key={`${item.label}-${item.href ?? index}`}
+              key={`${item.label}-${item.href ?? sectionScrollId ?? index}`}
               className="flex shrink-0 items-center gap-x-0.5"
             >
               {index === 0 ? null : (
@@ -69,7 +85,17 @@ export function Breadcrumbs({
                   /
                 </span>
               )}
-              {item.href && !isLast ? (
+              {isSectionScroll ? (
+                <button
+                  type="button"
+                  className={inBar ? sectionScrollBarClass : sectionScrollClass}
+                  onClick={() =>
+                    scrollToConceptGroupSection(sectionScrollId ?? "")
+                  }
+                >
+                  {item.label}
+                </button>
+              ) : item.href && !isLast ? (
                 <Link
                   href={item.href}
                   scroll={false}
@@ -91,14 +117,22 @@ export function Breadcrumbs({
                     }
                     queueHandbookHref(href);
                   }}
-                  className="cursor-pointer rounded-md px-1.5 py-0.5 font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+                  className={
+                    inBar
+                      ? "cursor-pointer rounded-md px-1.5 py-0 font-medium leading-5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+                      : "cursor-pointer rounded-md px-1.5 py-0.5 font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+                  }
                 >
                   {item.label}
                 </Link>
               ) : (
                 <span
                   aria-current={isLast ? "page" : undefined}
-                  className="px-1.5 py-0.5 font-medium text-zinc-900 dark:text-zinc-50"
+                  className={
+                    inBar
+                      ? "px-1.5 py-0 font-medium leading-5 text-zinc-900 dark:text-zinc-50"
+                      : "px-1.5 py-0.5 font-medium text-zinc-900 dark:text-zinc-50"
+                  }
                 >
                   {item.label}
                 </span>

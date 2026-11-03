@@ -115,6 +115,7 @@ export function SubjectClusterHub({
       rootSections={filtered.rootSections}
       groupedSections={filtered.groupedSections}
       afterRootSections={filtered.afterRootSections}
+      suppressClusterHeadings={focusedClusterId !== null}
     />
   );
 }

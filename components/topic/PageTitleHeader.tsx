@@ -14,6 +14,13 @@ export function PageTitleHeader({ title }: { title: string }) {
   );
 
   return (
-    <ConceptTitleHeader title={title} chrome={chrome} showBookmark showShare />
+    <div className="mb-[10px]">
+      <ConceptTitleHeader
+        title={title}
+        chrome={chrome}
+        showBookmark
+        showShare
+      />
+    </div>
   );
 }

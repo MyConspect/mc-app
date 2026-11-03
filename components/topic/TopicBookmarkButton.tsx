@@ -10,12 +10,14 @@ export function TopicBookmarkButton({
   conceptId,
   size = "lg",
   className,
+  revealOnHover = false,
 }: {
   title: string;
   chrome: ChromeCopy;
   conceptId?: string;
   size?: "md" | "lg";
   className?: string;
+  revealOnHover?: boolean;
 }) {
   const pathname = usePathname() ?? "/";
 
@@ -27,6 +29,7 @@ export function TopicBookmarkButton({
       chrome={chrome}
       size={size}
       className={className}
+      revealOnHover={revealOnHover}
     />
   );
 }

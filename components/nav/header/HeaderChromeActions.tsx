@@ -12,34 +12,44 @@ export function HeaderChromeActions({
   locale,
   onInstructionsClick,
   languageVariant = "links",
+  parts = "all",
 }: {
   chrome: ChromeCopy;
   locale: ReturnType<typeof localeFromPathname>;
   onInstructionsClick?: () => void;
   languageVariant?: "links" | "select";
+  parts?: "all" | "instructions" | "locale";
 }) {
   const pathname = usePathname() ?? "/en";
   const instructionsPath = instructionsHref(locale);
   const onInstructions = pathname === instructionsPath;
+  const showInstructions = parts === "all" || parts === "instructions";
+  const showLocale = parts === "all" || parts === "locale";
 
   return (
     <div className="flex shrink-0 items-center gap-1">
-      <Link
-        href={instructionsPath}
-        onClick={onInstructionsClick}
-        aria-label={chrome.instructions}
-        title={chrome.instructions}
-        aria-current={onInstructions ? "page" : undefined}
-        className={
-          onInstructions
-            ? "inline-flex size-9 touch-manipulation items-center justify-center rounded-md text-zinc-900 dark:text-zinc-50"
-            : "inline-flex size-9 touch-manipulation items-center justify-center rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-        }
-      >
-        <InstructionsIcon />
-      </Link>
-      <LanguageSwitcher locale={locale} variant={languageVariant} />
-      <ThemeToggle />
+      {showInstructions ? (
+        <Link
+          href={instructionsPath}
+          onClick={onInstructionsClick}
+          aria-label={chrome.instructions}
+          title={chrome.instructions}
+          aria-current={onInstructions ? "page" : undefined}
+          className={
+            onInstructions
+              ? "inline-flex size-9 touch-manipulation items-center justify-center rounded-md text-zinc-900 dark:text-zinc-50"
+              : "inline-flex size-9 touch-manipulation items-center justify-center rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          }
+        >
+          <InstructionsIcon />
+        </Link>
+      ) : null}
+      {showLocale ? (
+        <>
+          <LanguageSwitcher locale={locale} variant={languageVariant} />
+          <ThemeToggle />
+        </>
+      ) : null}
     </div>
   );
 }

@@ -154,7 +154,11 @@ export function SiteHeader({
           </div>
           <div className="flex h-9 shrink-0 items-center gap-1 bg-white pr-(--chrome-inline) pl-1 max-md:relative sm:pl-2 md:sticky md:right-0 md:z-10 dark:bg-zinc-950">
             <div className="hidden items-center gap-0.5 md:flex">
-              <HeaderChromeActions chrome={chrome} locale={locale} />
+              <HeaderChromeActions
+                chrome={chrome}
+                locale={locale}
+                parts="locale"
+              />
             </div>
             <button
               type="button"
@@ -208,6 +212,16 @@ export function DrawerFooter({
       />
       <div className="hidden items-center justify-between gap-2 px-2 py-1.5 md:flex">
         <div className="flex min-w-0 items-center gap-1">
+          <HeaderChromeActions
+            chrome={chrome}
+            locale={locale}
+            onInstructionsClick={onNavigate}
+            parts="instructions"
+          />
+          <span
+            className="mx-0.5 h-5 w-px shrink-0 bg-zinc-200 dark:bg-zinc-700"
+            aria-hidden="true"
+          />
           <ContactLinks />
         </div>
         <div className="flex shrink-0 items-center gap-1.5">

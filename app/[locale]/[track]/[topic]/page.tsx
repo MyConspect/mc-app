@@ -4,7 +4,10 @@ import { CardGrid, SubjectClusterHub } from "@/components/catalog";
 import {
   ConceptList,
   PageTitleHeader,
+  SubjectIntroBody,
+  SubjectPageTitle,
   TopicNavConceptsProvider,
+  TopicPageTitle,
 } from "@/components/topic";
 import {
   getSubject,
@@ -171,33 +174,47 @@ export default async function TopicPage({
         ? clusterSections.filter((section) => section.cluster.id !== "platform")
         : clusterSections;
     return (
-      <main className="w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
-        <PageTitleHeader title={subject.title} />
+      <main className="handbook-subject-main w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
+        <SubjectPageTitle
+          subjectTitle={subject.title}
+          sections={sections}
+          rootSections={rootSections}
+          groupedSections={groupedSections}
+          afterRootSections={afterRootSections}
+        />
         {introLoaded ? (
-          <div className="mt-8 max-w-3xl">
-            {introLoaded.usedFallback ? (
-              <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
-                {FALLBACK_NOTE_BADGE[locale]}
-              </p>
-            ) : null}
-            <ConceptList
-              concepts={introLoaded.parsed.concepts}
-              topicTitle={introLoaded.parsed.title}
-              emptyMessage="No concepts were parsed from this topic."
-              groupInterviewSections={introLoaded.parsed.concepts.some(
-                (concept) => Boolean(concept.group),
-              )}
+          <SubjectIntroBody
+            fallbackBanner={
+              introLoaded.usedFallback ? (
+                <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
+                  {FALLBACK_NOTE_BADGE[locale]}
+                </p>
+              ) : null
+            }
+            concepts={introLoaded.parsed.concepts}
+            emptyMessage="No concepts were parsed from this topic."
+            groupInterviewSections={introLoaded.parsed.concepts.some(
+              (concept) => Boolean(concept.group),
+            )}
+            clusterHub={
+              <SubjectClusterHub
+                sections={sections}
+                rootSections={rootSections}
+                groupedSections={groupedSections}
+                afterRootSections={afterRootSections}
+              />
+            }
+          />
+        ) : (
+          <div>
+            <SubjectClusterHub
+              sections={sections}
+              rootSections={rootSections}
+              groupedSections={groupedSections}
+              afterRootSections={afterRootSections}
             />
           </div>
-        ) : null}
-        <div className={introLoaded ? "mt-10" : undefined}>
-          <SubjectClusterHub
-            sections={sections}
-            rootSections={rootSections}
-            groupedSections={groupedSections}
-            afterRootSections={afterRootSections}
-          />
-        </div>
+        )}
       </main>
     );
   }
@@ -237,25 +254,25 @@ export default async function TopicPage({
     loaded.topic,
     groupedHubConcepts ?? loaded.parsed.concepts,
   );
-  const pageTitle = isInterviewTasksTopic(loaded.topic)
-    ? loaded.topic.title
-    : loaded.parsed.title;
   const groupConceptSections =
     groupedHubConcepts !== undefined ||
     pageConcepts.some((concept) => Boolean(concept.group)) ||
     (isInterviewTopic(loaded.topic) && !isInterviewTasksTopic(loaded.topic));
+  const showTopicIndexTitle = !groupConceptSections;
 
   return (
-    <main className="w-full max-w-3xl px-4 pb-10 max-sm:pt-0 sm:px-6 sm:pt-5">
+    <main className="handbook-topic-main w-full max-w-3xl px-4 pt-5 pb-10 sm:px-6">
       {loaded.usedFallback ? (
         <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
           {FALLBACK_NOTE_BADGE[locale]}
         </p>
       ) : null}
+      {showTopicIndexTitle ? (
+        <TopicPageTitle title={loaded.topic.title} />
+      ) : null}
       <TopicNavConceptsProvider concepts={pageConcepts}>
         <ConceptList
           concepts={pageConcepts}
-          topicTitle={pageTitle}
           emptyMessage="No concepts were parsed from this topic."
           groupInterviewSections={groupConceptSections}
         />

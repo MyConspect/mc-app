@@ -176,11 +176,22 @@ body {
   scroll-margin-top: var(--handbook-sticky-inset, 0px);
 }
 
+.handbook-breadcrumb-bar {
+  box-sizing: border-box;
+}
+
+.handbook-breadcrumb-bar__nav [role="group"] button {
+  width: 1.5rem;
+  height: 1.5rem;
+  min-height: 1.5rem;
+  min-width: 1.5rem;
+}
+
 /* Concept detail: toolbar stays fixed; title + body scroll together. */
 #handbook-main:has(article.concept-detail-article) {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 #handbook-main:has(article.concept-detail-article) > main {
@@ -191,6 +202,27 @@ body {
   overflow: hidden;
   padding-top: 0;
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
+#handbook-main:has(article.concept-detail-article)
+  > main
+  .handbook-intro-concept-pane,
+#handbook-main:has(article.concept-detail-article) > main.handbook-topic-main,
+#handbook-main:has(article.concept-detail-article)
+  > main.handbook-subject-main {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+#handbook-main:has(article.concept-detail-article)
+  > main
+  .handbook-intro-concept-pane
+  > article.concept-detail-article,
+#handbook-main:has(article.concept-detail-article)
+  > main.handbook-topic-main
+  > article.concept-detail-article {
+  min-height: 0;
+  flex: 1 1 auto;
 }
 
 @media (min-width: 640px) {
@@ -214,8 +246,87 @@ article.concept-detail-article .concept-detail-title--under-toolbar {
 }
 
 article.concept-detail-article .concept-detail-title--solo {
-  padding-top: 0.75rem;
+  padding-top: 0.5rem;
   padding-bottom: 0;
+}
+
+article.concept-detail-article .concept-detail-panel {
+  margin-top: 0.75rem;
+  padding: 0.9rem 0.95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  background-clip: padding-box;
+}
+
+article.concept-detail-article .concept-detail-title--in-panel {
+  padding: 0;
+  background: transparent;
+}
+
+article.concept-detail-article .concept-detail-title--in-panel h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body--hide-slot-heading
+  > .concept-slot:first-child
+  > .concept-slot__heading,
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body--hide-slot-heading
+  > .concept-depth-quick:first-child
+  > .concept-slot:first-child
+  > .concept-slot__heading,
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body--hide-slot-heading
+  > .concept-depth-detailed:first-child
+  > .concept-slot:first-child
+  > .concept-slot__heading {
+  display: none;
+}
+
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body
+  > .concept-slot:first-child,
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body
+  > .concept-depth-quick:first-child
+  > .concept-slot:first-child,
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body
+  > .concept-depth-detailed:first-child
+  > .concept-slot:first-child {
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+article.concept-detail-article
+  .concept-detail-panel
+  .concept-body.concept-body--detail-top {
+  margin-top: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  article.concept-detail-article .concept-detail-title--solo {
+    padding-top: 0.625rem;
+  }
+}
+
+article.concept-detail-article .concept-detail-title--after-topic-page {
+  padding-top: 0;
 }
 
 article.concept-detail-article .concept-detail-title--under-toolbar-from-sm {
@@ -307,7 +418,17 @@ article.concept-detail-article
   .concept-detail-body-scroll
   .concept-part
   + .concept-part {
+  margin-top: 0.625rem;
+  padding-top: 0;
   border-top: 0;
+}
+
+article.concept-detail-article
+  .concept-detail-body-scroll
+  .concept-part
+  + .concept-part
+  > .concept-part__title {
+  margin-top: 0;
 }
 
 @media (max-width: 767px) {
@@ -363,7 +484,7 @@ article.concept-detail-article
 }
 
 html[data-concept-hash] nav.concept-list {
-  visibility: hidden;
+  display: none;
 }
 
 html[data-concept-depth="quick"] .concept-depth-detailed,

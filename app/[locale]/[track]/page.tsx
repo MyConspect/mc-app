@@ -131,7 +131,7 @@ export default async function TrackPage({
                 {FALLBACK_NOTE_BADGE[locale]}
               </p>
             ) : null}
-            <div className="mt-8 max-w-3xl">
+            <div className="max-w-3xl">
               <ConceptList
                 concepts={hub.parsed.concepts}
                 emptyMessage="No concepts were parsed from this track hub."
@@ -156,7 +156,7 @@ export default async function TrackPage({
       ? localizeBehaviorConcepts(loaded.parsed.concepts, locale)
       : loaded.parsed.concepts;
     return (
-      <main className="w-full max-w-3xl px-4 pb-10 max-sm:pt-0 sm:px-6 sm:pt-5">
+      <main className="w-full max-w-3xl px-4 pt-5 pb-10 sm:px-6">
         {loaded.usedFallback ? (
           <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
             {FALLBACK_NOTE_BADGE[locale]}
@@ -164,7 +164,6 @@ export default async function TrackPage({
         ) : null}
         <ConceptList
           concepts={concepts}
-          topicTitle={behaviorPageTitle(locale, loaded.parsed.title)}
           emptyMessage="No concepts were parsed from this topic."
           groupInterviewSections={isInterviewTopic(leaf)}
         />
