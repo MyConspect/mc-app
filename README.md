@@ -1,6 +1,6 @@
 # MyConspect
 
-Browse-only study handbook. Conspect markdown lives in `resources/en` and `resources/ru` (same basenames — see `.cursor/rules/locale-sync.mdc`) and is turned into static pages at build time. Edit notes in the separate **[mc-content](https://github.com/radomir-radionov/mc-content)** repo (or a local `resources/` tree). This app repo gitignores `resources/`; Vercel and CI shallow-clone mc-content at build time (`scripts/ensure-resources.ts`).
+Browse-only study handbook. Conspect markdown lives in `resources/en` and `resources/ru` (same basenames — see `.cursor/rules/locale-sync.mdc`) and is turned into static pages at build time. Edit notes in the separate **[mc-content](https://github.com/MyConspect/mc-content)** repo (or a local `resources/` tree). This app repo gitignores `resources/`; Vercel and CI shallow-clone mc-content at build time (`scripts/ensure-resources.ts`).
 
 Live site: [https://myconspect.vercel.app](https://myconspect.vercel.app).
 
@@ -56,15 +56,15 @@ Set `NEXT_PUBLIC_SITE_URL` (no trailing slash) for absolute sitemap and robots U
 
 ## CI/CD
 
-### Study notes on deploy (mc-app + [mc-content](https://github.com/radomir-radionov/mc-content))
+### Study notes on deploy (mc-app + [mc-content](https://github.com/MyConspect/mc-content))
 
 Notes live in **mc-content** (`en/` + `ru/` at repo root, or the same under `resources/`). Set these **environment variables** on [Vercel](https://vercel.com/docs/projects/environment-variables) (Production + Preview) and as [GitHub Actions secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions) when CI must clone notes:
 
-| Variable              | Required | Purpose                                                                    |
-| --------------------- | -------- | -------------------------------------------------------------------------- |
-| `RESOURCES_GIT_URL`   | Yes      | HTTPS clone URL, e.g. `https://github.com/radomir-radionov/mc-content.git` |
-| `RESOURCES_GIT_TOKEN` | No       | PAT with repo read access — only if the notes repo is private              |
-| `RESOURCES_GIT_REF`   | No       | Branch or tag (default `main`)                                             |
+| Variable              | Required | Purpose                                                              |
+| --------------------- | -------- | -------------------------------------------------------------------- |
+| `RESOURCES_GIT_URL`   | Yes      | HTTPS clone URL, e.g. `https://github.com/MyConspect/mc-content.git` |
+| `RESOURCES_GIT_TOKEN` | No       | PAT with repo read access — only if the notes repo is private        |
+| `RESOURCES_GIT_REF`   | No       | Branch or tag (default `main`)                                       |
 
 `prebuild` / `predev` run `tsx scripts/ensure-resources.ts`: if `resources/en/` already has markdown (your machine), nothing is downloaded; otherwise the script shallow-clones the notes repo.
 
@@ -73,4 +73,18 @@ GitHub Actions:
 - `.github/workflows/ci.yml` — `npm ci`, lint, tests, `check-order`, production build, and Cypress sidebar E2E (Chrome) on push and PRs to `main` / `dev` (needs the secrets above)
 - `.github/workflows/check-conspect.yml` — scheduled source URL audit (same secrets)
 
-Production and preview deploys run automatically through the [Vercel GitHub integration](https://vercel.com/docs/git/vercel-for-github): push to `main` ships production; pull requests get preview URLs. Install the [Vercel GitHub App](https://github.com/apps/vercel) on `radomir-radionov/MyConspect` if the project is not already connected.
+Production and preview deploys run automatically through the [Vercel GitHub integration](https://vercel.com/docs/git/vercel-for-github): push to **`MyConspect/mc-app`** `main` ships production; pull requests get preview URLs. Install the [Vercel GitHub App](https://github.com/apps/vercel) on the **MyConspect** org with access to **mc-app** if the project is not already connected.
+
+### Production not updating after pushes to `main`
+
+**Symptom:** GitHub Actions on `main` run, but the [Vercel project](https://vercel.com/docs/projects/overview) (**myconspect**) shows no new deployments and production stays on an old commit.
+
+**Root cause (stale Git link after repo move):** `mc-app` lives under **`MyConspect/mc-app`**, but Vercel can still be linked to the pre-transfer owner (`radomir-radionov/mc-app`). The stored `link.org` in project settings may not match the org that receives pushes. Webhooks from **MyConspect** then never start a build, even though `productionBranch` is still `main` and CI on GitHub succeeds.
+
+**Fix:**
+
+1. Vercel → **myconspect** → **Settings → Git** — connected repository must be **`MyConspect/mc-app`**, production branch **`main`** (disconnect and reconnect if the owner is wrong).
+2. GitHub → **MyConspect** org → **GitHub Apps** → **Vercel** — grant access to **mc-app**.
+3. Redeploy latest **`main`** once (Deployments → Redeploy, or an empty push).
+
+GitHub CI failing (e.g. Cypress on `main`) does not by itself stop Vercel unless you enabled deployment checks that wait on those workflows.
