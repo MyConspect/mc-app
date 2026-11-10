@@ -227,22 +227,48 @@ export default async function TopicPage({
   if (isNavHubTopic(loaded.topic)) {
     const pageTitle = loaded.parsed.title;
     const hubCards = localizeCards(locale, navChildBrowseCards(loaded.topic));
+    const hubConcepts = conceptsForInterviewTopic(
+      loaded.topic,
+      loaded.parsed.concepts,
+    );
+    const showHubConcepts = hubConcepts.length > 0;
     return (
-      <main className="w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
+      <main
+        className={
+          showHubConcepts
+            ? "handbook-topic-main w-full max-w-3xl px-4 pt-5 pb-10 sm:px-6"
+            : "w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6"
+        }
+      >
         {loaded.usedFallback ? (
           <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
             {FALLBACK_NOTE_BADGE[locale]}
           </p>
         ) : null}
-        <PageTitleHeader title={pageTitle} />
-        {loaded.parsed.description ? (
+        {showHubConcepts ? (
+          <TopicPageTitle title={loaded.topic.title} />
+        ) : (
+          <PageTitleHeader title={pageTitle} />
+        )}
+        {!showHubConcepts && loaded.parsed.description ? (
           <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
             {loaded.parsed.description}
           </p>
         ) : null}
-        <div className="mt-8">
-          <CardGrid items={hubCards} />
-        </div>
+        {showHubConcepts ? (
+          <TopicNavConceptsProvider concepts={hubConcepts}>
+            <ConceptList
+              concepts={hubConcepts}
+              emptyMessage="No concepts were parsed from this topic."
+              groupInterviewSections
+            />
+          </TopicNavConceptsProvider>
+        ) : null}
+        {hubCards.length > 0 ? (
+          <div className={showHubConcepts ? "mt-10" : "mt-8"}>
+            <CardGrid items={hubCards} />
+          </div>
+        ) : null}
       </main>
     );
   }

@@ -44,6 +44,8 @@
   --slot-accent-bg-thoughts: #fef3c7;
   --slot-accent-sources: #64748b;
   --slot-accent-bg-sources: #f1f5f9;
+  --slot-accent-interview-questions: #6366f1;
+  --slot-accent-bg-interview-questions: #e0e7ff;
   --slot-accent-key: #16a34a;
   --slot-accent-bg-key: #dcfce7;
   --slot-accent-advices: #ca8a04;
@@ -99,6 +101,8 @@
   --slot-accent-bg-thoughts: #422006;
   --slot-accent-sources: #94a3b8;
   --slot-accent-bg-sources: #1e293b;
+  --slot-accent-interview-questions: #a5b4fc;
+  --slot-accent-bg-interview-questions: #1e1b4b;
   --slot-accent-key: #4ade80;
   --slot-accent-bg-key: #14532d;
   --slot-accent-advices: #facc15;
@@ -333,20 +337,20 @@ article.concept-detail-article .concept-detail-title--after-topic-page {
 
 article.concept-detail-article .concept-detail-title--under-toolbar-from-sm {
   padding-top: 0.75rem;
-  padding-bottom: 0;
+  padding-bottom: 0.375rem;
 }
 
 @media (min-width: 640px) {
   article.concept-detail-article .concept-detail-title--under-toolbar-from-sm {
     padding-top: 1rem;
-    padding-bottom: 0.375rem;
+    padding-bottom: 0.5rem;
   }
 }
 
 article.concept-detail-article .concept-body.concept-body--detail-top {
-  gap: 0;
+  gap: 0.35rem;
   margin-top: 0;
-  padding-top: 0;
+  padding-top: 0.5rem;
 }
 
 article.concept-detail-article
@@ -494,6 +498,11 @@ article[data-concept-depth="quick"] .concept-depth-detailed {
   display: none !important;
 }
 
+html[data-concept-depth="quick"] .concept-part--detailed-only,
+article[data-concept-depth="quick"] .concept-part--detailed-only {
+  display: none !important;
+}
+
 html[data-concept-depth="detailed"] .concept-depth-quick,
 article[data-concept-depth="detailed"] .concept-depth-quick {
   display: none !important;
@@ -547,6 +556,11 @@ article[data-concept-depth="detailed"] .concept-depth-quick {
   --slot-accent-bg: var(--slot-accent-bg-detailed);
 }
 
+/* Optional-depth Detailed view: ### part title is enough — no "Detailed" slot label */
+.concept-depth-detailed > .slot-detailed > .concept-slot__heading {
+  display: none;
+}
+
 .slot-cases {
   --slot-accent: var(--slot-accent-cases);
   --slot-accent-bg: var(--slot-accent-bg-cases);
@@ -576,6 +590,11 @@ article[data-concept-depth="detailed"] .concept-depth-quick {
 .slot-sources {
   --slot-accent: var(--slot-accent-sources);
   --slot-accent-bg: var(--slot-accent-bg-sources);
+}
+
+.slot-interviewQuestions {
+  --slot-accent: var(--slot-accent-interview-questions);
+  --slot-accent-bg: var(--slot-accent-bg-interview-questions);
 }
 
 .slot-key {
@@ -610,6 +629,30 @@ article[data-concept-depth="detailed"] .concept-depth-quick {
   font-weight: 650;
   letter-spacing: -0.015em;
   color: var(--foreground);
+}
+
+.concept-part--detailed-only > .concept-part__title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.concept-part--detailed-only .concept-slot__body blockquote {
+  margin: 0.85rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border-left: 0;
+  border-radius: 0.5rem;
+  background: color-mix(
+    in srgb,
+    var(--slot-accent-advices) 12%,
+    var(--background)
+  );
+  color: var(--foreground);
+}
+
+.concept-part--detailed-only .concept-slot__body blockquote p {
+  margin: 0;
 }
 
 .concept-part__title + .concept-slot {
@@ -702,6 +745,7 @@ article[data-concept-depth="detailed"] .concept-depth-quick {
 }
 
 .concept-slot__body li {
+  display: list-item;
   margin: 0.25rem 0;
 }
 
@@ -854,11 +898,19 @@ article[data-concept-depth="detailed"] .concept-depth-quick {
 
 .concept-body ul,
 .concept-body ol {
+  list-style-position: outside;
   padding-left: 1.25rem;
 }
 
 .concept-body li {
+  display: list-item;
   margin: 0.25rem 0;
+}
+
+/* Markdown lists often wrap item text in <p>; keep the marker on the first line */
+.concept-body li > p:first-child,
+.concept-slot__body li > p:first-child {
+  display: inline;
 }
 
 .concept-body a {
@@ -1009,6 +1061,14 @@ article[data-concept-depth="detailed"] .concept-depth-quick {
   border: 1px solid var(--border-warm);
   border-radius: 0.5rem;
   padding: 0.25rem 0.75rem;
+}
+
+article.concept-detail-article .concept-body details {
+  margin: 0;
+}
+
+article.concept-detail-article .concept-body details + details {
+  margin-top: 0.35rem;
 }
 
 .concept-body details > summary {

@@ -25,14 +25,27 @@ export function useConceptBodyDepth(
       return;
     }
 
-    const quick = root.querySelector(".concept-depth-quick");
-    const detailed = root.querySelector(".concept-depth-detailed");
+    const quickBlocks = root.querySelectorAll(".concept-depth-quick");
+    const detailedBlocks = root.querySelectorAll(".concept-depth-detailed");
 
-    if (quick instanceof HTMLElement) {
-      setBlockVisible(quick, conceptDepth === "quick");
+    for (const quick of quickBlocks) {
+      if (quick instanceof HTMLElement) {
+        setBlockVisible(quick, conceptDepth === "quick");
+      }
     }
-    if (detailed instanceof HTMLElement) {
-      setBlockVisible(detailed, conceptDepth === "detailed");
+    for (const detailed of detailedBlocks) {
+      if (detailed instanceof HTMLElement) {
+        setBlockVisible(detailed, conceptDepth === "detailed");
+      }
+    }
+
+    const detailedOnlyParts = root.querySelectorAll(
+      ".concept-part--detailed-only",
+    );
+    for (const part of detailedOnlyParts) {
+      if (part instanceof HTMLElement) {
+        setBlockVisible(part, conceptDepth === "detailed");
+      }
     }
   }, [conceptDepth, hasOptionalDepth, html, rootRef]);
 }

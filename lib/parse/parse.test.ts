@@ -251,3 +251,39 @@ Short prompt.
 
   assert.deepEqual(titles, ["What is a closure?", "Implement debounce"]);
 });
+
+test("stripDuplicateHeadingsInDetails removes redundant h3 after summary", () => {
+  const blocks = collectConceptBlocks(`
+<details>
+<summary>What is Redux?</summary>
+
+### What is Redux?
+
+**Definition:** Store.
+</details>
+`);
+  assert.equal(blocks.length, 1);
+  assert.doesNotMatch(blocks[0].body, /^### What is Redux/m);
+});
+
+test("interview collection wrappers are not flattened to child questions", () => {
+  const blocks = collectConceptBlocks(`
+## Interview Practice
+
+<details>
+<summary>100+ React questions (GFE)</summary>
+
+<!-- gfe-article-wrapper -->
+
+<details>
+<summary>1. What is React?</summary>
+
+**Definition:** Library.
+</details>
+
+</details>
+`);
+
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].title, "100+ React questions (GFE)");
+});

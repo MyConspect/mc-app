@@ -8,10 +8,7 @@ export type HandbookRedirect = {
   readonly permanent: boolean;
 };
 
-function legacyRedirect(
-  source: string,
-  destination: string,
-): HandbookRedirect {
+function legacyRedirect(source: string, destination: string): HandbookRedirect {
   return { source, destination, permanent: true };
 }
 
@@ -49,10 +46,7 @@ export function handbookRedirects(): readonly HandbookRedirect[] {
       "/:locale(en|ru)/other/special-security",
       "/:locale/frontend/special-security",
     ),
-    legacyRedirect(
-      "/other/special-security",
-      "/en/frontend/special-security",
-    ),
+    legacyRedirect("/other/special-security", "/en/frontend/special-security"),
     legacyRedirect(
       "/:locale(en|ru)/other/web-security-questions",
       "/:locale/frontend/web-security-questions",
@@ -100,13 +94,40 @@ export function handbookRedirects(): readonly HandbookRedirect[] {
       "/:locale/backend/redis-interview",
     ),
     legacyRedirect("/backend/redis", "/en/backend/redis-interview"),
-    legacyRedirect("/system-design/sd-foundations", "/en/system-design/sd-core"),
+    legacyRedirect(
+      "/system-design/sd-foundations",
+      "/en/system-design/sd-core",
+    ),
     legacyRedirect(
       "/system-design/sd-patterns",
       "/en/system-design/special-patterns",
     ),
     legacyRedirect("/backend/nodejs-runtime", "/en/backend/nodejs-core"),
     legacyRedirect("/backend/nodejs-process", "/en/backend/nodejs-additional"),
+    legacyRedirect(
+      "/:locale(en|ru)/frontend/typescript-interview",
+      "/:locale/frontend/ts-interview",
+    ),
+    legacyRedirect(
+      "/frontend/typescript-interview",
+      "/en/frontend/ts-interview",
+    ),
+    legacyRedirect(
+      "/:locale(en|ru)/frontend/ts-freshers-guide",
+      "/:locale/frontend/ts-basics#interview-practice-gfe-freshers",
+    ),
+    legacyRedirect(
+      "/:locale(en|ru)/frontend/ts-freshers-guide-interview",
+      "/:locale/frontend/ts-basics#interview-practice-gfe-freshers",
+    ),
+    legacyRedirect(
+      "/:locale(en|ru)/frontend/typescript/ts-:topic",
+      "/:locale/frontend/ts-:topic",
+    ),
+    legacyRedirect(
+      "/frontend/typescript/ts-interview-tasks",
+      "/en/frontend/ts-interview-tasks",
+    ),
     legacyRedirect(track, "/en/:track"),
     legacyRedirect(`${track}/:topic`, "/en/:track/:topic"),
   ];

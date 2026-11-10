@@ -484,6 +484,9 @@ function interviewConceptItems(
     const id = uniqueId(slugify(idSource), usedIds);
     const title = cleanInterviewTitle(block.title, interviewSection);
     const searchText = outlineSearchText(block.body, hideAnswers);
+    const bodyForDepth = hideAnswers
+      ? stripAnswerSections(block.body)
+      : block.body;
     return render(block).then(
       (html): Concept => ({
         id,
@@ -497,6 +500,9 @@ function interviewConceptItems(
         searchText,
         interviewSection,
         ...(block.group ? { group: block.group } : {}),
+        ...(hasConceptOptionalDepth(bodyForDepth)
+          ? { hasOptionalDepth: true }
+          : {}),
       }),
     );
   });
@@ -516,8 +522,19 @@ function isInterviewQuestionBlock(block: ConceptBlock): boolean {
   return looksLikeConcept(block.body, block.title);
 }
 
+function isInterviewCollectionWrapper(block: ConceptBlock): boolean {
+  return (
+    block.body.includes("<!-- gfe-article-wrapper -->") ||
+    block.body.includes("<!-- gfe-section-wrapper -->") ||
+    block.body.includes("<!-- interview-group-wrapper -->")
+  );
+}
+
 function shouldExpandInterviewWrapper(block: ConceptBlock): boolean {
   if (!block.body.includes("<details")) {
+    return false;
+  }
+  if (isInterviewCollectionWrapper(block)) {
     return false;
   }
   if (isInterviewQuestionTitle(block.title)) {
@@ -552,7 +569,7 @@ function flattenInterviewBlocks(
 
 async function renderInterviewConcept(block: ConceptBlock): Promise<string> {
   if (block.body.includes("<details")) {
-    return renderFragment(block.body);
+    return renderFragment(stripDuplicateHeadingsInDetails(block.body));
   }
   return renderHtml(block.body);
 }
@@ -917,6 +934,27 @@ function stripDuplicateTitleHeading(title: string, body: string): string {
     return body;
   }
   return (preamble + rest.slice(match[0].length)).trimStart();
+}
+
+function stripDuplicateHeadingsInDetails(markdown: string): string {
+  let text = markdown;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    text = text.replace(
+      /(<summary>)([\s\S]*?)(<\/summary>\s*(?:<!--[\s\S]*?-->\s*)*)(#{1,3}\s+[^\n]+)(\n+)/gi,
+      (full, open, summary, mid, heading, newline) => {
+        const summaryTitle = stripMd(summary);
+        const headingTitle = stripMd(heading.replace(/^#{1,3}\s+/, ""));
+        if (!headingMatchesTitle(summaryTitle, headingTitle)) {
+          return full;
+        }
+        changed = true;
+        return `${open}${summary}${mid}${newline}`;
+      },
+    );
+  }
+  return text;
 }
 
 async function renderFragment(markdown: string): Promise<string> {

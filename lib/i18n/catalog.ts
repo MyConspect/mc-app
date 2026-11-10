@@ -163,6 +163,14 @@ const RU_BLURBS: Readonly<Record<string, string>> = {
     "child_process, cluster, workers и realtime-серверы.",
   "CI/CD, package managers, and task runners.":
     "CI/CD, менеджеры пакетов и task runners.",
+  "npm lockfile, CI, semver, workspaces, supply chain — 16 GFE concepts.":
+    "npm: lockfile, CI, semver, workspaces, supply chain — 16 концептов GFE.",
+  "One Q&A accordion per GreatFrontEnd npm interview question.":
+    "Один accordion Q&A на каждый вопрос GreatFrontEnd по npm.",
+  "GFE filterable list, async UI, races, debounce — ~3 YOE machine coding.":
+    "GFE: фильтруемый список, async UI, гонки, debounce — machine coding ~3 года.",
+  "One Q&A per GFE machine coding section (~3 years).":
+    "Один Q&A на секцию GFE machine coding (~3 года).",
   "CI/CD, packages, and bundlers.": "CI/CD, пакеты и бандлеры.",
   "Cache, sessions, data structures, and TTL.":
     "Кэш, сессии, структуры данных и TTL.",
@@ -416,6 +424,9 @@ const RU_BLURBS: Readonly<Record<string, string>> = {
   "TypeScript interview questions, answers not filled in.":
     "Вопросы по TypeScript, ответы не заполнены.",
   "Interview Q&A and coding tasks.": "Вопросы/ответы и задачи по коду.",
+  "GFE fresher advice: projects, basics, debugging, and interview-day habits.":
+    "GFE для новичков: проекты, основы, отладка и привычки на собеседовании.",
+  Tips: "Советы",
   "Git interview questions, answers not filled in.":
     "Вопросы по Git, ответы не заполнены.",
   "Testing interview questions, answers not filled in.":

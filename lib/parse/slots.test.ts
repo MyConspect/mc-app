@@ -40,6 +40,26 @@ test("structureConceptBody keeps When to use and When not to use as separate slo
   assert.equal((html.match(/slot-avoid/g) ?? []).length, 1);
 });
 
+test("structureConceptBody renders Interview questions slot with links", async () => {
+  const html = await structureConceptBody(
+    `**Definition:** Short.
+
+**Interview questions:**
+
+- [What is the purpose of the key prop in React?](./4_react_interview.md#what-is-the-purpose-of-the-key-prop-in-react)`,
+    async (md) =>
+      md.replace(
+        /\]\(\.\/4_react_interview\.md#/,
+        "](/en/frontend/react-interview#",
+      ),
+  );
+
+  assert.match(html, /slot-interviewQuestions/);
+  assert.match(html, /Interview questions/);
+  assert.match(html, /purpose of the key prop/i);
+  assert.match(html, /react-interview#/);
+});
+
 test("structureConceptBody omits See also slots", async () => {
   const html = await structureConceptBody(
     `**Short answer:** Same five OOP principles.
@@ -163,6 +183,47 @@ test("structureConceptBody wraps post-how slots when concept-depth optional", as
   assert.match(html, /concept-depth-quick[\s\S]*slot-cases/);
 });
 
+test("structureConceptBody hides ### detailed-only parts from Quick markup", async () => {
+  const html = await structureConceptBody(
+    `<!-- concept-depth:optional -->
+
+**Definition:** Short.
+
+### TL;DR
+
+**Detailed:**
+
+Long block.`,
+    renderFragment,
+  );
+
+  assert.doesNotMatch(
+    html.slice(0, html.indexOf("concept-part--detailed-only")),
+    /concept-part--detailed-only/,
+  );
+  assert.match(html, /concept-part--detailed-only/);
+});
+
+test("structureConceptBody omits Detailed slot heading in optional-depth Detailed pane", async () => {
+  const html = await structureConceptBody(
+    `<!-- concept-depth:optional -->
+
+**Definition:** Short.
+
+### Syntax
+
+**Detailed:**
+
+Fragment body.`,
+    renderFragment,
+  );
+
+  assert.match(html, /concept-part__title/);
+  const syntaxPart = html.slice(html.indexOf("Syntax"));
+  assert.doesNotMatch(syntaxPart, /concept-slot__heading/);
+  assert.match(syntaxPart, /Fragment body/);
+});
+
 test("structureConceptBody puts only Detailed slot in concept-depth-detailed", async () => {
   const html = await structureConceptBody(
     `<!-- concept-depth:optional -->
@@ -186,6 +247,7 @@ test("structureConceptBody puts only Detailed slot in concept-depth-detailed", a
   assert.match(html, /concept-depth-detailed/);
   const detailed = html.slice(html.indexOf("concept-depth-detailed"));
   assert.match(detailed, /First block/);
+  assert.doesNotMatch(detailed, /concept-slot__heading/);
   assert.doesNotMatch(detailed, /When to use/);
   const quickEnd = html.indexOf("concept-depth-detailed");
   const quick = html.slice(html.indexOf("concept-depth-quick"), quickEnd);
