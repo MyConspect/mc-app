@@ -22,6 +22,18 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Resolve mc-content revision
+        if: env.RESOURCES_GIT_URL != ''
+        id: content-rev
+        run: bash scripts/resolve-content-revision.sh
+      - name: Cache mc-content and search index
+        if: steps.content-rev.outputs.sha != ''
+        uses: actions/cache@v4
+        with:
+          path: |
+            resources
+            public/search-index
+          key: mc-content-build-${{ steps.content-rev.outputs.sha }}-v1
       - name: Fetch study notes
         run: npm run ensure-resources
       - run: npm run lint
@@ -66,6 +78,18 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Resolve mc-content revision
+        if: env.RESOURCES_GIT_URL != ''
+        id: content-rev
+        run: bash scripts/resolve-content-revision.sh
+      - name: Cache mc-content and search index
+        if: steps.content-rev.outputs.sha != ''
+        uses: actions/cache@v4
+        with:
+          path: |
+            resources
+            public/search-index
+          key: mc-content-build-${{ steps.content-rev.outputs.sha }}-v1
       - name: Fetch study notes
         run: npm run ensure-resources
       - name: Install Vercel CLI
@@ -92,6 +116,18 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Resolve mc-content revision
+        if: env.RESOURCES_GIT_URL != ''
+        id: content-rev
+        run: bash scripts/resolve-content-revision.sh
+      - name: Cache mc-content and search index
+        if: steps.content-rev.outputs.sha != ''
+        uses: actions/cache@v4
+        with:
+          path: |
+            resources
+            public/search-index
+          key: mc-content-build-${{ steps.content-rev.outputs.sha }}-v1
       - name: Fetch study notes
         run: npm run ensure-resources
       - uses: cypress-io/github-action@v7.4.6

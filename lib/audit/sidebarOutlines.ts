@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { TRACKS, getTopic, type Topic } from "@/lib/catalog";
+import { TRACKS, getTopic, type Topic, type TrackId } from "@/lib/catalog";
 import { LOCALES, type Locale } from "@/lib/i18n/locales";
 import { withSidebarConceptOutlines } from "@/lib/nav/chromeNav";
 import { handbookNavForTrack } from "@/lib/nav/handbook";
@@ -48,14 +48,20 @@ function expectedOutlineIds(
 }
 
 export function auditSidebarOutlines(
-  options: { indexRoot?: string } = {},
+  options: { indexRoot?: string; trackIds?: readonly TrackId[] } = {},
 ): readonly SidebarOutlineMismatch[] {
   const indexRoot =
     options.indexRoot ?? path.join(process.cwd(), "public", "search-index");
   const mismatches: SidebarOutlineMismatch[] = [];
+  const trackFilter = options.trackIds
+    ? new Set(options.trackIds)
+    : null;
+  const tracks = trackFilter
+    ? TRACKS.filter((track) => trackFilter.has(track.id))
+    : TRACKS;
 
   for (const locale of LOCALES) {
-    for (const track of TRACKS) {
+    for (const track of tracks) {
       const groups = handbookNavForTrack(locale, track.id);
       const shellGroups = withSidebarConceptOutlines(groups);
       const indexFile = path.join(indexRoot, locale, `${track.id}.json`);

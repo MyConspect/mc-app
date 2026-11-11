@@ -84,6 +84,16 @@ After `check` passes on a push to `main`, the workflow runs `vercel build --prod
 
 `prebuild` / `predev` run `tsx scripts/ensure-resources.ts`: if `resources/en/` already has markdown (your machine), nothing is downloaded; otherwise the script shallow-clones the notes repo.
 
+### Content-only updates (mc-content without mc-app code changes)
+
+1. Push to **[mc-content](https://github.com/MyConspect/mc-content)** `main` (or the branch in `RESOURCES_GIT_REF`).
+2. Redeploy **mc-app** (push an empty commit, merge to `main`, or redeploy in Vercel). CI resolves the notes commit SHA and caches `resources/` + `public/search-index/` under that SHA.
+3. **Prebuild is incremental:** only tracks whose markdown files changed get a new `public/search-index/<locale>/<track>.json`. Unchanged tracks are reused. `ensure-resources` skips re-cloning when the cached tree already matches `CONTENT_REVISION`. Sidebar outline audit skips when nothing changed.
+
+`next build` still compiles every static route — that is required for the current static handbook. Parser output per page is cached in-process by file mtime during the build.
+
+Force a full regen (local or CI): `FULL_CONTENT_BUILD=1 npm run build`.
+
 GitHub Actions:
 
 - `.github/workflows/ci.yml` — `npm ci`, lint, tests, `check-order`, production build, Cypress sidebar E2E on push and PRs to `main` / `dev`; on **push to `main`**, deploys production to Vercel after `check` (needs `VERCEL_*` secrets below)
