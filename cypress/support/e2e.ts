@@ -22,7 +22,11 @@ function nav(
 }
 
 function conceptArticle(id: string) {
-  return cy.get(`main article#${id}`);
+  return cy.get(`main article.concept-detail-article#${id}`);
+}
+
+function conceptIndexList() {
+  return cy.get("main nav.concept-list");
 }
 
 function sidebar() {
@@ -70,6 +74,7 @@ declare global {
         id: string,
       ): Chainable<JQuery<HTMLElement>>;
       conceptArticle(id: string): Chainable<JQuery<HTMLElement>>;
+      conceptIndexList(): Chainable<JQuery<HTMLElement>>;
       sidebar(): Chainable<JQuery<HTMLElement>>;
       pointerOn(
         selector: string,
@@ -88,6 +93,7 @@ declare global {
 
 Cypress.Commands.add("nav", nav);
 Cypress.Commands.add("conceptArticle", conceptArticle);
+Cypress.Commands.add("conceptIndexList", conceptIndexList);
 Cypress.Commands.add("sidebar", sidebar);
 Cypress.Commands.add("pointerOn", pointerOn);
 Cypress.Commands.add("mainScroller", mainScroller);
