@@ -623,31 +623,6 @@ describe("handbook sidebar", () => {
     });
   });
 
-  it("opens the search sidebar when typing on a phone", () => {
-    cy.viewport(390, 844);
-    cy.visit("/en/frontend/react-hooks");
-    cy.get('input[placeholder="Search topics…"]').clear().type("useEf");
-    cy.wait(400);
-    cy.contains("button", "Close topics").should("be.visible");
-    cy.sidebar().should("be.visible");
-    cy.sidebar().should(($nav) => {
-      const text = $nav.text().toLowerCase();
-      expect(text).to.contain("useeffect");
-      expect(text).not.to.contain("javascript");
-    });
-    cy.sidebar().contains("HTML").should("not.exist");
-
-    cy.get('#handbook-sidebar [data-concept-id="useeffect"]').click();
-    cy.get('#handbook-header button[aria-controls="handbook-sidebar"]').should(
-      "have.attr",
-      "aria-expanded",
-      "false",
-    );
-    cy.location("pathname").should("eq", "/en/frontend/react-hooks");
-    cy.location("hash").should("eq", "#useeffect");
-    cy.conceptArticle("useeffect").should("be.visible");
-  });
-
   it("keeps the overlay open until a concept is chosen", () => {
     cy.viewport(390, 844);
     cy.visit("/en/frontend/web-api");

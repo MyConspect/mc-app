@@ -54,7 +54,7 @@ function mainScroller() {
 }
 
 function conceptNavButton(label: "Back" | "Next") {
-  return cy.get(`button[aria-label="${label}"]`);
+  return cy.get(`.concept-detail-dock button[aria-label="${label}"]`);
 }
 
 function sidebarHydrated() {
@@ -84,9 +84,7 @@ declare global {
       desktopSearchMode(
         mode: "titles" | "notes",
       ): Chainable<JQuery<HTMLElement>>;
-      conceptNavButton(
-        label: "Back" | "Next",
-      ): Chainable<JQuery<HTMLElement>>;
+      conceptNavButton(label: "Back" | "Next"): Chainable<JQuery<HTMLElement>>;
     }
   }
 }
