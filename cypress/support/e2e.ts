@@ -22,7 +22,11 @@ function nav(
 }
 
 function conceptArticle(id: string) {
-  return cy.get(`main article#${id}`);
+  return cy.get(`main article.concept-detail-article#${id}`);
+}
+
+function conceptIndexList() {
+  return cy.get("main nav.concept-list");
 }
 
 function sidebar() {
@@ -50,7 +54,7 @@ function mainScroller() {
 }
 
 function conceptNavButton(label: "Back" | "Next") {
-  return cy.get(`button[aria-label="${label}"]`);
+  return cy.get(`.concept-detail-dock button[aria-label="${label}"]`);
 }
 
 function sidebarHydrated() {
@@ -70,6 +74,7 @@ declare global {
         id: string,
       ): Chainable<JQuery<HTMLElement>>;
       conceptArticle(id: string): Chainable<JQuery<HTMLElement>>;
+      conceptIndexList(): Chainable<JQuery<HTMLElement>>;
       sidebar(): Chainable<JQuery<HTMLElement>>;
       pointerOn(
         selector: string,
@@ -79,15 +84,14 @@ declare global {
       desktopSearchMode(
         mode: "titles" | "notes",
       ): Chainable<JQuery<HTMLElement>>;
-      conceptNavButton(
-        label: "Back" | "Next",
-      ): Chainable<JQuery<HTMLElement>>;
+      conceptNavButton(label: "Back" | "Next"): Chainable<JQuery<HTMLElement>>;
     }
   }
 }
 
 Cypress.Commands.add("nav", nav);
 Cypress.Commands.add("conceptArticle", conceptArticle);
+Cypress.Commands.add("conceptIndexList", conceptIndexList);
 Cypress.Commands.add("sidebar", sidebar);
 Cypress.Commands.add("pointerOn", pointerOn);
 Cypress.Commands.add("mainScroller", mainScroller);

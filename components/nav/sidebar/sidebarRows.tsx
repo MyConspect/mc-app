@@ -230,11 +230,12 @@ function ConceptItems({
           first?.pathname === topic.href && first.hash === `#${concept.id}`;
         const onPath = conceptActive && !searching;
         const pinPath = navPathPinned(onPath, true, stackPathPins);
+        const group = concept.group;
         const showGroup =
-          Boolean(concept.group) &&
-          concept.group !== concepts[index - 1]?.group &&
-          !sameTitle(concept.group, topic.title) &&
-          !sameTitle(concept.group, concept.title);
+          group != null &&
+          group !== concepts[index - 1]?.group &&
+          !sameTitle(group, topic.title) &&
+          !sameTitle(group, concept.title);
         const groupPad = index === 0 ? "pt-1" : "pt-3";
         return (
           <li key={concept.id} className="contents">

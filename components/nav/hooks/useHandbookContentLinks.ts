@@ -45,10 +45,11 @@ export function useHandbookContentLinks(
   const router = useRouter();
 
   useEffect(() => {
-    const root = rootRef.current;
-    if (!root) {
+    const container = rootRef.current;
+    if (!container) {
       return;
     }
+    const rootEl: HTMLElement = container;
 
     function onClick(event: MouseEvent) {
       const target = event.target;
@@ -56,7 +57,7 @@ export function useHandbookContentLinks(
         return;
       }
       const anchor = target.closest("a");
-      if (!(anchor instanceof HTMLAnchorElement) || !root.contains(anchor)) {
+      if (!(anchor instanceof HTMLAnchorElement) || !rootEl.contains(anchor)) {
         return;
       }
       if (shouldIgnoreAnchorClick(event, anchor)) {
@@ -73,7 +74,7 @@ export function useHandbookContentLinks(
       });
     }
 
-    root.addEventListener("click", onClick, true);
-    return () => root.removeEventListener("click", onClick, true);
+    rootEl.addEventListener("click", onClick, true);
+    return () => rootEl.removeEventListener("click", onClick, true);
   }, [html, pathname, rootRef, router]);
 }

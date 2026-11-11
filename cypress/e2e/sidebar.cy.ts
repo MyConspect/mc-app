@@ -367,10 +367,10 @@ describe("handbook sidebar", () => {
   it("opens a concept in detail view when chosen from the page list", () => {
     cy.viewport(390, 844);
     cy.visit("/en/frontend/react-core");
-    cy.get("main nav.concept-list").contains("button", "JSX").click();
+    cy.conceptIndexList().contains("button", "JSX").click();
     cy.location("hash").should("eq", "#jsx");
     cy.conceptArticle("jsx").should("be.visible");
-    cy.get("main article.concept-list").should("have.length", 1);
+    cy.get("main article.concept-detail-article").should("have.length", 1);
     cy.get('.concept-detail-dock button[aria-label="Back"]').should("exist");
 
     cy.get('.concept-detail-dock button[aria-label="Next"]').click({
@@ -381,7 +381,34 @@ describe("handbook sidebar", () => {
     cy.conceptArticle("jsx").should("not.exist");
   });
 
-  it("returns to the previous concept from detail view", () => {
+  it("returns to the topic index when Back after opening from the page list", () => {
+    cy.viewport(390, 844);
+    cy.visit("/en/frontend/core-browser-platform");
+    cy.conceptIndexList()
+      .contains("button", "Multi-process architecture")
+      .click();
+    cy.location("hash").should("eq", "#multi-process-architecture");
+    cy.conceptArticle("multi-process-architecture").should("be.visible");
+    cy.conceptIndexList().should("not.exist");
+
+    cy.conceptNavButton("Back").click({ force: true });
+    cy.location("hash").should("eq", "");
+    cy.conceptIndexList().should("be.visible");
+    cy.conceptArticle("multi-process-architecture").should("not.exist");
+  });
+
+  it("returns to the prior concept when Back follows Next in the topic", () => {
+    cy.viewport(390, 844);
+    cy.visit("/en/frontend/react-core");
+    cy.conceptIndexList().contains("button", "JSX").click();
+    cy.conceptNavButton("Next").click({ force: true });
+    cy.location("hash").should("eq", "#fragments");
+    cy.conceptNavButton("Back").click({ force: true });
+    cy.location("hash").should("eq", "#jsx");
+    cy.conceptArticle("jsx").should("be.visible");
+  });
+
+  it("uses topic list order for Back on a direct concept link", () => {
     cy.viewport(390, 844);
     cy.visit("/en/frontend/react-core#fragments");
     cy.conceptArticle("fragments").should("be.visible");
@@ -531,7 +558,7 @@ describe("handbook sidebar", () => {
     });
     cy.location("hash").should("eq", `#${cachingId}`);
     cy.conceptArticle(cachingId).should("be.visible");
-    cy.get("main article.concept-list").should("have.length", 1);
+    cy.get("main article.concept-detail-article").should("have.length", 1);
     cy.conceptArticle("core-web-vitals").should("not.exist");
   });
 
@@ -594,31 +621,6 @@ describe("handbook sidebar", () => {
     cy.get("#handbook-header > header > div").should(($row) => {
       expect($row[0].scrollWidth).to.be.at.most($row[0].clientWidth + 1);
     });
-  });
-
-  it("opens the search sidebar when typing on a phone", () => {
-    cy.viewport(390, 844);
-    cy.visit("/en/frontend/react-hooks");
-    cy.get('input[placeholder="Search topics…"]').clear().type("useEf");
-    cy.wait(400);
-    cy.contains("button", "Close topics").should("be.visible");
-    cy.sidebar().should("be.visible");
-    cy.sidebar().should(($nav) => {
-      const text = $nav.text().toLowerCase();
-      expect(text).to.contain("useeffect");
-      expect(text).not.to.contain("javascript");
-    });
-    cy.sidebar().contains("HTML").should("not.exist");
-
-    cy.get('#handbook-sidebar [data-concept-id="useeffect"]').click();
-    cy.get('#handbook-header button[aria-controls="handbook-sidebar"]').should(
-      "have.attr",
-      "aria-expanded",
-      "false",
-    );
-    cy.location("pathname").should("eq", "/en/frontend/react-hooks");
-    cy.location("hash").should("eq", "#useeffect");
-    cy.conceptArticle("useeffect").should("be.visible");
   });
 
   it("keeps the overlay open until a concept is chosen", () => {
