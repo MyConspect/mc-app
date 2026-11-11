@@ -1,6 +1,44 @@
 import { conceptMatchesQuery } from "./search";
 import type { NavConcept, SearchMode } from "./types";
 
+export function compactConceptId(id: string): string {
+  return id.replace(/-/g, "");
+}
+
+/** Map a URL hash to a concept id (exact, then unique hyphen-insensitive match). */
+export function resolveConceptId(
+  hashId: string,
+  concepts: readonly { readonly id: string }[],
+): string {
+  if (!hashId) {
+    return "";
+  }
+  if (concepts.some((concept) => concept.id === hashId)) {
+    return hashId;
+  }
+  const compact = compactConceptId(hashId);
+  if (!compact) {
+    return "";
+  }
+  const matches = concepts.filter(
+    (concept) => compactConceptId(concept.id) === compact,
+  );
+  if (matches.length === 1) {
+    return matches[0]?.id ?? "";
+  }
+  if (compact.length < 12) {
+    return "";
+  }
+  const prefixes = concepts.filter((concept) => {
+    const other = compactConceptId(concept.id);
+    return compact.startsWith(other) || other.startsWith(compact);
+  });
+  if (prefixes.length === 1) {
+    return prefixes[0]?.id ?? "";
+  }
+  return "";
+}
+
 type SearchableConcept = Pick<
   NavConcept,
   "id" | "title" | "titleSearchText" | "searchText"
@@ -26,8 +64,9 @@ export function nextConceptHash(input: {
   if (input.arrivalHash.length > 0 && !input.queryEdited) {
     return null;
   }
+  const currentId = resolveConceptId(input.currentHash, input.concepts);
   const hashConcept = input.concepts.find(
-    (concept) => concept.id === input.currentHash,
+    (concept) => concept.id === currentId,
   );
   if (hashConcept && conceptMatchesQuery(hashConcept, needle, input.mode)) {
     return null;

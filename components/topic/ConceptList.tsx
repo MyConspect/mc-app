@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { usePathname } from "next/navigation";
+import { useHandbookContentLinks } from "@/components/nav/hooks/useHandbookContentLinks";
 import { useHandbookLocation } from "@/components/nav/hooks/useHandbookLocation";
 import {
   HighlightedText,
@@ -22,12 +23,12 @@ import {
 } from "@/components/nav/ui/BookmarkButton";
 import { highlightQueryInHtml } from "@/components/search/utils/highlightQueryInHtml";
 import { setHashIfChanged, setHashOnPath } from "@/components/nav/utils/hash";
-import { hashIdFrom } from "@/lib/nav/navUtils";
+import { nextConceptHash, resolveConceptId } from "@/lib/nav/conceptHash";
+import { hashIdFrom, sameTitle } from "@/lib/nav/navUtils";
 import { CopyConceptLinkButton } from "./CopyConceptLinkButton";
-import { handbookScrollContainer } from "@/components/topic/utils/conceptScroll";
+import { resetHandbookReadingScroll } from "@/components/topic/utils/conceptScroll";
 import { chromeFor } from "@/lib/i18n/chrome";
 import { localeFromPathname } from "@/lib/i18n/paths";
-import { nextConceptHash } from "@/lib/nav/conceptHash";
 import type { ChromeCopy } from "@/lib/nav";
 import type { Concept } from "@/lib/parse";
 import {
@@ -36,7 +37,7 @@ import {
   ConceptGroupSectionHeader,
 } from "./ConceptTitleHeader";
 import { ConceptFooterActionsRegistrar } from "./conceptFooterActionsContext";
-import { useConceptDepth } from "./ConceptDepthToggle";
+import { ConceptDepthToggle, useConceptDepth } from "./ConceptDepthToggle";
 import { useConceptBodyDepth } from "./useConceptBodyDepth";
 import type { ConceptDepthPreference } from "@/components/nav/utils/uiStorage";
 import { useCodeCopyButtons } from "./hooks/useCodeCopyButtons";
@@ -95,13 +96,6 @@ function groupConcepts(
   return groups;
 }
 
-function scrollMainToTop() {
-  const scroller = handbookScrollContainer();
-  if (scroller) {
-    scroller.scrollTop = 0;
-  }
-}
-
 export function ConceptList({
   concepts,
   emptyMessage,
@@ -122,15 +116,19 @@ export function ConceptList({
   const { activeConceptId } = useHandbookLocation();
   const [bootConceptId, setBootConceptId] = useState("");
   const flat = concepts.length === 1;
-  const resolvedConceptId = activeConceptId || bootConceptId;
+  const resolvedConceptId = useMemo(() => {
+    const raw = activeConceptId || bootConceptId;
+    return resolveConceptId(raw, concepts) || raw;
+  }, [activeConceptId, bootConceptId, concepts]);
   const activeConcept = useMemo(
     () => concepts.find((concept) => concept.id === resolvedConceptId) ?? null,
     [resolvedConceptId, concepts],
   );
-
+  const accordionIndex = groupInterviewSections && !flat;
   useLayoutEffect(() => {
     function syncConceptHashFromUrl() {
-      const id = hashIdFrom(window.location.hash);
+      const raw = hashIdFrom(window.location.hash);
+      const id = resolveConceptId(raw, concepts) || raw;
       const root = document.documentElement;
       if (id && concepts.some((concept) => concept.id === id)) {
         root.dataset.conceptHash = id;
@@ -178,11 +176,10 @@ export function ConceptList({
   }, [concepts, mode, pathname, query, queryEdited]);
 
   useLayoutEffect(() => {
-    if (resolvedConceptId) {
-      return;
+    if (flat || activeConcept || !accordionIndex) {
+      resetHandbookReadingScroll();
     }
-    scrollMainToTop();
-  }, [pathname, resolvedConceptId]);
+  }, [accordionIndex, activeConcept, flat, pathname, resolvedConceptId]);
 
   if (concepts.length === 0) {
     return (
@@ -224,7 +221,8 @@ export function ConceptList({
         }
         return (
           <section key={group.key}>
-            {group.label ? (
+            {group.label &&
+            !sameTitle(group.label, group.concepts[0]?.title ?? "") ? (
               <ConceptGroupSectionHeader title={group.label} chrome={chrome} />
             ) : null}
             {group.concepts.length > 0 ? (
@@ -260,7 +258,10 @@ function ConceptIndexList({
   pathname: string;
 }) {
   return (
-    <nav aria-label={chrome.topicsNav} className={CONCEPT_LIST_CARD}>
+    <nav
+      aria-label={chrome.topicsNav}
+      className={`${CONCEPT_LIST_CARD} concept-list--accordion`}
+    >
       <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 [&>li:first-child>button]:pt-2">
         {concepts.map((concept) => (
           <ConceptIndexRow
@@ -293,19 +294,30 @@ function ConceptIndexRow({
   const saved = useIsBookmarked(pathname, concept.id);
 
   return (
-    <li className="group relative transition-colors hover:bg-yellow-50 dark:hover:bg-yellow-950/60">
+    <li
+      id={concept.id}
+      className="group relative transition-colors hover:bg-yellow-50 dark:hover:bg-yellow-950/60"
+    >
       <button
         type="button"
         className={CONCEPT_INDEX_BUTTON}
         onClick={() => setHashOnPath(pathname, concept.id, false)}
       >
+        <span
+          aria-hidden="true"
+          className="mt-0.5 inline-block size-3 shrink-0 text-zinc-400 dark:text-zinc-500"
+        >
+          <svg viewBox="0 0 12 12" className="size-3 fill-current">
+            <path d="M4.2 1.8 9 6l-4.8 4.2V1.8Z" />
+          </svg>
+        </span>
         <HighlightedText text={concept.title} query={query} />
       </button>
       <div
         className={
           saved
-            ? "absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-0.5 max-sm:pointer-events-auto"
-            : "pointer-events-none absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-0.5 max-sm:pointer-events-auto group-hover:pointer-events-auto group-focus-within:pointer-events-auto"
+            ? "absolute top-3 right-2 flex items-center gap-0.5 max-sm:pointer-events-auto"
+            : "pointer-events-none absolute top-3 right-2 flex items-center gap-0.5 max-sm:pointer-events-auto group-hover:pointer-events-auto group-focus-within:pointer-events-auto"
         }
       >
         <CopyConceptLinkButton conceptId={concept.id} chrome={chrome} />
@@ -345,6 +357,10 @@ function ConceptDetail({
 
   const hasOptionalDepth = conceptHasOptionalDepth(concept);
   const conceptDepth = useConceptDepth();
+
+  useLayoutEffect(() => {
+    resetHandbookReadingScroll();
+  }, [concept.id]);
   const actionProps = {
     title: concept.title,
     chrome,
@@ -419,6 +435,7 @@ const ConceptBody = memo(function ConceptBody({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useCodeCopyButtons(ref, chrome, html);
+  useHandbookContentLinks(ref, html);
   useConceptBodyDepth(ref, conceptDepth, hasOptionalDepth, html);
 
   return (

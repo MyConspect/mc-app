@@ -2,7 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { useMemo, useSyncExternalStore } from "react";
+import { resolveConceptId } from "@/lib/nav/conceptHash";
 import { hashIdFrom } from "@/lib/nav/navUtils";
+import { useTopicNavConcepts } from "@/components/topic/context/TopicNavConceptsContext";
 import {
   getHash,
   getPendingHash,
@@ -35,7 +37,12 @@ export function useHandbookLocation() {
     }
     return handbookLocation(pathname, hash);
   }, [pathname, hash, pendingPathname, pendingHash]);
-  const activeConceptId = hashIdFrom(location.hash);
+  const topicConcepts = useTopicNavConcepts();
+  const rawConceptId = hashIdFrom(location.hash);
+  const resolvedFromTopic = topicConcepts
+    ? resolveConceptId(rawConceptId, topicConcepts)
+    : "";
+  const activeConceptId = resolvedFromTopic || rawConceptId;
 
   return {
     pathname,

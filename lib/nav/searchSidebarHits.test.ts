@@ -125,6 +125,35 @@ test("collectGroupSearchHits keeps overview sections when the topic title matche
   assert.equal(hits[0]?.concept.title, "Event loop overview");
 });
 
+test("collectGroupSearchHits drops a title twin when a distinct sibling also matches", () => {
+  const group: NavGroup = {
+    id: "frontend",
+    title: "Frontend",
+    href: "/en/frontend",
+    entries: [
+      {
+        kind: "topic",
+        topic: {
+          slug: "ts-enums",
+          href: "/en/frontend/ts-enums",
+          title: "Enums",
+          blurb: "Numeric and string enums.",
+          concepts: [
+            { id: "enums", title: "Enums" },
+            { id: "enums-fresher", title: "Enums (fresher)" },
+          ],
+        },
+      },
+    ],
+  };
+
+  const hits = collectGroupSearchHits(group, "enums", "titles");
+  assert.deepEqual(
+    hits.map((hit) => hit.concept.title),
+    ["Enums (fresher)"],
+  );
+});
+
 test("collectGroupSearchHits keeps topics when the only match repeats the topic title", () => {
   const group: NavGroup = {
     id: "frontend",

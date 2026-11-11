@@ -639,4 +639,25 @@ describe("handbookNavSections layout", () => {
       0,
     );
   });
+
+  it("nests machine coding interview under React Interview", () => {
+    const frontendInterviews = interviewTopicsInGroup(
+      findGroup("frontend", "interviews")!,
+    );
+    const react = frontendInterviews.find(
+      (topic) => topic.slug === "react-interview",
+    );
+    assert.ok(react?.nestedTopics);
+    assert.ok(
+      react.nestedTopics!.some(
+        (topic) => topic.slug === "react-machine-coding-interview",
+      ),
+    );
+    assert.ok(
+      !frontendInterviews.some(
+        (topic) => topic.slug === "react-machine-coding-interview",
+      ),
+      "machine coding interview must not lift to frontend track interviews",
+    );
+  });
 });

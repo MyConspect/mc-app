@@ -1,9 +1,11 @@
 export { CHROME, INSTRUCTIONS_HREF } from "./chrome";
+export { resolveConceptId } from "./conceptHash";
 export {
   filterInterviewConcepts,
   hashIdFrom,
   sameTitle,
   shouldHideSidebarConcepts,
+  shouldShowTopicIndexTitle,
 } from "./navUtils";
 export {
   crumbsWithActive,

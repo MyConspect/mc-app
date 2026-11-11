@@ -117,6 +117,7 @@ const SLOT_LABELS_RU: Partial<Record<SlotKind, string>> = {
   key: "Ключ",
   advices: "Советы",
   traps: "Ловушки",
+  interviewQuestions: "Вопросы для интервью",
 };
 
 export function isBehaviorQuestionsTopic(

@@ -4,7 +4,11 @@ import {
   conceptMatchesQuery,
   matchesQuery,
 } from "./search";
-import { isRedundantTopicConceptTitle, sameTitle } from "./navUtils";
+import {
+  isRedundantTopicConceptTitle,
+  sameTitle,
+  withoutRedundantTopicTitles,
+} from "./navUtils";
 import {
   searchIndexFor,
   topicSearchConcepts,
@@ -82,6 +86,14 @@ function visibleConcepts(
       : index.topicOf.has(topic)
         ? topicSearchConcepts(index, topic, needle, mode, bodyHits)
         : fallbackMatches(topic, needle, mode);
+  const nested = withoutRedundantTopicTitles(
+    topic.title,
+    matched,
+    (item) => item.concept.title,
+  );
+  if (nested.length > 0) {
+    return nested;
+  }
   const only = matched.length === 1 ? matched[0] : undefined;
   if (only && isRedundantTopicConceptTitle(topic.title, only.concept.title)) {
     if (mode === "notes" && needle.length > 0 && only.bodyOnly) {

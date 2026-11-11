@@ -11,12 +11,55 @@ export function sameTitle(left: string, right: string): boolean {
   return left.trim().toLowerCase() === right.trim().toLowerCase();
 }
 
-/** Lone sidebar/search row that only repeats the topic title (not "Topic — section"). */
+/** Sidebar/search row that only repeats the topic title (not "Topic — section"). */
 export function isRedundantTopicConceptTitle(
   topicTitle: string,
   conceptTitle: string,
 ): boolean {
   return sameTitle(topicTitle, conceptTitle);
+}
+
+export function withoutRedundantTopicTitles<T>(
+  topicTitle: string,
+  items: readonly T[],
+  titleOf: (item: T) => string,
+): T[] {
+  return items.filter(
+    (item) => !isRedundantTopicConceptTitle(topicTitle, titleOf(item)),
+  );
+}
+
+/** Hide the topic H1 when the only concept repeats the topic name (one heading, not two). */
+export function shouldShowTopicIndexTitle(
+  topicTitle: string,
+  concepts: readonly { readonly title: string }[],
+  groupConceptSections: boolean,
+): boolean {
+  if (groupConceptSections) {
+    return false;
+  }
+  const only = concepts.length === 1 ? concepts[0] : undefined;
+  if (only && isRedundantTopicConceptTitle(topicTitle, only.title)) {
+    return false;
+  }
+  return true;
+}
+
+/** Fold when several children remain, or when a title twin was dropped and others stay. */
+export function shouldShowTopicConceptFold(
+  topicTitle: string,
+  allConcepts: readonly { readonly title: string }[],
+  visibleCount: number,
+): boolean {
+  if (visibleCount > 1) {
+    return true;
+  }
+  if (visibleCount < 1) {
+    return false;
+  }
+  return allConcepts.some((concept) =>
+    isRedundantTopicConceptTitle(topicTitle, concept.title),
+  );
 }
 
 export function hashIdFrom(hash: string): string {

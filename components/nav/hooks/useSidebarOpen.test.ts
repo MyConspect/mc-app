@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { NavRootSection } from "@/lib/nav";
 import { queueHandbookHref, takePendingHashForPath } from "../utils/hash";
-import { activeTrackIdForNavPath, sidebarNavLocation } from "./useSidebarOpen";
+import {
+  activeTrackIdForNavPath,
+  consumeCollapseTracksOnSectionChange,
+  dispatchSidebarCollapseTracks,
+  sidebarNavLocation,
+} from "./useSidebarOpen";
 
 const sections: readonly NavRootSection[] = [
   {
@@ -81,4 +86,11 @@ test("active track follows pending path while router pathname is stale", () => {
 test("an interview topic does not open a cluster", () => {
   const nav = sidebarNavLocation(sections, "/en/backend/nodejs-interview", "");
   assert.equal(nav.location.clusterKey, null);
+});
+
+test("section radio collapse is consumed once and does not leak to the next nav", () => {
+  consumeCollapseTracksOnSectionChange();
+  dispatchSidebarCollapseTracks();
+  assert.equal(consumeCollapseTracksOnSectionChange(), true);
+  assert.equal(consumeCollapseTracksOnSectionChange(), false);
 });

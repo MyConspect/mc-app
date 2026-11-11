@@ -17,6 +17,7 @@ import {
   type NavTopic,
 } from "@/lib/nav";
 import { navSubjectClusters } from "@/lib/nav/subjectClusters";
+import { resolveConceptId } from "@/lib/nav/conceptHash";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { conceptGroupSectionDomId } from "@/lib/nav/conceptGroupSection";
 import {
@@ -363,7 +364,10 @@ function conceptById(
   if (!id) {
     return undefined;
   }
-  return concepts.find((concept) => concept.id === id);
+  return (
+    concepts.find((concept) => concept.id === id) ??
+    concepts.find((concept) => concept.id === resolveConceptId(id, concepts))
+  );
 }
 
 function topicForConceptInSubject(

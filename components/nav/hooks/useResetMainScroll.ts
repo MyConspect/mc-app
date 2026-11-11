@@ -1,26 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
+import { resetHandbookReadingScroll } from "@/components/topic/utils/conceptScroll";
 import {
-  handbookMain,
-  handbookScrollContainer,
-} from "@/components/topic/utils/conceptScroll";
+  getHash,
+  getServerHash,
+  subscribeHash,
+} from "../utils/hash";
 
 export function useResetMainScroll() {
   const pathname = usePathname() ?? "/";
+  const hash = useSyncExternalStore(subscribeHash, getHash, getServerHash);
 
-  useEffect(() => {
-    if (window.location.hash) {
-      return;
-    }
-    const main = handbookMain();
-    if (main instanceof HTMLElement) {
-      main.scrollTop = 0;
-    }
-    const body = handbookScrollContainer();
-    if (body instanceof HTMLElement && body !== main) {
-      body.scrollTop = 0;
-    }
-  }, [pathname]);
+  useLayoutEffect(() => {
+    resetHandbookReadingScroll();
+  }, [pathname, hash]);
 }

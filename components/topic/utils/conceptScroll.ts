@@ -41,6 +41,18 @@ export function handbookScrollContainer(): HTMLElement | null {
   return conceptDetailBodyScroll() ?? handbookMain();
 }
 
+/** Put the reading pane at the start of the opened item (not leftover index/article scroll). */
+export function resetHandbookReadingScroll() {
+  const main = handbookMain();
+  if (main) {
+    main.scrollTop = 0;
+  }
+  const body = conceptDetailBodyScroll();
+  if (body && body !== main) {
+    body.scrollTop = 0;
+  }
+}
+
 export function conceptPinTarget(element: HTMLElement): HTMLElement {
   if (element instanceof HTMLDetailsElement) {
     const summary = element.querySelector(":scope > summary");

@@ -25,6 +25,7 @@ export type SlotKind =
   | "traps"
   | "key"
   | "advices"
+  | "interviewQuestions"
   | "intro"
   | "extra";
 
@@ -49,6 +50,7 @@ const SLOT_DISPLAY: Record<
   example: "Examples",
   thoughts: "Thoughts",
   sources: "Sources",
+  interviewQuestions: "Interview questions",
   traps: "TRAPS",
   key: "Key",
   advices: "Advices",
@@ -70,6 +72,7 @@ const SLOT_ORDER: Record<SlotKind, number> = {
   thoughts: 60,
   extra: 65,
   sources: 70,
+  interviewQuestions: 72,
 };
 
 // Notes use `**Label:**` (colon before closing bold), not `**Label**:`
@@ -192,6 +195,9 @@ function classifyMarker(rawLabel: string): SlotKind {
   }
   if (label === "source" || label === "sources") {
     return "sources";
+  }
+  if (label === "interview questions" || label === "interview question") {
+    return "interviewQuestions";
   }
   if (
     label === "pros" ||
@@ -420,14 +426,26 @@ function sectionsForMarkdown(
   return preserveDocumentOrder ? sections : orderSectionsForRender(sections);
 }
 
-function wrapPart(heading: string, slotsHtml: string): string {
+type WrapPartOptions = {
+  /** Part has no Quick slots — show only when handbook depth is Detailed. */
+  readonly detailedOnly?: boolean;
+};
+
+function wrapPart(
+  heading: string,
+  slotsHtml: string,
+  options?: WrapPartOptions,
+): string {
   if (!slotsHtml.trim() && !heading) {
     return "";
   }
   const title = heading
     ? `<h3 class="concept-part__title">${escapeHtml(heading)}</h3>`
     : "";
-  return `<section class="concept-part">${title}${slotsHtml}</section>`;
+  const className = options?.detailedOnly
+    ? "concept-part concept-part--detailed-only"
+    : "concept-part";
+  return `<section class="${className}">${title}${slotsHtml}</section>`;
 }
 
 function mergePitfallsIntoCases(sections: ConceptSection[]): ConceptSection[] {
@@ -491,17 +509,24 @@ function isAnchorOnlyIntroHtml(kind: SlotKind, bodyHtml: string): boolean {
   return /^<p>\s*<a\b[^>]*>\s*<\/a>\s*<\/p>\s*$/i.test(trimmed);
 }
 
+type RenderSectionsOptions = {
+  /** Slot kinds that render body only (no icon / heading label). */
+  readonly omitLabelKinds?: ReadonlySet<SlotKind>;
+};
+
 function wrapSlot(
   kind: SlotKind,
   rawLabel: string,
   bodyHtml: string,
   locale?: Locale,
+  options?: RenderSectionsOptions,
 ): string {
   if (!bodyHtml.trim()) {
     return "";
   }
+  const omitLabel = options?.omitLabelKinds?.has(kind) ?? false;
   const labelHtml =
-    kind === "intro"
+    kind === "intro" || omitLabel
       ? ""
       : slotLabelHtml(kind, displayLabel(kind, rawLabel, locale));
   return `<section class="concept-slot slot-${kind}">${labelHtml}<div class="concept-slot__body">${bodyHtml}</div></section>`;
@@ -511,6 +536,7 @@ async function renderSections(
   sections: readonly ConceptSection[],
   renderFragment: (fragment: string) => Promise<string>,
   locale?: Locale,
+  options?: RenderSectionsOptions,
 ): Promise<string> {
   const rendered = await Promise.all(
     sections.map(async (section) => {
@@ -520,7 +546,13 @@ async function renderSections(
       if (isAnchorOnlyIntroHtml(section.kind, bodyHtml)) {
         return "";
       }
-      return wrapSlot(section.kind, section.rawLabel, bodyHtml, locale);
+      return wrapSlot(
+        section.kind,
+        section.rawLabel,
+        bodyHtml,
+        locale,
+        options,
+      );
     }),
   );
   return rendered.filter(Boolean).join("\n");
@@ -563,15 +595,24 @@ export async function structureConceptBody(
         optionalDepth && quick.length > 0
           ? `<div class="concept-depth-quick">${await renderSections(quick, renderFragment, locale)}</div>`
           : await renderSections(quick, renderFragment, locale);
+      const detailedRenderOptions: RenderSectionsOptions | undefined =
+        optionalDepth
+          ? { omitLabelKinds: new Set<SlotKind>(["detailed"]) }
+          : undefined;
       const detailedHtml =
         detailed.length > 0
           ? `<div class="concept-depth-detailed">${await renderSections(
               detailed,
               renderFragment,
               locale,
+              detailedRenderOptions,
             )}</div>`
           : "";
-      return wrapPart(part.heading, `${quickHtml}${detailedHtml}`);
+      const detailedOnly =
+        optionalDepth && quick.length === 0 && detailed.length > 0;
+      return wrapPart(part.heading, `${quickHtml}${detailedHtml}`, {
+        detailedOnly,
+      });
     }),
   );
 

@@ -100,11 +100,21 @@ export function dispatchSidebarCollapseAll() {
   window.dispatchEvent(new Event(SIDEBAR_COLLAPSE_ALL_EVENT));
 }
 
+let collapseTracksOnSectionChange = false;
+
 export function dispatchSidebarCollapseTracks() {
+  collapseTracksOnSectionChange = true;
   if (typeof window === "undefined") {
     return;
   }
   window.dispatchEvent(new Event(SIDEBAR_COLLAPSE_TRACKS_EVENT));
+}
+
+/** True when Conspect/Interviews was switched from the radio (tracks stay closed). */
+export function consumeCollapseTracksOnSectionChange(): boolean {
+  const next = collapseTracksOnSectionChange;
+  collapseTracksOnSectionChange = false;
+  return next;
 }
 
 export function foldRevision(
@@ -403,8 +413,13 @@ function syncOpenState({
     return;
   }
   if (!leftSearch && activeRootSectionId !== snapshot.activeRootSectionId) {
-    collapseAllSidebarTracks(setOpenTrackIds, setTrackFolds);
     setOpenRootSectionIds(new Set([activeRootSectionId]));
+    if (consumeCollapseTracksOnSectionChange() || !activeTrackScope) {
+      collapseAllSidebarTracks(setOpenTrackIds, setTrackFolds);
+      return;
+    }
+    setOpenTrackIds(new Set([activeTrackScope]));
+    setTrackFolds(new Map([[activeTrackScope, location]]));
     return;
   }
   if (

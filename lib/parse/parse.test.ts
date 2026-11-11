@@ -1,10 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  canonicalLinkHash,
   collectConceptBlocks,
   extractInterviewAnchorTitles,
   parseTopicOutline,
 } from "./parse";
+
+test("canonicalLinkHash turns nodejs hashes into slugify(title) ids", () => {
+  assert.equal(
+    canonicalLinkHash(
+      "How does Node.js handle child threads?",
+      "#how-does-nodejs-handle-child-threads",
+    ),
+    "#how-does-node-js-handle-child-threads",
+  );
+  assert.equal(canonicalLinkHash("Event loop", "#event-loop"), "#event-loop");
+  assert.equal(
+    canonicalLinkHash("Interview", "#interview-practice"),
+    "#interview-practice",
+  );
+});
 
 test("collectConceptBlocks strips duplicate heading after anchor preamble", () => {
   const blocks = collectConceptBlocks(`
@@ -250,4 +266,105 @@ Short prompt.
 `);
 
   assert.deepEqual(titles, ["What is a closure?", "Implement debounce"]);
+});
+
+test("stripDuplicateHeadingsInDetails removes redundant h3 after summary", () => {
+  const blocks = collectConceptBlocks(`
+<details>
+<summary>What is Redux?</summary>
+
+### What is Redux?
+
+**Definition:** Store.
+</details>
+`);
+  assert.equal(blocks.length, 1);
+  assert.doesNotMatch(blocks[0].body, /^### What is Redux/m);
+});
+
+test("interview collection wrappers stay one block in collectConceptBlocks", () => {
+  const blocks = collectConceptBlocks(`
+## Interview Practice
+
+<details>
+<summary>100+ React questions (GFE)</summary>
+
+<!-- gfe-article-wrapper -->
+
+<details>
+<summary>1. What is React?</summary>
+
+**Definition:** Library.
+</details>
+
+</details>
+`);
+
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].title, "100+ React questions (GFE)");
+});
+
+test("interview collection wrappers flatten to grouped questions in the outline", () => {
+  const outline = parseTopicOutline(`
+## Interview Practice
+
+<details>
+<summary>JavaScript Fundamentals</summary>
+
+<!-- interview-group-wrapper -->
+
+<details>
+<summary>What are the data types present in JavaScript?</summary>
+
+**Definition:** Primitive and composite types.
+</details>
+
+<details>
+<summary>What is the difference between null and undefined?</summary>
+
+**Definition:** Distinct empty values.
+</details>
+
+</details>
+`);
+
+  assert.equal(outline.length, 2);
+  assert.equal(outline[0]?.group, "JavaScript Fundamentals");
+  assert.equal(
+    outline[0]?.title,
+    "What are the data types present in JavaScript?",
+  );
+  assert.equal(
+    outline[0]?.id,
+    "what-are-the-data-types-present-in-javascript",
+  );
+  assert.equal(outline[1]?.group, "JavaScript Fundamentals");
+  assert.equal(
+    outline[1]?.title,
+    "What is the difference between null and undefined?",
+  );
+});
+
+test("gfe article wrappers flatten to child questions in the outline", () => {
+  const outline = parseTopicOutline(`
+## Interview Practice
+
+<details>
+<summary>100+ React questions (GFE)</summary>
+
+<!-- gfe-article-wrapper -->
+
+<details>
+<summary>1. What is React?</summary>
+
+**Definition:** Library.
+</details>
+
+</details>
+`);
+
+  assert.equal(outline.length, 1);
+  assert.equal(outline[0]?.group, "100+ React questions (GFE)");
+  assert.equal(outline[0]?.title, "1. What is React?");
+  assert.equal(outline[0]?.id, "1-what-is-react");
 });
