@@ -28,6 +28,7 @@ import { catalogBlurb } from "@/lib/i18n/catalog";
 import { FALLBACK_NOTE_BADGE } from "@/lib/i18n/chrome";
 import { isLocale, localeStaticParams, type Locale } from "@/lib/i18n/locales";
 import { withLocale } from "@/lib/i18n/paths";
+import { shouldShowTopicIndexTitle } from "@/lib/nav/navUtils";
 import {
   loadTopicPage,
   loadTypesHubConcepts,
@@ -284,7 +285,11 @@ export default async function TopicPage({
     groupedHubConcepts !== undefined ||
     pageConcepts.some((concept) => Boolean(concept.group)) ||
     (isInterviewTopic(loaded.topic) && !isInterviewTasksTopic(loaded.topic));
-  const showTopicIndexTitle = !groupConceptSections;
+  const showTopicIndexTitle = shouldShowTopicIndexTitle(
+    loaded.topic.title,
+    pageConcepts,
+    groupConceptSections,
+  );
 
   return (
     <main className="handbook-topic-main w-full max-w-3xl px-4 pt-5 pb-10 sm:px-6">

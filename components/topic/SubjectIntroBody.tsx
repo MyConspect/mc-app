@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useHandbookLocation } from "@/components/nav/hooks/useHandbookLocation";
+import { resolveConceptId } from "@/lib/nav/conceptHash";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { ConceptList } from "./ConceptList";
 import { TopicNavConceptsProvider } from "./context/TopicNavConceptsContext";
@@ -21,7 +22,9 @@ export function SubjectIntroBody({
   clusterHub: ReactNode;
 }) {
   const { location } = useHandbookLocation();
-  const hashId = hashIdFrom(location.hash);
+  const hashId =
+    resolveConceptId(hashIdFrom(location.hash), concepts) ||
+    hashIdFrom(location.hash);
   const conceptOpen = concepts.some((concept) => concept.id === hashId);
 
   return (

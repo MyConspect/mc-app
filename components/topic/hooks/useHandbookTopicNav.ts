@@ -2,9 +2,11 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
+import { conceptBackHref } from "@/components/nav/utils/conceptNavBack";
 import {
   followHandbookHref,
   clearConceptHash,
+  suppressNextConceptNavRecord,
 } from "@/components/nav/utils/hash";
 import { useHandbookLocation } from "@/components/nav/hooks/useHandbookLocation";
 import {
@@ -21,6 +23,7 @@ import {
   siblingNavHrefForPath,
 } from "@/components/nav/utils/location";
 import { useTopicNavConcepts } from "@/components/topic/context/TopicNavConceptsContext";
+import { resolveConceptId } from "@/lib/nav/conceptHash";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { useHandbookNavGroups } from "@/components/nav/context/handbookNavContext";
 import { useSearchCorpus } from "@/components/nav/utils/searchCorpus";
@@ -41,7 +44,8 @@ function siblingHrefFromConceptIds(
   hash: string,
   delta: -1 | 1,
 ): string | null {
-  const conceptId = hashIdFrom(hash);
+  const conceptId =
+    resolveConceptId(hashIdFrom(hash), concepts) || hashIdFrom(hash);
   if (!conceptId || concepts.length <= 1) {
     return null;
   }
@@ -145,6 +149,13 @@ export function useHandbookTopicNav(options?: {
         -1,
       );
     }
+    const fromHistory =
+      conceptOpen && resolvedConceptId
+        ? conceptBackHref(location.pathname, resolvedConceptId)
+        : null;
+    if (fromHistory !== null) {
+      return fromHistory;
+    }
     if (topicScopedSibling?.prev != null) {
       return topicScopedSibling.prev;
     }
@@ -199,7 +210,7 @@ export function useHandbookTopicNav(options?: {
   }, [navGroups, location.pathname, navHash, chrome.home, chrome.instructions]);
 
   const navigate = useCallback(
-    (href: string | null) => {
+    (href: string | null, options?: { suppressConceptNavRecord?: boolean }) => {
       if (!href) {
         return;
       }
@@ -210,6 +221,9 @@ export function useHandbookTopicNav(options?: {
         }
         clearConceptHash(false);
         return;
+      }
+      if (options?.suppressConceptNavRecord) {
+        suppressNextConceptNavRecord();
       }
       followHandbookHref(
         href,
@@ -224,7 +238,7 @@ export function useHandbookTopicNav(options?: {
   );
 
   const goBack = useCallback(() => {
-    navigate(prevHref);
+    navigate(prevHref, { suppressConceptNavRecord: true });
   }, [navigate, prevHref]);
 
   const goNext = useCallback(() => {

@@ -20,6 +20,9 @@ import {
   filterInterviewConcepts,
   isRedundantTopicConceptTitle,
   navTopicWithLiveConcepts,
+  sameTitle,
+  shouldShowTopicConceptFold,
+  withoutRedundantTopicTitles,
 } from "@/lib/nav/navUtils";
 import { useTopicNavConcepts } from "@/components/topic/context/TopicNavConceptsContext";
 import { navTopicTreeContainsHref } from "@/lib/nav/topicTree";
@@ -101,6 +104,14 @@ function visibleConcepts(topic: NavTopic, query: string, mode: SearchMode) {
       : topic.concepts.filter((concept) =>
           conceptMatchesQuery(concept, needle, mode),
         );
+  const nested = withoutRedundantTopicTitles(
+    topic.title,
+    matched,
+    (concept) => concept.title,
+  );
+  if (nested.length > 0) {
+    return nested;
+  }
   const only = matched.length === 1 ? matched[0] : undefined;
   if (only && isRedundantTopicConceptTitle(topic.title, only.title)) {
     if (
@@ -221,7 +232,9 @@ function ConceptItems({
         const pinPath = navPathPinned(onPath, true, stackPathPins);
         const showGroup =
           Boolean(concept.group) &&
-          concept.group !== concepts[index - 1]?.group;
+          concept.group !== concepts[index - 1]?.group &&
+          !sameTitle(concept.group, topic.title) &&
+          !sameTitle(concept.group, concept.title);
         const groupPad = index === 0 ? "pt-1" : "pt-3";
         return (
           <li key={concept.id} className="contents">
@@ -294,7 +307,13 @@ const SectionTopicLink = memo(function SectionTopicLink({
     : filterInterviewConcepts(navTopic, concepts);
   const showConceptNav =
     !navTopic.hideSidebarConcepts && sidebarConcepts.length > 0;
-  const showTopicFold = showConceptNav && sidebarConcepts.length > 1;
+  const showTopicFold =
+    showConceptNav &&
+    shouldShowTopicConceptFold(
+      navTopic.title,
+      navTopic.concepts,
+      sidebarConcepts.length,
+    );
   const topicFoldOpen = openTopicHref === topic.href;
   const topicOpen = searching ? showConceptNav : showTopicFold && topicFoldOpen;
 
@@ -497,7 +516,12 @@ export function TopicRow({
     sidebarConcepts.length > 0 &&
     !hasNestedTopics;
   const showTopicFold =
-    (showConceptNav && sidebarConcepts.length > 1) ||
+    (showConceptNav &&
+      shouldShowTopicConceptFold(
+        navTopic.title,
+        navTopic.concepts,
+        sidebarConcepts.length,
+      )) ||
     (hasNestedTopics && nestedTopics.length > 1);
   const showLoneNested =
     hasNestedTopics && nestedTopics.length === 1 && !showConceptNav;

@@ -1,6 +1,26 @@
 import { splitHref } from "@/lib/nav";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { setBookmarkNavMode } from "./bookmarkNavMode";
+import { clearConceptNavForPath, recordConceptNav } from "./conceptNavBack";
+
+let suppressConceptNavRecord = false;
+
+/** Skip recording on the next same-document hash change (concept back/forward chrome). */
+export function suppressNextConceptNavRecord() {
+  suppressConceptNavRecord = true;
+}
+
+function maybeRecordConceptNav(
+  pathname: string,
+  fromConceptId: string,
+  toConceptId: string,
+) {
+  if (suppressConceptNavRecord) {
+    suppressConceptNavRecord = false;
+    return;
+  }
+  recordConceptNav(pathname, fromConceptId, toConceptId);
+}
 
 export { hashIdFrom };
 
@@ -106,6 +126,11 @@ export function applySameDocumentHref(
     return true;
   }
   if (nextPath === currentPath) {
+    maybeRecordConceptNav(
+      nextPath,
+      hashIdFrom(currentHash),
+      hashIdFrom(nextHash),
+    );
     window.history.replaceState(
       window.history.state,
       "",
@@ -170,6 +195,7 @@ export function setHashOnPath(pathname: string, id: string, scroll = true) {
     `${window.location.pathname}${window.location.search}${window.location.hash}` !==
     url
   ) {
+    maybeRecordConceptNav(pathname, hashIdFrom(window.location.hash), id);
     window.history.replaceState(window.history.state, "", url);
   }
   clearPendingPathHash();
@@ -195,6 +221,7 @@ export function clearConceptHash(scroll = false) {
   if (`${next}${window.location.hash}` !== next) {
     window.history.replaceState(window.history.state, "", next);
   }
+  clearConceptNavForPath(window.location.pathname);
   clearPendingPathHash();
   dispatchHashChange(scroll);
 }

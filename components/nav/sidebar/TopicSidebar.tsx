@@ -90,13 +90,13 @@ export const TopicSidebar = memo(function TopicSidebar({
   searchLoading?: boolean;
   hideNavChromeOnMobile?: boolean;
 }) {
-  const { pathname, highlightPathname, hash } = useHandbookLocation();
+  const { pathname, highlightPathname, location, hash } = useHandbookLocation();
   const mode = useSearchMode();
   const pathGroups = useMemo(
-    () => navGroupsForPath(sections, pathname),
-    [sections, pathname],
+    () => navGroupsForPath(sections, highlightPathname),
+    [sections, highlightPathname],
   );
-  const activeRootSectionId = inferNavRootSection(pathname);
+  const activeRootSectionId = inferNavRootSection(highlightPathname);
   const scopedGroups = useMemo(
     () =>
       sections.flatMap((section) =>
@@ -135,8 +135,8 @@ export const TopicSidebar = memo(function TopicSidebar({
     patchTrackFold,
   } = useSidebarOpen({
     sections,
-    pathname,
-    hash,
+    pathname: highlightPathname,
+    hash: location.hash || hash,
     searching,
     activeRootSectionId,
   });
@@ -147,12 +147,13 @@ export const TopicSidebar = memo(function TopicSidebar({
     },
     [router],
   );
-  const navRevision = `${foldRevision(trackFolds, openTrackIds)}|${pathname}|${hash}`;
+  const navHash = location.hash || hash;
+  const navRevision = `${foldRevision(trackFolds, openTrackIds)}|${highlightPathname}|${navHash}`;
   const stickyRevision = `${navRevision}|${searching}`;
   useSidebarAsideScroll({
     searching,
-    pathname,
-    hash,
+    pathname: highlightPathname,
+    hash: navHash,
     navRevision,
     firstHref,
     activeConceptId,

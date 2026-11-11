@@ -1,6 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { nextConceptHash } from "./conceptHash";
+import { nextConceptHash, resolveConceptId } from "./conceptHash";
+
+test("resolveConceptId maps Node.js hashes that omit the extra hyphen", () => {
+  const concepts = [
+    { id: "how-does-node-js-handle-child-threads" },
+    { id: "what-is-the-event-loop-in-node-js" },
+    { id: "explain-process-nexttick" },
+  ];
+  assert.equal(
+    resolveConceptId("how-does-nodejs-handle-child-threads", concepts),
+    "how-does-node-js-handle-child-threads",
+  );
+  assert.equal(
+    resolveConceptId("explain-processnexttick", concepts),
+    "explain-process-nexttick",
+  );
+  assert.equal(
+    resolveConceptId("how-does-node-js-handle-child-threads", concepts),
+    "how-does-node-js-handle-child-threads",
+  );
+  assert.equal(resolveConceptId("missing-question", concepts), "");
+});
+
 
 const concepts = [
   { id: "closures", title: "Closures" },

@@ -1,8 +1,8 @@
 "use client";
 
 import { useLayoutEffect, useMemo } from "react";
-import { HANDBOOK_MAIN_ID } from "@/constants";
 import { useHandbookLocation } from "@/components/nav/hooks/useHandbookLocation";
+import { resetHandbookReadingScroll } from "@/components/topic/utils/conceptScroll";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { ClusterCardSections } from "./ClusterCardSections";
 import type { BrowseCard } from "@/lib/catalog";
@@ -103,10 +103,7 @@ export function SubjectClusterHub({
     if (!focusedClusterId) {
       return;
     }
-    const main = document.getElementById(HANDBOOK_MAIN_ID);
-    if (main instanceof HTMLElement) {
-      main.scrollTop = 0;
-    }
+    resetHandbookReadingScroll();
   }, [focusedClusterId, location.pathname]);
 
   return (

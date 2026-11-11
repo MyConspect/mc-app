@@ -187,8 +187,43 @@ export function slugify(value: string): string {
   return slug || "section";
 }
 
+function compactSlug(id: string): string {
+  return id.replace(/-/g, "");
+}
+
+/** Align a markdown hash with `slugify(link text)` when it is clearly the same concept. */
+export function canonicalLinkHash(
+  linkText: string,
+  hash: string | undefined,
+): string | undefined {
+  if (!hash) {
+    return undefined;
+  }
+  const raw = hash.replace(/^#/, "");
+  if (!raw) {
+    return undefined;
+  }
+  const fromText = slugify(linkText);
+  if (raw === fromText) {
+    return `#${raw}`;
+  }
+  const compactRaw = compactSlug(raw);
+  const compactText = compactSlug(fromText);
+  if (compactRaw === compactText) {
+    return `#${fromText}`;
+  }
+  if (raw.startsWith("q-") && fromText.length >= 12) {
+    return `#${fromText}`;
+  }
+  if (fromText.length === 96 && compactRaw.startsWith(compactText)) {
+    return `#${fromText}`;
+  }
+  return `#${raw}`;
+}
+
 function rewriteNoteLinks(markdown: string, locale: Locale): string {
-  const mdLinks = /\]\((?:\.\.\/)?(?:\.\/)?(\d+_[a-z0-9_]+\.md)(#[^)\s]*)?\)/gi;
+  const mdLinks =
+    /\[([^\]]+)\]\((?:\.\.\/)?(?:\.\/)?(\d+_[a-z0-9_]+\.md)(#[^)\s]*)?\)/gi;
   const hrefs = /href="(?:\.\.\/)?(?:\.\/)?(\d+_[a-z0-9_]+\.md)(#[^"]*)?"/gi;
 
   const replaceFile = (
@@ -203,10 +238,13 @@ function rewriteNoteLinks(markdown: string, locale: Locale): string {
   };
 
   return markdown
-    .replace(mdLinks, (full, file: string, hash?: string) => {
-      const next = replaceFile(file, hash);
-      return next ? `](${next})` : full;
-    })
+    .replace(
+      mdLinks,
+      (full, text: string, file: string, hash?: string) => {
+        const next = replaceFile(file, canonicalLinkHash(text, hash));
+        return next ? `[${text}](${next})` : full;
+      },
+    )
     .replace(hrefs, (full, file: string, hash?: string) => {
       const next = replaceFile(file, hash);
       return next ? `href="${next}"` : full;
@@ -295,7 +333,8 @@ async function collectConcepts(
   const interviewConcepts = interviewConceptItems(
     interview,
     usedIds,
-    renderInterviewConcept,
+    (block) =>
+      renderHtml(stripDuplicateHeadingsInDetails(block.body), options),
     anchorTitles,
     options.hideAnswers ?? false,
   );
@@ -534,44 +573,57 @@ function shouldExpandInterviewWrapper(block: ConceptBlock): boolean {
   if (!block.body.includes("<details")) {
     return false;
   }
-  if (isInterviewCollectionWrapper(block)) {
-    return false;
-  }
   if (isInterviewQuestionTitle(block.title)) {
     return false;
-  }
-  if (isInterviewSectionTitle(block.title)) {
-    return true;
   }
   const nested = collectConceptBlocks(block.body);
   if (nested.length === 0) {
     return false;
   }
+  if (
+    isInterviewCollectionWrapper(block) ||
+    isInterviewSectionTitle(block.title)
+  ) {
+    return nested.some(isInterviewQuestionBlock);
+  }
   const questionCount = nested.filter(isInterviewQuestionBlock).length;
   return questionCount > 0 && questionCount >= nested.length / 2;
 }
 
+function wrapperGroupName(block: ConceptBlock): string | undefined {
+  if (
+    isInterviewSectionTitle(block.title) ||
+    isInterviewQuestionTitle(block.title)
+  ) {
+    return block.group;
+  }
+  return block.title;
+}
+
 function flattenInterviewBlocks(
   blocks: readonly ConceptBlock[],
+  inheritedGroup?: string,
 ): ConceptBlock[] {
   const result: ConceptBlock[] = [];
   for (const block of blocks) {
     if (shouldExpandInterviewWrapper(block)) {
-      result.push(...flattenInterviewBlocks(collectConceptBlocks(block.body)));
+      const group = wrapperGroupName(block) ?? inheritedGroup;
+      const children = collectConceptBlocks(block.body).map((child) => ({
+        ...child,
+        ...(child.group || !group ? {} : { group }),
+      }));
+      result.push(...flattenInterviewBlocks(children, group));
       continue;
     }
     if (isInterviewQuestionBlock(block)) {
-      result.push(block);
+      result.push(
+        inheritedGroup && !block.group
+          ? { ...block, group: inheritedGroup }
+          : block,
+      );
     }
   }
   return result;
-}
-
-async function renderInterviewConcept(block: ConceptBlock): Promise<string> {
-  if (block.body.includes("<details")) {
-    return renderFragment(stripDuplicateHeadingsInDetails(block.body));
-  }
-  return renderHtml(block.body);
 }
 
 function normalizeConceptTitle(title: string): string {
