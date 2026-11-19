@@ -5,8 +5,11 @@ import {
   CONCEPT_INDEX_CLUSTER_SECTION,
   CONCEPT_INDEX_GROUP_HEADING,
   CONCEPT_INDEX_HEADING_LINK,
+  CONCEPT_INDEX_HEADING_TO_LIST,
 } from "@/components/topic/conceptIndexStyles";
 import { ConceptIndexCardGrid } from "./ConceptIndexCardGrid";
+
+const TOPIC_GROUP_INNER_LEADING_TITLE = "Overview";
 
 export function ClusterTopicGroupIndexSection({
   heading,
@@ -25,8 +28,16 @@ export function ClusterTopicGroupIndexSection({
         </Link>
       </h3>
       {items.length > 0 ? (
-        <div className="mt-1.5">
-          <ConceptIndexCardGrid items={items} />
+        <div className={CONCEPT_INDEX_HEADING_TO_LIST}>
+          <ConceptIndexCardGrid
+            items={items}
+            sectionHeadingVisible
+            leadingGroupTitle={
+              items.some((item) => item.indexRowKind === "group-heading")
+                ? TOPIC_GROUP_INNER_LEADING_TITLE
+                : heading.title
+            }
+          />
         </div>
       ) : null}
     </section>

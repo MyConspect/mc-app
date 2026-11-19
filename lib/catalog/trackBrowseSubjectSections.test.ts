@@ -32,7 +32,7 @@ test("Node.js track browse lists Core, Modules, HTTP, and Additional as bullets"
   );
 });
 
-test("Computer Science track browse lists Computer science under Core subject", () => {
+test("Computer Science track browse lists Core cluster topic under Core subject", () => {
   const core = getSubject("computer-science", "core");
   assert.ok(core);
   const sections = localizedClusterSectionsForSubject(
@@ -47,7 +47,7 @@ test("Computer Science track browse lists Computer science under Core subject", 
   assert.equal(normalized.length, 1);
   assert.deepEqual(
     normalized[0]?.items.map((item) => item.title),
-    ["Computer science"],
+    ["Computer Science"],
   );
   assert.ok(
     normalized[0]?.items[0]?.href.includes(

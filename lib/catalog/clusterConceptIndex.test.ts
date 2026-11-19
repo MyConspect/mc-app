@@ -3,14 +3,34 @@ import test from "node:test";
 import { getSubject } from "@/lib/catalog";
 import { subjectClusterSectionsForLocale } from "./localizeSubjectClusters";
 
-test("title-twin cluster on subject hub lists one topic link only", () => {
+test("computer-science Core hub lists Computer Science concepts on the subject index", () => {
   const core = getSubject("computer-science", "core");
   assert.ok(core);
   const sections = subjectClusterSectionsForLocale("en", core);
   assert.equal(sections.length, 1);
-  assert.equal(sections[0]?.cluster.title, "Computer science");
-  assert.equal(sections[0]?.items.length, 0);
+  assert.equal(sections[0]?.cluster.title, "Computer Science");
+  assert.ok((sections[0]?.items.length ?? 0) > 0);
   assert.match(sections[0]?.headingHref ?? "", /computer-science$/);
+  const titles = sections[0]?.items.map((item) => item.title) ?? [];
+  assert.ok(titles.includes("Programming paradigm"));
+  assert.ok(titles.includes("Logic programming"));
+});
+
+test("data-structures subject hub lists concepts under each cluster", () => {
+  const dataStructures = getSubject("computer-science", "data-structures");
+  assert.ok(dataStructures);
+  const sections = subjectClusterSectionsForLocale("en", dataStructures);
+  const linear = sections.find((section) => section.cluster.id === "linear");
+  const trees = sections.find((section) => section.cluster.id === "trees");
+  const advanced = sections.find(
+    (section) => section.cluster.id === "advanced",
+  );
+  assert.ok(linear);
+  assert.ok(trees);
+  assert.ok(advanced);
+  assert.ok((linear.items.length ?? 0) > 0);
+  assert.ok((trees.items.length ?? 0) > 0);
+  assert.ok((advanced.items.length ?? 0) > 0);
 });
 
 test("frontend Core Accessibility index omits GFE interview group row", () => {
@@ -53,7 +73,7 @@ test("System design subject hub index depth", () => {
   const sections = subjectClusterSectionsForLocale("en", systemDesign);
   const sdCore = sections.find((section) => section.cluster.id === "core");
   assert.ok(sdCore);
-  assert.equal(sdCore.items.length, 0);
+  assert.ok(sdCore.items.length > 0);
   assert.match(sdCore.headingHref ?? "", /sd-core/);
   const principles = sections.find(
     (section) => section.cluster.id === "principles",

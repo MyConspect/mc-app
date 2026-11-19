@@ -13,6 +13,7 @@ import type { ChromeCopy } from "@/lib/nav";
 import type { Concept } from "@/lib/parse";
 import {
   CONCEPT_INDEX_CLUSTER_SECTION,
+  CONCEPT_INDEX_HEADING_TO_LIST,
   CONCEPT_INDEX_DOT_INTERACTIVE,
   CONCEPT_INDEX_LINK,
   CONCEPT_INDEX_ROW,
@@ -106,12 +107,20 @@ export function ConceptGroupIndexSection({
         <ConceptGroupSectionHeader title={group.label} chrome={chrome} />
       ) : null}
       {sectionConcepts.length > 0 ? (
-        <ConceptIndexList
-          concepts={sectionConcepts}
-          query={query}
-          pathname={pathname}
-          chrome={chrome}
-        />
+        <div
+          className={
+            group.label && !suppressHeading
+              ? CONCEPT_INDEX_HEADING_TO_LIST
+              : undefined
+          }
+        >
+          <ConceptIndexList
+            concepts={sectionConcepts}
+            query={query}
+            pathname={pathname}
+            chrome={chrome}
+          />
+        </div>
       ) : null}
     </section>
   );

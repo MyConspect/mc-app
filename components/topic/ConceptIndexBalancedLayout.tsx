@@ -23,20 +23,24 @@ export type ConceptIndexEntriesSource =
 export function ConceptIndexBalancedLayout({
   entries,
   layoutMode,
-  usePaneColumnFlow = false,
+  usePaneColumnFlow = true,
   paneHeightPx = 640,
   columnNeedOptions,
   widthColumnCapacity,
+  indexRootClassName,
+  paneMeasureRef,
 }: {
   readonly entries: ConceptIndexEntriesSource;
   readonly layoutMode?: ConceptIndexLayoutMode;
-  /** Stacked vertical sections by default; pane flow only when explicitly enabled. */
+  /** Multi-column newspaper flow when layoutMode is omitted (off = single stack). */
   readonly usePaneColumnFlow?: boolean;
   /** Measured main-column height for packing (client). */
   readonly paneHeightPx?: number;
   readonly columnNeedOptions?: ConceptIndexLayoutColumnNeedOptions;
   /** Measured index-pane column capacity (parent `.handbook-subject-index-body`). */
   readonly widthColumnCapacity?: number;
+  readonly indexRootClassName?: string;
+  readonly paneMeasureRef?: (element: HTMLDivElement | null) => void;
   /** @deprecated Wide grid spans are unused; newspaper flow handles layout. */
   readonly allowWideSectionTracks?: boolean;
 }) {
@@ -46,7 +50,8 @@ export function ConceptIndexBalancedLayout({
   );
 
   const mode: ConceptIndexLayoutMode =
-    layoutMode ?? (usePaneColumnFlow ? "newspaper" : "stack");
+    layoutMode ??
+    (resolvedEntries.length > 1 && usePaneColumnFlow ? "newspaper" : "stack");
 
   if (resolvedEntries.length === 0) {
     return null;
@@ -66,7 +71,10 @@ export function ConceptIndexBalancedLayout({
 
   if (mode === "stack") {
     return (
-      <div className="concept-list-index w-full space-y-8">
+      <div
+        ref={paneMeasureRef}
+        className={`concept-list-index w-full space-y-8${indexRootClassName ? ` ${indexRootClassName}` : ""}`}
+      >
         {resolvedEntries.map((entry) => (
           <div key={entry.key}>{entry.node}</div>
         ))}
@@ -81,6 +89,8 @@ export function ConceptIndexBalancedLayout({
       columnNeedOptions={columnNeedOptions}
       paneHeightPx={paneHeightPx}
       widthColumnCapacity={widthColumnCapacity}
+      rootClassName={indexRootClassName}
+      paneMeasureRef={paneMeasureRef}
     />
   );
 }

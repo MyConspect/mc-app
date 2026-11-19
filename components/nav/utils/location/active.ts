@@ -99,6 +99,17 @@ export function closedSectionKey(subjectHref: string, sectionId: string) {
   return `!${sectionKey(subjectHref, sectionId)}`;
 }
 
+export function closedSubjectKey(subjectHref: string) {
+  return `!${subjectHref}`;
+}
+
+export function isSubjectForceClosed(
+  subjectHref: string,
+  openSubjectHref: string | null | undefined,
+): boolean {
+  return openSubjectHref === closedSubjectKey(subjectHref);
+}
+
 export function isNavSectionOpen(
   section: { readonly id: string; readonly defaultOpen?: boolean },
   subjectHref: string,

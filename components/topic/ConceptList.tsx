@@ -44,7 +44,8 @@ import type { ConceptDepthPreference } from "@/components/nav/utils/uiStorage";
 import { useCodeCopyButtons } from "./hooks/useCodeCopyButtons";
 import { useConceptKeyboardNav } from "./hooks/useConceptKeyboardNav";
 import { useHandbookTopicNav } from "./hooks/useHandbookTopicNav";
-import { ConceptIndexBalancedLayout } from "./ConceptIndexBalancedLayout";
+import { ConceptIndexList as ConceptIndexNavList } from "./ConceptGroupIndexSection";
+import { ConceptIndexPaneLayout } from "./ConceptIndexPaneLayout";
 import { buildConceptIndexBalancedEntries } from "./buildConceptIndexBalancedEntries";
 import {
   conceptsForIndexSection,
@@ -54,8 +55,14 @@ import {
 import {
   CONCEPT_INDEX_DOT_INTERACTIVE,
   CONCEPT_INDEX_LINK,
+  CONCEPT_INDEX_HEADING_TO_LIST,
   CONCEPT_INDEX_ROW,
+  CONCEPT_INDEX_CLUSTER_SECTION,
+  HANDBOOK_INDEX_PANE_LIST_SLOT,
+  HANDBOOK_INDEX_PANE_SECTION,
 } from "./conceptIndexStyles";
+import { conceptIndexLayoutModeForEntries } from "@/lib/catalog/conceptIndexPaneLayoutMode";
+import { TopicPageTitle } from "./TopicPageTitle";
 
 export function ConceptList({
   concepts,
@@ -64,7 +71,8 @@ export function ConceptList({
   embedInParentGrid = false,
   topicTitle,
   interviewAccordionIndex = false,
-  usePaneColumnFlow = false,
+  usePaneColumnFlow = true,
+  indexHeading,
 }: {
   concepts: readonly Concept[];
   emptyMessage: string;
@@ -75,8 +83,10 @@ export function ConceptList({
   topicTitle?: string;
   /** Interview Q&A: section list + hash drilldown — not for theory topics with `group`. */
   interviewAccordionIndex?: boolean;
-  /** Multi-column pane flow (`handbook-subject-index-body`); off on leaf topic pages. */
+  /** Newspaper columns when multiple sections; set false for a vertical stack only. */
   usePaneColumnFlow?: boolean;
+  /** Leaf topic index H1 — omitted on concept detail (`#hash`). */
+  indexHeading?: string;
 }) {
   const query = useSearchQuery();
   const mode = useSearchMode();
@@ -241,7 +251,7 @@ export function ConceptList({
           chrome={chrome}
         />
         {sectionConcepts.length > 0 ? (
-          <ConceptIndexList
+          <ConceptIndexNavList
             concepts={sectionConcepts}
             query={query}
             chrome={chrome}
@@ -261,7 +271,7 @@ export function ConceptList({
           chrome={chrome}
         />
         {sectionConcepts.length > 0 ? (
-          <ConceptIndexList
+          <ConceptIndexNavList
             concepts={sectionConcepts}
             query={query}
             chrome={chrome}
@@ -334,7 +344,7 @@ export function ConceptList({
       return null;
     }
     return (
-      <section key={group.key} className="min-w-0 w-full max-w-full">
+      <section key={group.key} className={CONCEPT_INDEX_CLUSTER_SECTION}>
         {group.label ? (
           <ConceptGroupSectionHeader
             title={sectionRowTitle(group.label)}
@@ -342,89 +352,84 @@ export function ConceptList({
           />
         ) : null}
         {sectionConcepts.length > 0 ? (
-          <ConceptIndexList
-            concepts={sectionConcepts}
-            query={query}
-            chrome={chrome}
-            pathname={pathname}
-          />
+          <div className={group.label ? CONCEPT_INDEX_HEADING_TO_LIST : undefined}>
+            <ConceptIndexNavList
+              concepts={sectionConcepts}
+              query={query}
+              chrome={chrome}
+              pathname={pathname}
+            />
+          </div>
         ) : null}
       </section>
     );
   });
 
+  const indexBody = (
+    <>
+      {indexSections}
+    </>
+  );
+
   if (embedInParentGrid) {
-    return <>{indexSections}</>;
+    if (!indexHeading?.trim()) {
+      return indexBody;
+    }
+    return (
+      <section className={CONCEPT_INDEX_CLUSTER_SECTION}>
+        <TopicPageTitle title={indexHeading} />
+        <div className={CONCEPT_INDEX_HEADING_TO_LIST}>{indexBody}</div>
+      </section>
+    );
   }
 
-  if (!interviewAccordionDrilldown && balancedEntries.length > 1) {
+  const paneLayoutMode = usePaneColumnFlow
+    ? conceptIndexLayoutModeForEntries(balancedEntries, {
+        preferNewspaperFrom: 1,
+      })
+    : conceptIndexLayoutModeForEntries(balancedEntries);
+  if (
+    !interviewAccordionDrilldown &&
+    paneLayoutMode === "newspaper"
+  ) {
+    if (!indexHeading?.trim()) {
+      return (
+        <ConceptIndexPaneLayout
+          entries={balancedEntries}
+          layoutMode={paneLayoutMode}
+        />
+      );
+    }
     return (
-      <ConceptIndexBalancedLayout
-        entries={balancedEntries}
-        usePaneColumnFlow={usePaneColumnFlow}
-      />
+      <section className={HANDBOOK_INDEX_PANE_SECTION}>
+        <TopicPageTitle title={indexHeading} />
+        <ConceptIndexPaneLayout
+          entries={balancedEntries}
+          layoutMode={paneLayoutMode}
+          className={HANDBOOK_INDEX_PANE_LIST_SLOT}
+        />
+      </section>
+    );
+  }
+
+  if (indexHeading?.trim()) {
+    return (
+      <section
+        className={`${CONCEPT_INDEX_CLUSTER_SECTION} concept-list-index w-full`}
+      >
+        <TopicPageTitle title={indexHeading} />
+        <div className={CONCEPT_INDEX_HEADING_TO_LIST}>{indexSections}</div>
+      </section>
     );
   }
 
   return (
-    <div className="concept-list-index w-full space-y-8">{indexSections}</div>
+    <div className="concept-list-index w-full">{indexSections}</div>
   );
 }
 
 const CONCEPT_DETAIL_CARD =
   "concept-detail-article concept-list group relative -mx-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white max-sm:rounded-none sm:mx-0 dark:border-zinc-800 dark:bg-zinc-900";
-
-function ConceptIndexList({
-  concepts,
-  query,
-  chrome,
-  pathname,
-}: {
-  concepts: readonly Concept[];
-  query: string;
-  chrome: ChromeCopy;
-  pathname: string;
-}) {
-  return (
-    <nav aria-label={chrome.topicsNav} className="concept-list">
-      <ul className="list-none">
-        {concepts.map((concept) => (
-          <ConceptIndexRow
-            key={concept.id}
-            concept={concept}
-            query={query}
-            pathname={pathname}
-          />
-        ))}
-      </ul>
-    </nav>
-  );
-}
-
-function ConceptIndexRow({
-  concept,
-  query,
-  pathname,
-}: {
-  concept: Concept;
-  query: string;
-  pathname: string;
-}) {
-  return (
-    <li id={concept.id} className={CONCEPT_INDEX_ROW}>
-      <button
-        type="button"
-        className={CONCEPT_INDEX_LINK}
-        onClick={() => setHashOnPath(pathname, concept.id, false)}
-      >
-        <span aria-hidden="true" className={CONCEPT_INDEX_DOT_INTERACTIVE} />
-        <span className="flex-1 text-pretty transition-colors group-hover:text-yellow-500 dark:group-hover:text-yellow-300">
-          <HighlightedText text={concept.title} query={query} />
-        </span>
-      </button>
-    </li>
-  );
-}
 
 function conceptHasOptionalDepth(concept: Concept): boolean {
   return (

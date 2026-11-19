@@ -1,4 +1,8 @@
-import { conceptIndexColumnCountForContentHeight } from "./conceptIndexColumnMetrics";
+import {
+  CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX,
+  conceptIndexColumnCountForContentHeight,
+  conceptIndexRawColumnCountForWidth,
+} from "./conceptIndexColumnMetrics";
 import { conceptIndexClusterIndexPackWeight } from "./clusterIndexFitsPane";
 
 export type FocusedClusterIndexCounts = {
@@ -28,11 +32,19 @@ function resolvedPackWeight(
 }
 
 /** Columns for a focused multi-topic cluster (width + list weight, min 2 when wide). */
+export type FocusedClusterColumnCountOptions = {
+  readonly viewportWidthPx?: number;
+  readonly contentWidthPx?: number;
+  /** One balanced entry with a long dot list (leaf topic index). */
+  readonly singleLongSection?: boolean;
+};
+
 export function conceptIndexFocusedClusterColumnCount(
   widthCapacity: number,
   packWeight: number,
   paneHeightPx: number,
   counts?: FocusedClusterIndexCounts,
+  options?: FocusedClusterColumnCountOptions,
 ): number {
   if (!Number.isFinite(widthCapacity) || widthCapacity < 1) {
     return 1;
@@ -45,6 +57,19 @@ export function conceptIndexFocusedClusterColumnCount(
   let count = Math.min(widthCapacity, Math.max(1, heightNeed));
   if (widthCapacity >= 2) {
     count = Math.max(count, 2);
+  }
+  const viewport = options?.viewportWidthPx;
+  const contentW = options?.contentWidthPx;
+  const wideViewport =
+    viewport !== undefined &&
+    viewport >= CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX;
+  const paneFitsThreeTracks =
+    contentW === undefined ||
+    contentW <= 0 ||
+    (viewport !== undefined &&
+      conceptIndexRawColumnCountForWidth(contentW, undefined, viewport) >= 3);
+  if (wideViewport && widthCapacity >= 3 && count < 3 && paneFitsThreeTracks) {
+    count = Math.min(widthCapacity, 3);
   }
   return count;
 }

@@ -47,6 +47,8 @@ function theoryOutline(outline: readonly ConceptOutline[]): ConceptOutline[] {
 export type ConceptIndexBrowseCardsOptions = {
   /** Subject hub path for `concept-group-*` hashes (sidebar and cluster drilldown). */
   readonly groupHashBase?: string;
+  /** Parent index already shows the topic `h3` (nested multi-topic expansion). */
+  readonly omitLeadingUngroupedHeading?: boolean;
 };
 
 function subjectPathForGroupedTopic(
@@ -112,14 +114,26 @@ export function conceptIndexBrowseCardsForTopic(
   const cards: BrowseCard[] = [];
 
   if (theoryGroupLabels.length > 0) {
+    const ungrouped: BrowseCard[] = [];
     for (const entry of theory) {
       if (entry.group?.trim()) {
         continue;
       }
       const card = theoryConceptBrowseCard(entry, topicPath, skipTitle);
       if (card) {
-        cards.push(card);
+        ungrouped.push(card);
       }
+    }
+    if (ungrouped.length > 0 && !options?.omitLeadingUngroupedHeading) {
+      cards.push({
+        href: topicPath,
+        title: topic.title,
+        description: "",
+        indexRowKind: "group-heading",
+      });
+      cards.push(...ungrouped);
+    } else if (ungrouped.length > 0) {
+      cards.push(...ungrouped);
     }
     for (const title of theoryGroupLabels.filter(
       (label) => !skipTitle(label) && !sameTitle(cluster.title, label),
@@ -235,6 +249,7 @@ function expandTopicBrowseCards(
     locale,
     {
       groupHashBase: subjectPathForGroupedTopic(topic, locale),
+      omitLeadingUngroupedHeading: true,
     },
   );
   if (expanded.length > 0) {
@@ -360,9 +375,6 @@ function expandClusterSectionForConceptIndex(
   if (!topic) {
     return [section];
   }
-  if (isTitleTwinClusterTopic(section, topic)) {
-    return [{ ...section, cluster, items: [] }];
-  }
   const expanded = conceptIndexBrowseCardsForTopic(cluster, topic, locale, {
     groupHashBase: subjectPathForGroupedTopic(topic, locale),
   });
@@ -372,6 +384,9 @@ function expandClusterSectionForConceptIndex(
   const residual = titleTwinResidualBrowseCards(cluster, topic, locale);
   if (residual.length > 0) {
     return [{ ...section, cluster, items: residual }];
+  }
+  if (isTitleTwinClusterTopic(section, topic)) {
+    return [{ ...section, cluster, items: [] }];
   }
   const theory = theoryOutline(loadTopicOutline(topic, locale));
   if (theory.length > 0) {

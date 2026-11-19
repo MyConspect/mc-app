@@ -1,14 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import {
-  CONCEPT_GROUP_SECTION_INSET,
-  CONCEPT_INDEX_HEADING_LINK,
-  CONCEPT_INDEX_SECTION_HEADING,
-} from "@/components/topic/conceptIndexStyles";
 import type { ConceptIndexBalancedEntry } from "@/components/topic/ConceptIndexBalancedLayout";
+import { CONCEPT_INDEX_CLUSTER_SECTION } from "@/components/topic/conceptIndexStyles";
 import type { BrowseCard } from "@/lib/catalog";
 import { normalizeTrackBrowseSections } from "@/lib/catalog/trackBrowseSubjectSections";
+import { ClusterConceptIndexSection } from "./ClusterCardSections";
 import { CardGrid, type CardItem } from "./CardGrid";
 import type { TrackBrowseIndexBlock } from "./TrackBrowseIndex";
 
@@ -49,19 +45,18 @@ export function buildTrackBrowseBalancedEntries({
       weight: Math.max(1, items.length),
       listItemCount: items.length,
       node: (
-        <div className="min-w-0 w-full max-w-full scroll-mt-24">
-          <h2
-            className={`${CONCEPT_INDEX_SECTION_HEADING} ${CONCEPT_GROUP_SECTION_INSET} scroll-mt-24`}
-          >
-            <Link
-              href={block.subjectHref}
-              className={CONCEPT_INDEX_HEADING_LINK}
-            >
-              {block.subjectTitle}
-            </Link>
-          </h2>
-          <CardGrid items={items} variant="concept-index" />
-        </div>
+        <ClusterConceptIndexSection
+          section={{
+            cluster: {
+              id: `${block.subjectSlug}-track-hub`,
+              title: block.subjectTitle,
+              blurb: "",
+            },
+            headingHref: block.subjectHref,
+            items,
+          }}
+          omitSubjectTitleClusterHeading={false}
+        />
       ),
     });
   }
@@ -74,7 +69,7 @@ export function buildTrackBrowseBalancedEntries({
       weight: trackFlatItems.length,
       listItemCount: trackFlatItems.length,
       node: (
-        <section className="min-w-0 w-full max-w-full scroll-mt-24">
+        <section className={CONCEPT_INDEX_CLUSTER_SECTION}>
           <CardGrid items={trackFlatItems} variant="concept-index" />
         </section>
       ),

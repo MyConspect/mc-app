@@ -1,10 +1,11 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { useHandbookLocation } from "@/components/nav/hooks/useHandbookLocation";
 import { buildConceptIndexBalancedEntries } from "@/components/topic/buildConceptIndexBalancedEntries";
-import { ConceptIndexBalancedLayout } from "@/components/topic/ConceptIndexBalancedLayout";
+import type { ConceptIndexLayoutMode } from "@/components/topic/ConceptIndexBalancedLayout";
+import { ConceptIndexPaneLayout } from "@/components/topic/ConceptIndexPaneLayout";
 import { resetHandbookReadingScroll } from "@/components/topic/utils/conceptScroll";
 import { chromeFor } from "@/lib/i18n/chrome";
 import { localeFromPathname } from "@/lib/i18n/paths";
@@ -22,10 +23,10 @@ import {
   findSubjectClusterSection,
   mergeNestedClusterSection,
 } from "@/lib/catalog/mergeNestedClusterIndexSection";
-import { clusterSectionIndexStats } from "@/lib/catalog/clusterIndexFitsPane";
-import { useConceptIndexPaneHeight } from "@/components/topic/useConceptIndexPaneHeight";
-import { useConceptIndexColumnCount } from "@/components/topic/useConceptIndexColumnCount";
-import type { ConceptIndexLayoutMode } from "@/components/topic/ConceptIndexBalancedLayout";
+import {
+  clusterSectionIndexStats,
+} from "@/lib/catalog/clusterIndexFitsPane";
+import { conceptIndexLayoutModeForEntries } from "@/lib/catalog/conceptIndexPaneLayoutMode";
 import type { Concept } from "@/lib/parse";
 import { ConceptList } from "@/components/topic/ConceptList";
 import { TopicNavConceptsProvider } from "@/components/topic/context/TopicNavConceptsContext";
@@ -126,10 +127,6 @@ export function SubjectClusterHub({
     [clusterLayout, hubFocus],
   );
 
-  const [indexPaneEl, setIndexPaneEl] = useState<HTMLDivElement | null>(null);
-  const paneHeightPx = useConceptIndexPaneHeight(indexPaneEl);
-  const widthColumnCapacity = useConceptIndexColumnCount(indexPaneEl);
-
   const nestedClusterLayout = useMemo(() => {
     if (hubFocus.kind !== "cluster" || !sectionsNested?.length) {
       return filtered;
@@ -200,6 +197,14 @@ export function SubjectClusterHub({
 
   const focusedClusterPaneFlow = hubFocus.kind === "cluster";
 
+  const hubSplitsTopicGroups = useMemo(
+    () =>
+      clusterSectionPools(nestedClusterLayout).some((section) =>
+        section.items.some((item) => item.indexRowKind === "group-heading"),
+      ),
+    [nestedClusterLayout],
+  );
+
   const balancedEntries = useMemo(() => {
     if (hubFocus.kind === "concept-group") {
       return [];
@@ -217,7 +222,7 @@ export function SubjectClusterHub({
       pathname,
       suppressClusterHeadings: focusedClusterId !== null,
       /** One packable unit per topic group (Styles, Data, …) for multi-column grid. */
-      splitClusterTopicGroups: focusedClusterPaneFlow,
+      splitClusterTopicGroups: focusedClusterPaneFlow || hubSplitsTopicGroups,
       subjectTitle,
     });
   }, [
@@ -229,12 +234,16 @@ export function SubjectClusterHub({
     pathname,
     focusedClusterId,
     focusedClusterPaneFlow,
+    hubSplitsTopicGroups,
     subjectTitle,
   ]);
 
-  const indexLayoutMode: ConceptIndexLayoutMode = focusedClusterPaneFlow
-    ? "newspaper"
-    : "stack";
+  const indexLayoutMode: ConceptIndexLayoutMode =
+    browseListVariant === "concept-index"
+      ? conceptIndexLayoutModeForEntries(balancedEntries, {
+          preferNewspaperFrom: 1,
+        })
+      : conceptIndexLayoutModeForEntries(balancedEntries);
 
   const focusedClusterIndexStats = useMemo(() => {
     if (!focusedClusterPaneFlow || hubFocus.kind !== "cluster") {
@@ -286,25 +295,13 @@ export function SubjectClusterHub({
 
   if (browseListVariant === "concept-index") {
     return (
-      <div ref={setIndexPaneEl} className="min-h-0 min-w-0 w-full">
-        <ConceptIndexBalancedLayout
-          entries={balancedEntries}
-          layoutMode={indexLayoutMode}
-          paneHeightPx={paneHeightPx}
-          widthColumnCapacity={widthColumnCapacity}
-          columnNeedOptions={
-            focusedClusterPaneFlow && focusedClusterIndexStats
-              ? {
-                  oneTrackPerEntry: false,
-                  totalListWeight: focusedClusterIndexStats.packWeight,
-                  indexListRowCount: focusedClusterIndexStats.listRowCount,
-                  indexGroupHeadingCount:
-                    focusedClusterIndexStats.groupHeadingCount,
-                }
-              : undefined
-          }
-        />
-      </div>
+      <ConceptIndexPaneLayout
+        entries={balancedEntries}
+        layoutMode={indexLayoutMode}
+        packStatsOverride={
+          focusedClusterPaneFlow ? focusedClusterIndexStats : undefined
+        }
+      />
     );
   }
 

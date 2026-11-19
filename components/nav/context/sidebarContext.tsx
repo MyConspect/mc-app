@@ -231,7 +231,7 @@ const NAV_ROW_SURFACE =
 export function rowClass(active: boolean, sticky = false, indentClass = "") {
   // Indent with padding (not margin) so `w-full` rows keep one shared right edge.
   // Inactive rows keep a transparent ring so active highlight does not shift layout.
-  const shared = `flex min-h-11 w-full touch-manipulation cursor-pointer items-start justify-between gap-2 rounded-md px-2 py-2 text-left text-base font-medium max-md:min-h-11 ${NAV_ROW_SURFACE}`;
+  const shared = `flex min-h-11 w-full touch-manipulation cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-base font-medium max-md:min-h-11 ${NAV_ROW_SURFACE}`;
   const highlight = active
     ? `${shared} text-zinc-900 bg-yellow-50 ring-yellow-200 dark:bg-yellow-950 dark:text-zinc-50 dark:ring-yellow-800`
     : `${shared} text-zinc-600 bg-transparent ring-transparent hover:bg-yellow-50 dark:text-zinc-400 dark:hover:bg-yellow-950/60`;

@@ -19,7 +19,7 @@ import { SubjectHubFocusedGroupList } from "@/components/catalog/SubjectHubFocus
 import { ConceptList } from "./ConceptList";
 import { TopicNavConceptsProvider } from "./context/TopicNavConceptsContext";
 import type { Concept } from "@/lib/parse";
-import { ConceptIndexBalancedLayout } from "./ConceptIndexBalancedLayout";
+import { ConceptIndexPaneLayout } from "./ConceptIndexPaneLayout";
 import { HANDBOOK_SUBJECT_INDEX_BODY } from "./conceptIndexStyles";
 import { buildConceptIndexBalancedEntries } from "./buildConceptIndexBalancedEntries";
 import { resetHandbookReadingScroll } from "./utils/conceptScroll";
@@ -170,7 +170,7 @@ export function SubjectIntroBody({
 
   if (hubFocus.kind === "cluster") {
     return (
-      <>
+      <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
         {fallbackBanner}
         <SubjectClusterHub
           sections={clusterIndex.sections}
@@ -183,17 +183,14 @@ export function SubjectIntroBody({
           titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
           browseListVariant="concept-index"
         />
-      </>
+      </div>
     );
   }
 
   return (
     <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
       {fallbackBanner}
-      <ConceptIndexBalancedLayout
-        entries={balancedEntries}
-        usePaneColumnFlow={false}
-      />
+      <ConceptIndexPaneLayout entries={balancedEntries} />
     </div>
   );
 }

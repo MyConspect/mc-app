@@ -8,6 +8,12 @@ export const CONCEPT_GROUP_SECTION_INSET = "pl-1.5 pr-3";
 export const CONCEPT_INDEX_SECTION_HEADING =
   "m-0 text-pretty text-xl font-semibold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50";
 
+/**
+ * Gap from section heading (h2/h3) to the first bullet row.
+ * Required on all concept-index sections — see handbook-index-layout.mdc.
+ */
+export const CONCEPT_INDEX_HEADING_TO_LIST = "mt-1.5";
+
 /** Topic group title inside a cluster section (e.g. Styles under Architecture). */
 export const CONCEPT_INDEX_GROUP_HEADING =
   "m-0 text-pretty text-lg font-semibold leading-snug tracking-tight text-zinc-800 dark:text-zinc-100";
@@ -25,7 +31,7 @@ export const CONCEPT_INDEX_DOT_INTERACTIVE = `${CONCEPT_INDEX_DOT} mt-2 shrink-0
 
 export const CONCEPT_INDEX_ROW = "group";
 
-export const CONCEPT_INDEX_LINK = `concept-index-link flex w-full touch-manipulation cursor-pointer items-start ${CONCEPT_INDEX_ROW_GAP} ${CONCEPT_INDEX_ROW_INSET} py-1 text-left text-base font-medium leading-snug text-zinc-700 transition-colors hover:text-yellow-500 hover:no-underline group-hover:text-yellow-500 dark:text-zinc-400 dark:hover:text-yellow-300 dark:group-hover:text-yellow-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:focus-visible:ring-zinc-500/40`;
+export const CONCEPT_INDEX_LINK = `concept-index-link flex touch-manipulation cursor-pointer items-start ${CONCEPT_INDEX_ROW_GAP} ${CONCEPT_INDEX_ROW_INSET} py-1 text-left text-base font-medium leading-snug text-zinc-700 transition-colors hover:text-yellow-500 hover:no-underline group-hover:text-yellow-500 dark:text-zinc-400 dark:hover:text-yellow-300 dark:group-hover:text-yellow-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:focus-visible:ring-zinc-500/40`;
 
 /**
  * Row-major grid for uniform sections. Column track sizes live in
@@ -46,6 +52,22 @@ export const CONCEPT_INDEX_CLUSTER_SECTION =
 /** Fills `main.handbook-subject-main` for pane measure + column flow. */
 export const HANDBOOK_SUBJECT_INDEX_BODY =
   "handbook-subject-index-body min-h-0 min-w-0 w-full max-w-full flex-1 basis-0";
+
+/**
+ * Topic `h1` + in-pane scroll/multicol: section and list slot fill remaining main height.
+ * Pair with `ConceptIndexPaneLayout` (not a bare `ConceptIndexList`).
+ */
+export const HANDBOOK_INDEX_PANE_SECTION = `${CONCEPT_INDEX_CLUSTER_SECTION} flex min-h-0 min-w-0 w-full flex-1 flex-col`;
+
+/** Gap after topic `h1` (flex + scroll sizing lives in globals.css on the multicol root). */
+export const HANDBOOK_INDEX_PANE_LIST_SLOT = CONCEPT_INDEX_HEADING_TO_LIST;
+
+/**
+ * Breadcrumb → first heading: `main` uses `pt-5` only (see page routes).
+ * Cluster `h2` / topic `h1` stay `margin-top: 0` (globals.css).
+ */
+export const HANDBOOK_INDEX_MAIN_PAD =
+  "px-4 pt-5 pb-10 sm:px-6";
 
 /** Legacy grid packing (concept detail flows use pane columns above). */
 export const CONCEPT_INDEX_BALANCED_LAYOUT_BASE =

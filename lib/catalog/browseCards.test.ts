@@ -174,7 +174,7 @@ test("trackBrowseCards lists subject hubs and loose topics on other", () => {
   assert.ok(cards.some((card) => card.title === "Git"));
   assert.ok(cards.some((card) => card.title === "Build & CI"));
   assert.equal(
-    cards.some((card) => card.title === "Computer science"),
+    cards.some((card) => card.title === "Computer Science"),
     false,
   );
 });
@@ -236,7 +236,7 @@ test("trackSubjectBrowseBlocks lists Node.js on the backend track", () => {
 test("trackLooseBrowseCards lists ungrouped other topics", () => {
   const cards = trackLooseBrowseCards("other");
   assert.equal(
-    cards.some((card) => card.title === "Computer science"),
+    cards.some((card) => card.title === "Computer Science"),
     false,
   );
   assert.ok(cards.some((card) => card.title === "VS Code & DevTools"));

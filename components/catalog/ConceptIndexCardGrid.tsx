@@ -10,8 +10,11 @@ import {
   CONCEPT_INDEX_GROUP_HEADING,
   CONCEPT_INDEX_HEADING_LINK,
 } from "@/components/topic/conceptIndexStyles";
+import { ensureConceptIndexListTitles } from "@/lib/catalog/ensureConceptIndexListTitles";
 import { BrowseCardCell } from "./BrowseCardCell";
 import type { CardItem } from "./CardGrid";
+
+const CONCEPT_INDEX_LEADING_LIST_FALLBACK_TITLE = "Overview";
 
 type ConceptIndexBlock = {
   readonly heading?: CardItem;
@@ -82,21 +85,35 @@ function ConceptIndexItemList({
 /** Concept-index cluster lists (viewport columns handle flow on track hubs). */
 export function ConceptIndexCardGrid({
   items,
+  sectionHeadingVisible = false,
+  leadingGroupTitle,
 }: {
   readonly items: readonly CardItem[];
+  readonly sectionHeadingVisible?: boolean;
+  readonly leadingGroupTitle?: string;
 }) {
   if (items.length === 0) {
     return null;
   }
 
-  const hasGroupHeadings = items.some(
+  const fallbackTitle =
+    leadingGroupTitle?.trim() || CONCEPT_INDEX_LEADING_LIST_FALLBACK_TITLE;
+  const preparedItems = ensureConceptIndexListTitles(items, {
+    sectionHeadingVisible,
+    leadingGroupTitle: fallbackTitle,
+    leadingGroupHref: items[0]?.href,
+    wrapFlatListTitle: sectionHeadingVisible ? undefined : fallbackTitle,
+    wrapFlatListHref: items[0]?.href,
+  });
+
+  const hasGroupHeadings = preparedItems.some(
     (item) => item.indexRowKind === "group-heading",
   );
   if (!hasGroupHeadings) {
-    return <ConceptIndexItemList items={items} />;
+    return <ConceptIndexItemList items={preparedItems} />;
   }
 
-  const blocks = partitionConceptIndexItems(items);
+  const blocks = partitionConceptIndexItems(preparedItems);
 
   return (
     <div className="space-y-4">

@@ -15,6 +15,25 @@ export function sameTitle(left: string, right: string): boolean {
   return left.trim().toLowerCase() === right.trim().toLowerCase();
 }
 
+const TOPIC_TITLE_SUFFIX_SPLIT = /\s+[—–-]\s+/u;
+
+/** Leaf topic index H1 — catalog label, else markdown suffix after “ — ” / “ - ”. */
+export function topicLeafIndexHeading(
+  locale: Locale,
+  topic: Topic,
+  parsedTitle: string,
+): string {
+  const catalog = catalogBlurb(locale, topic.title).trim();
+  if (catalog) {
+    return catalog;
+  }
+  const parts = parsedTitle.trim().split(TOPIC_TITLE_SUFFIX_SPLIT);
+  if (parts.length > 1) {
+    return parts[parts.length - 1]!.trim();
+  }
+  return parsedTitle.trim();
+}
+
 function englishNavTitleVariants(title: string): Set<string> {
   const word = title.trim().toLowerCase();
   const out = new Set<string>();

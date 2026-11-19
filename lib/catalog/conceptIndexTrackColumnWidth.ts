@@ -1,5 +1,6 @@
 import {
   CONCEPT_INDEX_COL_GAP_REM,
+  CONCEPT_INDEX_COL_MAX_PX,
   CONCEPT_INDEX_COL_MIN_PX,
 } from "./conceptIndexColumnMetrics";
 
@@ -21,5 +22,8 @@ export function conceptIndexTrackColumnWidthPx(
   const gapPx = CONCEPT_INDEX_COL_GAP_REM * rootFontSizePx();
   const gaps = Math.max(0, columnCount - 1) * gapPx;
   const track = (paneWidthPx - gaps) / columnCount;
-  return Math.max(CONCEPT_INDEX_COL_MIN_PX, track);
+  return Math.min(
+    CONCEPT_INDEX_COL_MAX_PX,
+    Math.max(CONCEPT_INDEX_COL_MIN_PX, track),
+  );
 }

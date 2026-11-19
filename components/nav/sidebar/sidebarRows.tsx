@@ -34,6 +34,7 @@ import { NavGuide } from "../ui/NavGuide";
 import {
   applySameDocumentHref,
   followHandbookHref,
+  hashIdFrom,
   queueHandbookHref,
   replacePathHash,
   setHashOnPath,
@@ -52,7 +53,9 @@ import {
   sectionKey,
   isActiveHref,
   isConceptActiveOnPage,
+  closedSubjectKey,
   isOnSubjectPath,
+  isSubjectForceClosed,
   topicIsMobileNavLeaf,
 } from "../utils/location";
 import { clusterHasActiveConcept } from "../utils/location/shared";
@@ -82,6 +85,21 @@ import {
   useSidebarHighlight,
 } from "../context/sidebarContext";
 import { useHandbookMobileNavOpen } from "../context/handbookMobileNavContext";
+import {
+  offHubClusterFoldCollapse,
+  subjectHubClusterFoldClick,
+  topicPageClusterFoldClick,
+} from "@/lib/nav/sidebarClusterFoldToggle";
+
+function applySidebarClusterFoldHash(
+  pathname: string,
+  replaceHashWith: string | null,
+): void {
+  if (replaceHashWith === null) {
+    return;
+  }
+  replacePathHash(pathname, replaceHashWith);
+}
 
 function nestedClusterFoldMatches(
   cluster: NavCluster,
@@ -121,11 +139,11 @@ function RowTitle({
   open?: boolean;
 }) {
   return (
-    <span className="flex min-w-0 flex-1 items-start gap-1.5">
+    <span className="flex min-w-0 flex-1 items-center gap-1.5">
       {marker ? (
         <span
           aria-hidden="true"
-          className="mt-0.5 w-3 shrink-0 text-center leading-none text-zinc-500 dark:text-zinc-400"
+          className="w-3 shrink-0 text-center leading-none text-zinc-500 dark:text-zinc-400"
         >
           {open ? "−" : "+"}
         </span>
@@ -339,16 +357,27 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
           pinNavForHref(event.currentTarget, pathname, navigateHref);
           if (onTopic) {
             event.preventDefault();
-            const sameHash = window.location.hash === `#${sectionId}`;
+            const hashFragment = `#${sectionId}`;
+            const sameHash = window.location.hash === hashFragment;
+            const click = topicPageClusterFoldClick(
+              openClusterKey,
+              key,
+              hashFragment,
+              sameHash,
+              groupHashActive,
+            );
             if (!searching) {
               patchFold(trackId, {
-                clusterKey: key,
+                clusterKey: click.clusterKey,
                 topicHref: topic.href,
               });
             }
-            if (!sameHash) {
-              replacePathHash(pathname, `#${sectionId}`);
-            }
+            applySidebarClusterFoldHash(pathname, click.replaceHashWith);
+            return;
+          }
+          if (!searching && offHubClusterFoldCollapse(openClusterKey, key)) {
+            event.preventDefault();
+            patchFold(trackId, { clusterKey: null, topicHref: topic.href });
             return;
           }
           patchFold(trackId, { clusterKey: key, topicHref: topic.href });
@@ -967,22 +996,23 @@ export function TopicRow({
             event.preventDefault();
             pinNavForHref(event.currentTarget, pathname, navHref);
             const key = hubClusterKey!;
-            const next = `#${navId}`;
-            const sameHash = window.location.hash === next;
+            const hashFragment = `#${navId}`;
+            const sameHash = window.location.hash === hashFragment;
+            const click = subjectHubClusterFoldClick(
+              openClusterKey,
+              key,
+              navId,
+              hashFragment,
+              sameHash,
+              hubClusterActive,
+            );
             if (!searching) {
-              const opening = openClusterKey !== key;
-              if (sameHash) {
-                patchFold(trackId, {
-                  clusterKey: opening ? key : null,
-                  topicHref: null,
-                });
-              } else {
-                patchFold(trackId, { clusterKey: key, topicHref: null });
-              }
+              patchFold(trackId, {
+                clusterKey: click.clusterKey,
+                topicHref: null,
+              });
             }
-            if (!sameHash) {
-              replacePathHash(pathname, next);
-            }
+            applySidebarClusterFoldHash(pathname, click.replaceHashWith);
             return;
           }
           if (mobileNavOpen && !searching && showTopicFold) {
@@ -1192,29 +1222,34 @@ export function ClusterRow({
             pinNavForHref(event.currentTarget, pathname, navigateHref);
             if (onHub) {
               event.preventDefault();
-              const next = `#${cluster.id}`;
-              const sameHash = window.location.hash === next;
+              const hashFragment = `#${cluster.id}`;
+              const sameHash = window.location.hash === hashFragment;
+              const click = subjectHubClusterFoldClick(
+                openClusterKey,
+                key,
+                cluster.id,
+                hashFragment,
+                sameHash,
+                active,
+                {
+                  hubSectionConceptsMode: showHubSectionConcepts,
+                  sectionConceptsOpen,
+                },
+              );
               if (!searching) {
-                const collapseOnSameHash =
-                  sameHash &&
-                  !showHubSectionConcepts &&
-                  !isConceptGroupSectionId(cluster.id) &&
-                  openClusterKey === key;
                 patchFold(trackId, {
-                  clusterKey:
-                    showHubSectionConcepts && sectionConceptsOpen && sameHash
-                      ? null
-                      : collapseOnSameHash
-                        ? null
-                        : key,
-                  ...(hubFoldExclusive
+                  clusterKey: click.clusterKey,
+                  ...(hubFoldExclusive && !click.closing
                     ? { sectionKey: null, topicHref: null }
                     : {}),
                 });
               }
-              if (!sameHash) {
-                replacePathHash(pathname, next);
-              }
+              applySidebarClusterFoldHash(pathname, click.replaceHashWith);
+              return;
+            }
+            if (!searching && offHubClusterFoldCollapse(openClusterKey, key)) {
+              event.preventDefault();
+              patchFold(trackId, { clusterKey: null });
               return;
             }
             patchFold(trackId, { clusterKey: key });
@@ -1346,25 +1381,30 @@ export function ClusterRow({
               closeNavSoon(onNavigate);
               return;
             }
-            const next = `#${cluster.id}`;
-            const sameHash = window.location.hash === next;
-            const collapseOnSameHash =
-              sameHash &&
-              !isConceptGroupSectionId(cluster.id) &&
-              openClusterKey === key;
+            const hashFragment = `#${cluster.id}`;
+            const sameHash = window.location.hash === hashFragment;
+            const click = subjectHubClusterFoldClick(
+              openClusterKey,
+              key,
+              cluster.id,
+              hashFragment,
+              sameHash,
+              active,
+            );
             if (!searching) {
               patchFold(trackId, {
-                clusterKey: collapseOnSameHash ? null : key,
-                ...(hubFoldExclusive
+                clusterKey: click.clusterKey,
+                ...(hubFoldExclusive && !click.closing
                   ? { sectionKey: null, topicHref: null }
                   : {}),
               });
             }
-            if (collapseOnSameHash) {
-              replacePathHash(pathname, "");
-            } else if (!sameHash) {
-              replacePathHash(pathname, next);
-            }
+            applySidebarClusterFoldHash(pathname, click.replaceHashWith);
+            return;
+          }
+          if (!searching && offHubClusterFoldCollapse(openClusterKey, key)) {
+            event.preventDefault();
+            patchFold(trackId, { clusterKey: null });
             return;
           }
           patchFold(trackId, { clusterKey: key });
@@ -1386,7 +1426,7 @@ export function ClusterRow({
           open={clusterOpen}
         />
         {clusterOpen ? (
-          <span className="mt-0.5 shrink-0">
+          <span className="shrink-0">
             <NavChevron open />
           </span>
         ) : null}
@@ -1542,14 +1582,21 @@ export function SubjectRow({
 }) {
   const sectionId = useSidebarFoldScope();
   const clusterLeafInSidebar = conspectClusterLeavesInSidebar(sectionId);
-  const { query, pathname, searching, first } = useSidebarChrome();
+  const { query, pathname, searching, first, goToPath, onNavigate } =
+    useSidebarChrome();
   const { highlightPathname, stackPathPins } = useSidebarHighlight();
   const { fold, patchFold } = useScopedSidebarFold();
   const { subjectHref: openSubjectHref } = fold(trackId);
   const active = isActiveHref(highlightPathname, subject.href);
   const subjectOnPath = isOnSubjectPath(highlightPathname, subject);
+  const subjectForceClosed = isSubjectForceClosed(
+    subject.href,
+    openSubjectHref,
+  );
   const subjectOpen =
-    searching || openSubjectHref === subject.href || subjectOnPath;
+    searching ||
+    (!subjectForceClosed &&
+      (openSubjectHref === subject.href || subjectOnPath));
   const isHitSubject = first?.pathname === subject.href && first.hash === "";
   const onPath = !searching && isOnSubjectPath(highlightPathname, subject);
   const pinPath = navPathPinned(onPath, active, stackPathPins);
@@ -1644,6 +1691,45 @@ export function SubjectRow({
         data-nav-id={subject.slug}
         data-nav-path={pinPath ? "true" : undefined}
         onClick={(event) => {
+          const closedKey = closedSubjectKey(subject.href);
+          if (subjectOpen && !searching) {
+            event.preventDefault();
+            pinNavElement(event.currentTarget, {
+              hold: false,
+              scrollIntoView: false,
+            });
+            const onHub = pathname === subject.href;
+            const hubHash = hashIdFrom(
+              typeof window !== "undefined" ? window.location.hash : "",
+            );
+            if (!onHub || hubHash.length > 0) {
+              patchFold(trackId, {
+                subjectHref: subject.href,
+                clusterKey: null,
+                sectionKey: null,
+                topicHref: null,
+              });
+              followHandbookHref(subject.href, pathname, goToPath);
+              closeNavSoon(onNavigate);
+              return;
+            }
+            patchFold(trackId, {
+              subjectHref: closedKey,
+              clusterKey: null,
+              sectionKey: null,
+              topicHref: null,
+            });
+            return;
+          }
+          if (subjectForceClosed) {
+            event.preventDefault();
+            pinNavForHref(event.currentTarget, pathname, subject.href);
+            patchFold(trackId, { subjectHref: subject.href });
+            if (pathname !== subject.href) {
+              queueHandbookHref(subject.href);
+            }
+            return;
+          }
           if (pathname === subject.href) {
             event.preventDefault();
             pinNavElement(event.currentTarget, {
@@ -1651,10 +1737,7 @@ export function SubjectRow({
               scrollIntoView: false,
             });
             if (!searching) {
-              patchFold(trackId, {
-                subjectHref:
-                  openSubjectHref === subject.href ? null : subject.href,
-              });
+              patchFold(trackId, { subjectHref: subject.href });
             }
             return;
           }

@@ -782,7 +782,7 @@ describe("handbookNavSections layout", () => {
       (item) => item.id === "core",
     );
     assert.ok(cluster);
-    assert.equal(cluster.title, "Computer science");
+    assert.equal(cluster.title, "Computer Science");
     const topic = cluster.topics.find(
       (item) => item.slug === "computer-science",
     );

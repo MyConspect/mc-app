@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { ConceptIndexBalancedLayout } from "@/components/topic/ConceptIndexBalancedLayout";
+import { ConceptIndexPaneLayout } from "@/components/topic/ConceptIndexPaneLayout";
 import type { BrowseCard, Subject } from "@/lib/catalog";
 import type { Locale } from "@/lib/i18n/locales";
 import { buildTrackBrowseBalancedEntries } from "./buildTrackBrowseBalancedEntries";
@@ -31,7 +31,5 @@ export function TrackBrowseIndex({
     [blocks, looseCards],
   );
 
-  return (
-    <ConceptIndexBalancedLayout entries={entries} usePaneColumnFlow={false} />
-  );
+  return <ConceptIndexPaneLayout entries={entries} />;
 }

@@ -36,7 +36,8 @@ function readColumnCount(element: HTMLElement | null): number {
   if (!element) {
     return 1;
   }
-  return conceptIndexColumnCountForWidth(measureContentWidth(element));
+  const contentWidthPx = measureContentWidth(element);
+  return conceptIndexColumnCountForWidth(contentWidthPx);
 }
 
 /** Packed column count from grid container width (not viewport breakpoints). */
@@ -58,7 +59,11 @@ export function useConceptIndexColumnCount(
       if (subjectMain instanceof HTMLElement) {
         observer.observe(subjectMain);
       }
-      return () => observer.disconnect();
+      window.addEventListener("resize", onStoreChange);
+      return () => {
+        observer.disconnect();
+        window.removeEventListener("resize", onStoreChange);
+      };
     },
     [gridElement],
   );

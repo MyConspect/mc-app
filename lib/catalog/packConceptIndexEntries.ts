@@ -1,8 +1,7 @@
 import {
   applyInterstitialMiddleColumn,
   collapseLoneTailColumn,
-  CONCEPT_INDEX_LARGE_LIST_BREAK_ITEMS,
-  packSectionsToPaneHeightWithLargeListBreak,
+  packSectionsToPaneHeight,
   spreadSectionsAcrossViewportColumns,
   stackCompactSectionsUnderPrimaryColumn,
 } from "./conceptIndexColumnPack";
@@ -37,7 +36,6 @@ export function packConceptIndexEntries<T extends ConceptIndexPackableEntry>(
   }
 
   const weightOf = (entry: T) => entry.weight;
-  const listItemCountOf = (entry: T) => entry.listItemCount;
 
   if (entries.length === maxColumns + 1) {
     const spread = spreadSectionsAcrossViewportColumns(entries, maxColumns);
@@ -46,13 +44,11 @@ export function packConceptIndexEntries<T extends ConceptIndexPackableEntry>(
     }
   }
 
-  const packed = packSectionsToPaneHeightWithLargeListBreak(
+  const packed = packSectionsToPaneHeight(
     entries,
     paneHeightPx,
     maxColumns,
     weightOf,
-    listItemCountOf,
-    CONCEPT_INDEX_LARGE_LIST_BREAK_ITEMS,
   );
 
   return postProcessColumns(packed, weightOf);

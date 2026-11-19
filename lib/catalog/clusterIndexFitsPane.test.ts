@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  balancedEntriesIndexStats,
   clusterIndexFitsPane,
   clusterIndexShouldLockPaneHeight,
   clusterSectionListWeight,
+  conceptIndexPanePackOptionsForEntries,
 } from "./clusterIndexFitsPane";
 import type { SubjectClusterSection } from "./clusterConceptIndex";
 
@@ -27,4 +29,25 @@ test("clusterSectionListWeight counts group headings", () => {
     ],
   };
   assert.equal(clusterSectionListWeight(section), 5);
+});
+
+test("conceptIndexPanePackOptionsForEntries enables pane pack for multi-section hubs", () => {
+  const entries = [
+    { weight: 20, listItemCount: 18 },
+    { weight: 6, listItemCount: 4 },
+    { weight: 8, listItemCount: 6 },
+  ];
+  const stats = balancedEntriesIndexStats(entries);
+  assert.equal(stats.listRowCount, 28);
+  const options = conceptIndexPanePackOptionsForEntries(entries);
+  assert.ok(options);
+  assert.equal(options.oneTrackPerEntry, false);
+  assert.equal(options.totalListWeight, stats.packWeight);
+  const loneShort = conceptIndexPanePackOptionsForEntries([
+    { weight: 4, listItemCount: 5 },
+  ]);
+  assert.equal(loneShort, undefined);
+  const loneLong = conceptIndexPanePackOptionsForEntries([entries[0]]);
+  assert.ok(loneLong);
+  assert.equal(loneLong?.oneTrackPerEntry, false);
 });

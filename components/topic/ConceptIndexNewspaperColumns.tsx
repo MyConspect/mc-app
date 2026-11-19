@@ -5,7 +5,12 @@ import {
   clusterIndexShouldLockPaneHeight,
   conceptIndexClusterIndexPackWeight,
 } from "@/lib/catalog/clusterIndexFitsPane";
-import { CONCEPT_INDEX_COL_MIN_PX } from "@/lib/catalog/conceptIndexColumnMetrics";
+import {
+  CONCEPT_INDEX_COL_MIN_PX,
+  conceptIndexColumnCountForWidth,
+  conceptIndexPanePackScrollColumnCount,
+} from "@/lib/catalog/conceptIndexColumnMetrics";
+import { CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS } from "@/lib/catalog/conceptIndexSectionListSplit";
 import { conceptIndexFocusedClusterColumnCount } from "@/lib/catalog/conceptIndexFocusedClusterColumnCount";
 import { conceptIndexEntryPackWeight } from "@/lib/catalog/conceptIndexEntryPackWeight";
 import type { ConceptIndexLayoutColumnNeedOptions } from "@/lib/catalog/conceptIndexLayoutColumnNeed";
@@ -13,6 +18,7 @@ import type { ConceptIndexBalancedEntry } from "./ConceptIndexBalancedLayout";
 import { useConceptIndexColumnCount } from "./useConceptIndexColumnCount";
 import { useConceptIndexLayoutColumnCount } from "./useConceptIndexLayoutColumnCount";
 import { useConceptIndexPaneHeight } from "./useConceptIndexPaneHeight";
+import { useConceptIndexViewportWidth } from "./useConceptIndexViewportWidth";
 
 const NEWSPAPER_COLUMNS_CLASS =
   "concept-list-index concept-index-newspaper-columns w-full";
@@ -49,6 +55,8 @@ export function ConceptIndexNewspaperColumns({
   columnNeedOptions,
   paneHeightPx,
   widthColumnCapacity,
+  rootClassName,
+  paneMeasureRef,
 }: {
   readonly entries: readonly ConceptIndexBalancedEntry[];
   readonly fixedViewportColumns?: boolean;
@@ -56,20 +64,40 @@ export function ConceptIndexNewspaperColumns({
   /** Parent-measured pane height (locks multicol box so column-fill can use the right). */
   readonly paneHeightPx?: number;
   readonly widthColumnCapacity?: number;
+  readonly rootClassName?: string;
+  readonly paneMeasureRef?: (element: HTMLDivElement | null) => void;
 }) {
   const [rootEl, setRootElState] = useState<HTMLDivElement | null>(null);
   const [widthMeasureEl, setWidthMeasureEl] = useState<HTMLElement | null>(
     null,
   );
-  const setRootEl = useCallback((element: HTMLDivElement | null) => {
-    setRootElState(element);
-    const indexBody = element?.closest(".handbook-subject-index-body");
-    setWidthMeasureEl(
-      indexBody instanceof HTMLElement ? indexBody : element,
-    );
-  }, []);
+  const setRootEl = useCallback(
+    (element: HTMLDivElement | null) => {
+      setRootElState(element);
+      paneMeasureRef?.(element);
+      const indexBody = element?.closest(".handbook-subject-index-body");
+      setWidthMeasureEl(
+        indexBody instanceof HTMLElement ? indexBody : element,
+      );
+    },
+    [paneMeasureRef],
+  );
+  const viewportWidth = useConceptIndexViewportWidth();
   const measuredWidthCapacity = useConceptIndexColumnCount(widthMeasureEl);
+  const measurePaneWidthPx =
+    widthMeasureEl?.clientWidth ?? rootEl?.clientWidth ?? 0;
+  const widthCapacityFromPane = useMemo(() => {
+    if (measurePaneWidthPx >= 48) {
+      return conceptIndexColumnCountForWidth(
+        measurePaneWidthPx,
+        undefined,
+        viewportWidth,
+      );
+    }
+    return measuredWidthCapacity;
+  }, [measurePaneWidthPx, measuredWidthCapacity, viewportWidth]);
   const widthCapacity = Math.max(
+    widthCapacityFromPane,
     measuredWidthCapacity,
     widthColumnCapacity ?? 0,
   );
@@ -159,11 +187,20 @@ export function ConceptIndexNewspaperColumns({
       return widthCapacity;
     }
     if (panePack && packWeight > 0) {
+      const singleLongSection =
+        entries.length === 1 &&
+        entries[0].listItemCount >= CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS;
       return conceptIndexFocusedClusterColumnCount(
         widthCapacity,
         packWeight,
         effectivePaneHeight,
         indexCounts,
+        {
+          viewportWidthPx: viewportWidth,
+          contentWidthPx:
+            measurePaneWidthPx > 0 ? measurePaneWidthPx : undefined,
+          singleLongSection,
+        },
       );
     }
     return Math.max(1, layoutCapacity);
@@ -190,13 +227,43 @@ export function ConceptIndexNewspaperColumns({
     [panePack, effectivePaneHeight, packWeight, columnCount],
   );
 
+  const paneFitsLocked = paneFits && entries.length > 1;
+
   const lockPaneHeight = useMemo(
     () =>
       panePack &&
-      paneFits &&
+      paneFitsLocked &&
       effectivePaneHeight > 0 &&
       columnCount > 1,
-    [panePack, paneFits, effectivePaneHeight, columnCount],
+    [panePack, paneFitsLocked, effectivePaneHeight, columnCount],
+  );
+
+  const scrollColumnCount = useMemo(() => {
+    if (!panePack || lockPaneHeight) {
+      return 1;
+    }
+    return conceptIndexPanePackScrollColumnCount(
+      widthCapacity,
+      columnCount,
+      viewportWidth,
+      measurePaneWidthPx > 0 ? measurePaneWidthPx : undefined,
+    );
+  }, [
+    panePack,
+    lockPaneHeight,
+    widthCapacity,
+    columnCount,
+    viewportWidth,
+    measurePaneWidthPx,
+  ]);
+
+  const lockScrollPaneHeight = useMemo(
+    () =>
+      panePack &&
+      !lockPaneHeight &&
+      scrollColumnCount > 1 &&
+      effectivePaneHeight > 0,
+    [panePack, lockPaneHeight, scrollColumnCount, effectivePaneHeight],
   );
 
   const style = useMemo(() => {
@@ -214,12 +281,8 @@ export function ConceptIndexNewspaperColumns({
       next.height = effectivePaneHeight;
       next.maxHeight = effectivePaneHeight;
     } else if (panePack) {
-      const scrollColumns = Math.min(
-        widthCapacity,
-        Math.max(columnCount, widthCapacity >= 2 ? 2 : 1),
-      );
-      if (scrollColumns > 1) {
-        next.columnCount = scrollColumns;
+      if (scrollColumnCount > 1) {
+        next.columnCount = scrollColumnCount;
       } else {
         next.columnWidth = `${CONCEPT_INDEX_COL_MIN_PX}px`;
       }
@@ -230,30 +293,78 @@ export function ConceptIndexNewspaperColumns({
     }
 
     return Object.keys(next).length > 0 ? next : undefined;
-  }, [columnCount, widthCapacity, panePack, lockPaneHeight, effectivePaneHeight]);
+  }, [
+    columnCount,
+    widthCapacity,
+    panePack,
+    lockPaneHeight,
+    lockScrollPaneHeight,
+    scrollColumnCount,
+    effectivePaneHeight,
+    viewportWidth,
+    measurePaneWidthPx,
+  ]);
 
   if (entries.length === 0) {
     return null;
   }
 
-  const className = panePack
+  const columnsClassName = panePack
     ? `${NEWSPAPER_COLUMNS_CLASS} concept-index-newspaper-pane-pack${
-        paneFits ? "" : " concept-index-newspaper-pane-pack--scroll"
+        paneFitsLocked ? "" : " concept-index-newspaper-pane-pack--scroll"
       }`
     : NEWSPAPER_COLUMNS_CLASS;
+
+  const columnNodes = entries.map((entry) => (
+    <div key={entry.key} className="concept-index-newspaper-item">
+      {entry.node}
+    </div>
+  ));
+
+  const rootStyle = useMemo(() => {
+    if (lockPaneHeight && effectivePaneHeight > 0) {
+      return {
+        ...style,
+        height: effectivePaneHeight,
+        maxHeight: effectivePaneHeight,
+      };
+    }
+    return style;
+  }, [style, lockPaneHeight, effectivePaneHeight]);
+
+  if (lockScrollPaneHeight && effectivePaneHeight > 0) {
+    const scrollShellClassName = `concept-index-newspaper-pane-scroll min-h-0 w-full min-w-0 flex-1${
+      rootClassName ? ` ${rootClassName}` : ""
+    }`;
+    return (
+      <div
+        ref={setRootEl}
+        className={scrollShellClassName}
+        style={{ maxHeight: effectivePaneHeight }}
+        suppressHydrationWarning
+      >
+        <div
+          className={columnsClassName}
+          style={{
+            ...style,
+            minHeight: effectivePaneHeight,
+          }}
+          suppressHydrationWarning
+        >
+          {columnNodes}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
       ref={setRootEl}
-      className={className}
-      style={style}
+      className={`${columnsClassName}${rootClassName ? ` ${rootClassName}` : ""}`}
+      style={rootStyle}
       suppressHydrationWarning
     >
-      {entries.map((entry) => (
-        <div key={entry.key} className="concept-index-newspaper-item">
-          {entry.node}
-        </div>
-      ))}
+      {columnNodes}
     </div>
   );
 }

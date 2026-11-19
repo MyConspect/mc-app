@@ -3,6 +3,8 @@ import {
   CONCEPT_INDEX_PANE_USABLE_RATIO,
   CONCEPT_INDEX_WEIGHT_ROW_PX,
 } from "./conceptIndexColumnMetrics";
+import type { ConceptIndexLayoutColumnNeedOptions } from "./conceptIndexLayoutColumnNeed";
+import { CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS } from "./conceptIndexSectionListSplit";
 
 export type ClusterSectionIndexStats = {
   readonly packWeight: number;
@@ -107,4 +109,48 @@ export function clusterIndexFitsPane(
   }
   const safeColumns = Math.max(1, columnCount);
   return totalWeight <= rowsPerPane * safeColumns;
+}
+
+type BalancedEntryPack = {
+  readonly weight: number;
+  readonly listItemCount: number;
+};
+
+/** Aggregate pack stats for multi-section subject / track index columns. */
+export function balancedEntriesIndexStats(
+  entries: readonly BalancedEntryPack[],
+): ClusterSectionIndexStats {
+  const listRowCount = entries.reduce(
+    (sum, entry) => sum + entry.listItemCount,
+    0,
+  );
+  const weightSum = entries.reduce((sum, entry) => sum + entry.weight, 0);
+  return {
+    listRowCount,
+    groupHeadingCount: 0,
+    packWeight: Math.max(
+      weightSum,
+      conceptIndexClusterIndexPackWeight(listRowCount, 0, entries.length > 0),
+    ),
+  };
+}
+
+/** Pane-height newspaper flow (`oneTrackPerEntry: false`) for multi-section hubs and long single sections. */
+export function conceptIndexPanePackOptionsForEntries(
+  entries: readonly BalancedEntryPack[],
+  statsOverride?: ClusterSectionIndexStats,
+): ConceptIndexLayoutColumnNeedOptions | undefined {
+  const singleSection =
+    entries.length === 1 &&
+    entries[0].listItemCount >= CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS;
+  if (entries.length < 2 && !singleSection) {
+    return undefined;
+  }
+  const stats = statsOverride ?? balancedEntriesIndexStats(entries);
+  return {
+    oneTrackPerEntry: false,
+    totalListWeight: stats.packWeight,
+    indexListRowCount: stats.listRowCount,
+    indexGroupHeadingCount: stats.groupHeadingCount,
+  };
 }

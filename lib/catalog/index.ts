@@ -850,7 +850,7 @@ const SUBJECTS_BASE: readonly Subject[] = [
     clusters: [
       {
         id: "core",
-        title: "Computer science",
+        title: "Computer Science",
         blurb:
           "Computation, programming paradigms, imperative vs declarative, and logic programming.",
       },
@@ -896,14 +896,14 @@ const SUBJECTS_BASE: readonly Subject[] = [
     track: "computer-science",
     clusters: [
       {
+        id: "algorithms",
+        title: "Intro",
+        blurb: "Sorting, search, and graph algorithms.",
+      },
+      {
         id: "big-o",
         title: "Big O",
         blurb: "Algorithm basics and complexity analysis.",
-      },
-      {
-        id: "algorithms",
-        title: "Algorithms",
-        blurb: "Sorting, search, and graph algorithms.",
       },
       {
         id: "patterns",
@@ -2848,7 +2848,7 @@ const TOPICS_BASE: Topic[] = [
   grouped(
     "computer-science",
     "7_special_cs.md",
-    "Computer science",
+    "Computer Science",
     "What computation is, plus programming paradigms and logic programming.",
     "computer-science",
     "core",
@@ -3225,7 +3225,7 @@ const TOPICS_BASE: Topic[] = [
   grouped(
     "algorithms-common",
     "7_special_algorithms_common.md",
-    "Algorithms",
+    "Intro",
     "Sorting, search, graph traversal, and classic algorithm choices.",
     "computer-science",
     "algorithms",

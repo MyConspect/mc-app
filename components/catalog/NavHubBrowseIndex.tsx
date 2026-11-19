@@ -1,36 +1,25 @@
 "use client";
 
 import { useMemo } from "react";
-import { ConceptIndexBalancedLayout } from "@/components/topic/ConceptIndexBalancedLayout";
+import { ConceptIndexPaneLayout } from "@/components/topic/ConceptIndexPaneLayout";
 import type { BrowseCard } from "@/lib/catalog";
-import { CardGrid } from "./CardGrid";
+import { buildFlatBrowseBalancedEntries } from "./buildFlatBrowseBalancedEntries";
 
 export function NavHubBrowseIndex({
   items,
+  keyPrefix = "nav-hub",
 }: {
   readonly items: readonly BrowseCard[];
+  readonly keyPrefix?: string;
 }) {
   const entries = useMemo(
-    () => [
-      {
-        key: "nav-hub",
-        weight: items.length + 2,
-        listItemCount: items.length,
-        node: (
-          <section className="min-w-0 w-full max-w-full scroll-mt-24">
-            <CardGrid items={items} variant="concept-index" />
-          </section>
-        ),
-      },
-    ],
-    [items],
+    () => buildFlatBrowseBalancedEntries(items, keyPrefix),
+    [items, keyPrefix],
   );
 
   if (items.length === 0) {
     return null;
   }
 
-  return (
-    <ConceptIndexBalancedLayout entries={entries} usePaneColumnFlow={false} />
-  );
+  return <ConceptIndexPaneLayout entries={entries} />;
 }

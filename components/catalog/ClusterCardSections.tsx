@@ -4,6 +4,7 @@ import {
   CONCEPT_GROUP_SECTION_INSET,
   CONCEPT_INDEX_CLUSTER_SECTION,
   CONCEPT_INDEX_HEADING_LINK,
+  CONCEPT_INDEX_HEADING_TO_LIST,
   CONCEPT_INDEX_SECTION_HEADING,
 } from "@/components/topic/conceptIndexStyles";
 import { ConceptIndexCardGrid } from "./ConceptIndexCardGrid";
@@ -13,6 +14,7 @@ import {
   CATALOG_SECTION_SUMMARY,
 } from "./catalogListStyles";
 import type { BrowseCard } from "@/lib/catalog";
+import { ensureConceptIndexListTitles } from "@/lib/catalog/ensureConceptIndexListTitles";
 import { sameTitle } from "@/lib/nav/navUtils";
 import {
   flatNavGroupBrowseCards,
@@ -47,16 +49,19 @@ export function ClusterConceptIndexSection({
   section,
   suppressClusterHeading = false,
   subjectTitle,
+  omitSubjectTitleClusterHeading = true,
 }: {
   section: ClusterSection;
   suppressClusterHeading?: boolean;
   subjectTitle?: string;
+  omitSubjectTitleClusterHeading?: boolean;
 }) {
   return multiItemSection(
     section,
     suppressClusterHeading,
     "concept-index",
     subjectTitle,
+    omitSubjectTitleClusterHeading,
   );
 }
 
@@ -65,16 +70,55 @@ function multiItemSection(
   suppressClusterHeading: boolean,
   browseListVariant: CardGridVariant,
   subjectTitle?: string,
+  omitSubjectTitleClusterHeading = true,
 ) {
   const repeatsSubjectTitle = Boolean(
-    subjectTitle && sameTitle(cluster.title, subjectTitle),
+    omitSubjectTitleClusterHeading &&
+      subjectTitle &&
+      sameTitle(cluster.title, subjectTitle),
   );
-  const showHeading =
-    !suppressClusterHeading &&
-    !repeatsSubjectTitle &&
-    cluster.title.trim().length > 0;
   const conceptIndex = browseListVariant === "concept-index";
-  const hasGroupHeadings = items.some(
+  const clusterTitle = cluster.title.trim();
+  const displayClusterTitle =
+    clusterTitle.length > 0 ? cluster.title : subjectTitle?.trim() ?? "";
+  const sourceHasGroupHeadings = items.some(
+    (item) => item.indexRowKind === "group-heading",
+  );
+  const useSubjectTitleAsClusterH2 = Boolean(
+    conceptIndex &&
+      items.length > 0 &&
+      clusterTitle.length === 0 &&
+      displayClusterTitle.length > 0 &&
+      !sourceHasGroupHeadings &&
+      !suppressClusterHeading &&
+      !repeatsSubjectTitle,
+  );
+  let showHeading =
+    useSubjectTitleAsClusterH2 ||
+    (!suppressClusterHeading &&
+      !repeatsSubjectTitle &&
+      clusterTitle.length > 0);
+  let indexItems = items;
+  if (conceptIndex && items.length > 0) {
+    const fallbackTitle =
+      clusterTitle.length > 0 ? clusterTitle : subjectTitle?.trim();
+    indexItems = ensureConceptIndexListTitles(items, {
+      sectionHeadingVisible: showHeading,
+      leadingGroupTitle: fallbackTitle || undefined,
+      leadingGroupHref: headingHref ?? items[0]?.href,
+      wrapFlatListTitle: showHeading ? undefined : fallbackTitle || undefined,
+      wrapFlatListHref: headingHref ?? items[0]?.href,
+    });
+    if (
+      !showHeading &&
+      clusterTitle.length > 0 &&
+      !repeatsSubjectTitle &&
+      !indexItems.some((item) => item.indexRowKind === "group-heading")
+    ) {
+      showHeading = true;
+    }
+  }
+  const hasGroupHeadings = indexItems.some(
     (item) => item.indexRowKind === "group-heading",
   );
   const headingClass = conceptIndex
@@ -89,29 +133,35 @@ function multiItemSection(
         <h2 className={headingClass}>
           {headingHref ? (
             <Link href={headingHref} className={CONCEPT_INDEX_HEADING_LINK}>
-              {cluster.title}
+              {displayClusterTitle}
             </Link>
           ) : (
-            cluster.title
+            displayClusterTitle
           )}
         </h2>
       ) : null}
-      {items.length > 0 ? (
+      {indexItems.length > 0 ? (
         <div
           className={
             showHeading
               ? conceptIndex
                 ? hasGroupHeadings
                   ? "mt-3"
-                  : "mt-1.5"
+                  : CONCEPT_INDEX_HEADING_TO_LIST
                 : "mt-3"
               : undefined
           }
         >
           {conceptIndex && hasGroupHeadings ? (
-            <ConceptIndexCardGrid items={items} />
+            <ConceptIndexCardGrid
+              items={indexItems}
+              sectionHeadingVisible={showHeading}
+              leadingGroupTitle={
+                clusterTitle.length > 0 ? clusterTitle : subjectTitle
+              }
+            />
           ) : (
-            <CardGrid items={items} variant={browseListVariant} />
+            <CardGrid items={indexItems} variant={browseListVariant} />
           )}
         </div>
       ) : null}
@@ -125,12 +175,14 @@ function ClusterBlocks({
   browseListVariant = "concept-index",
   embedInParentGrid = false,
   subjectTitle,
+  omitSubjectTitleClusterHeading = true,
 }: {
   sections: readonly ClusterSection[];
   suppressClusterHeadings?: boolean;
   browseListVariant?: CardGridVariant;
   embedInParentGrid?: boolean;
   subjectTitle?: string;
+  omitSubjectTitleClusterHeading?: boolean;
 }) {
   if (
     !embedInParentGrid &&
@@ -155,6 +207,7 @@ function ClusterBlocks({
             suppressClusterHeadings,
             browseListVariant,
             subjectTitle,
+            omitSubjectTitleClusterHeading,
           ),
         );
       }
@@ -188,12 +241,32 @@ function ClusterBlocks({
         suppressClusterHeadings,
         browseListVariant,
         subjectTitle,
+        omitSubjectTitleClusterHeading,
       ),
     );
   }
   flushSingleBatch();
 
   return <>{blocks}</>;
+}
+
+function subjectHubClusterSectionCount(
+  sections: readonly ClusterSection[] | undefined,
+  groupedSections:
+    | readonly {
+        readonly clusters: readonly ClusterSection[];
+      }[]
+    | undefined,
+  rootSections: readonly ClusterSection[] | undefined,
+  afterRootSections: readonly ClusterSection[] | undefined,
+): number {
+  return (
+    (sections?.length ?? 0) +
+    (rootSections?.length ?? 0) +
+    (afterRootSections?.length ?? 0) +
+    (groupedSections?.reduce((sum, group) => sum + group.clusters.length, 0) ??
+      0)
+  );
 }
 
 export function ClusterCardSections({
@@ -223,6 +296,13 @@ export function ClusterCardSections({
   embedInParentGrid?: boolean;
   subjectTitle?: string;
 }) {
+  const omitSubjectTitleClusterHeading =
+    subjectHubClusterSectionCount(
+      sections,
+      groupedSections,
+      rootSections,
+      afterRootSections,
+    ) === 1;
   const outerClass = embedInParentGrid
     ? "catalog-sections contents"
     : "catalog-sections space-y-8";
@@ -241,6 +321,7 @@ export function ClusterCardSections({
             browseListVariant={browseListVariant}
             embedInParentGrid={embedInParentGrid}
             subjectTitle={subjectTitle}
+            omitSubjectTitleClusterHeading={omitSubjectTitleClusterHeading}
           />
         ) : null}
         {groupedSections?.map(({ section, clusters }) => {
@@ -256,6 +337,9 @@ export function ClusterCardSections({
                   key={section.id}
                   section={flatSection}
                   subjectTitle={subjectTitle}
+                  omitSubjectTitleClusterHeading={
+                    omitSubjectTitleClusterHeading
+                  }
                 />
               );
             }
@@ -297,6 +381,9 @@ export function ClusterCardSections({
                     browseListVariant={browseListVariant}
                     embedInParentGrid={embedInParentGrid}
                     subjectTitle={subjectTitle}
+                    omitSubjectTitleClusterHeading={
+                      omitSubjectTitleClusterHeading
+                    }
                   />
                 )}
               </div>
@@ -310,6 +397,7 @@ export function ClusterCardSections({
             browseListVariant={browseListVariant}
             embedInParentGrid={embedInParentGrid}
             subjectTitle={subjectTitle}
+            omitSubjectTitleClusterHeading={omitSubjectTitleClusterHeading}
           />
         ) : null}
       </div>
@@ -334,6 +422,7 @@ export function ClusterCardSections({
         browseListVariant={browseListVariant}
         embedInParentGrid={embedInParentGrid}
         subjectTitle={subjectTitle}
+        omitSubjectTitleClusterHeading={omitSubjectTitleClusterHeading}
       />
     </div>
   );

@@ -7,7 +7,10 @@ import {
   SubjectPageTitle,
   TopicNavConceptsProvider,
 } from "@/components/topic";
-import { HANDBOOK_SUBJECT_INDEX_BODY } from "@/components/topic/conceptIndexStyles";
+import {
+  HANDBOOK_INDEX_MAIN_PAD,
+  HANDBOOK_SUBJECT_INDEX_BODY,
+} from "@/components/topic/conceptIndexStyles";
 import {
   getSubject,
   getTrack,
@@ -22,6 +25,7 @@ import {
   topicRouteParams,
   type Topic,
 } from "@/lib/catalog";
+import type { ClusterConceptIndexExpandOptions } from "@/lib/catalog/clusterConceptIndex";
 import {
   localizedClusterSectionsForSubject,
   subjectClusterSectionsForLocale,
@@ -42,6 +46,8 @@ import { withLocale } from "@/lib/i18n/paths";
 import {
   conceptsForConspectTopic,
   interviewTopicSubjectTitle,
+  shouldShowTopicIndexTitle,
+  topicLeafIndexHeading,
 } from "@/lib/nav/navUtils";
 import {
   loadTopicPage,
@@ -51,6 +57,11 @@ import {
 } from "@/lib/parse";
 
 export const dynamicParams = false;
+
+/** Multi-topic clusters show topic titles plus in-page concept rows (e.g. AI → SDLC). */
+const SUBJECT_HUB_CLUSTER_INDEX_EXPAND: ClusterConceptIndexExpandOptions = {
+  multiTopicChildren: "nested",
+};
 
 export function generateStaticParams() {
   return localeStaticParams().flatMap(({ locale }) =>
@@ -165,13 +176,19 @@ export default async function TopicPage({
     const clusterSections =
       groupedSections || rootSections || afterRootSections
         ? undefined
-        : subjectClusterSectionsForLocale(locale, subject);
+        : subjectClusterSectionsForLocale(
+            locale,
+            subject,
+            SUBJECT_HUB_CLUSTER_INDEX_EXPAND,
+          );
     const clusterSectionsNested =
       clusterSections === undefined
         ? undefined
-        : subjectClusterSectionsForLocale(locale, subject, {
-            multiTopicChildren: "nested",
-          });
+        : subjectClusterSectionsForLocale(
+            locale,
+            subject,
+            SUBJECT_HUB_CLUSTER_INDEX_EXPAND,
+          );
     const sections = clusterSections
       ? filterSubjectClusterSectionsForIntro(
           subject,
@@ -204,7 +221,9 @@ export default async function TopicPage({
       conceptPoolForTitleTwin,
     );
     return (
-      <main className="handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col px-4 pt-5 pb-10 sm:px-6">
+      <main
+        className={`handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
+      >
         <SubjectPageTitle
           subjectTitle={subject.title}
           introConcepts={hubGroupConcepts}
@@ -271,7 +290,9 @@ export default async function TopicPage({
   if (isNavHubTopic(loaded.topic)) {
     const hubCards = localizeCards(locale, navChildBrowseCards(loaded.topic));
     return (
-      <main className="handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col px-4 pt-5 pb-10 sm:px-6">
+      <main
+        className={`handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
+      >
         {loaded.usedFallback ? (
           <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
             {FALLBACK_NOTE_BADGE[locale]}
@@ -301,22 +322,39 @@ export default async function TopicPage({
     pageConcepts.some((concept) => Boolean(concept.interviewSection));
   const interviewAccordionIndex =
     isInterviewTopic(loaded.topic) && !isInterviewTasksTopic(loaded.topic);
+  const topicIndexHeading = topicLeafIndexHeading(
+    locale,
+    loaded.topic,
+    loaded.parsed.title,
+  );
+  const showTopicIndexTitle = shouldShowTopicIndexTitle(
+    topicIndexHeading,
+    pageConcepts,
+    groupConceptSections,
+  );
   return (
-    <main className="handbook-topic-main w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
+    <main
+      className={`handbook-topic-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
+    >
       {loaded.usedFallback ? (
         <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
           {FALLBACK_NOTE_BADGE[locale]}
         </p>
       ) : null}
-      <TopicNavConceptsProvider concepts={pageConcepts}>
-        <ConceptList
-          concepts={pageConcepts}
-          emptyMessage="No concepts were parsed from this topic."
-          groupInterviewSections={groupConceptSections}
-          interviewAccordionIndex={interviewAccordionIndex}
-          topicTitle={interviewTopicSubjectTitle(loaded.topic, locale)}
-        />
-      </TopicNavConceptsProvider>
+      <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
+        <TopicNavConceptsProvider concepts={pageConcepts}>
+          <ConceptList
+            concepts={pageConcepts}
+            emptyMessage="No concepts were parsed from this topic."
+            groupInterviewSections={groupConceptSections}
+            interviewAccordionIndex={interviewAccordionIndex}
+            topicTitle={interviewTopicSubjectTitle(loaded.topic, locale)}
+            indexHeading={
+              showTopicIndexTitle ? topicIndexHeading : undefined
+            }
+          />
+        </TopicNavConceptsProvider>
+      </div>
     </main>
   );
 }

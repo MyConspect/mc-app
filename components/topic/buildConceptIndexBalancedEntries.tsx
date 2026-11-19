@@ -65,6 +65,7 @@ function clusterSectionBalancedEntries(
   section: SubjectClusterSection,
   suppressHeading: boolean,
   splitTopicGroups: boolean,
+  subjectTitle?: string,
 ): ConceptIndexBalancedEntry[] {
   const hasGroupHeadings = section.items.some(
     (item) => item.indexRowKind === "group-heading",
@@ -73,6 +74,14 @@ function clusterSectionBalancedEntries(
     return partitionBrowseCardsByGroupHeading(section.items).flatMap(
       (block, index) => {
         if (!block.heading) {
+          const fallbackTitle =
+            section.cluster.title.trim() || block.items[0]?.title || "Topics";
+          const syntheticHeading = {
+            href: block.items[0]?.href ?? section.headingHref ?? "#",
+            title: fallbackTitle,
+            description: "",
+            indexRowKind: "group-heading" as const,
+          };
           return [
             {
               key: `cluster:${section.cluster.id}:leading:${index}`,
@@ -82,9 +91,9 @@ function clusterSectionBalancedEntries(
               }),
               listItemCount: block.items.length,
               node: (
-                <ClusterConceptIndexSection
-                  section={{ ...section, items: block.items }}
-                  suppressClusterHeading
+                <ClusterTopicGroupIndexSection
+                  heading={syntheticHeading}
+                  items={block.items}
                 />
               ),
             },
@@ -119,6 +128,7 @@ function clusterSectionBalancedEntries(
         <ClusterConceptIndexSection
           section={section}
           suppressClusterHeading={suppressHeading}
+          subjectTitle={subjectTitle}
         />
       ),
     },
@@ -162,15 +172,19 @@ export function buildConceptIndexBalancedEntries({
 
   const clusterEntries: ConceptIndexBalancedEntry[] = [];
   const clusters = flattenSubjectClusterSectionsForIndex(clusterLayout);
+  const omitSubjectTitleClusterHeading = clusters.length === 1;
   for (const section of clusters) {
     const suppressHeading =
       suppressClusterHeadings ||
-      (subjectTitle ? sameTitle(section.cluster.title, subjectTitle) : false);
+      (omitSubjectTitleClusterHeading && subjectTitle
+        ? sameTitle(section.cluster.title, subjectTitle)
+        : false);
     clusterEntries.push(
       ...clusterSectionBalancedEntries(
         section,
         suppressHeading,
         splitClusterTopicGroups,
+        subjectTitle,
       ),
     );
   }

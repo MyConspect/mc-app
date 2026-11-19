@@ -7,21 +7,47 @@ function viewportPaneBudgetPx(): number {
   return Math.max(400, window.innerHeight * 0.92);
 }
 
+function indexMainForMeasure(
+  element: HTMLElement | null,
+): HTMLElement | null {
+  if (!element) {
+    return null;
+  }
+  const topicMain = element.closest("main.handbook-topic-main");
+  if (topicMain instanceof HTMLElement) {
+    return topicMain;
+  }
+  const subjectMain = element.closest("main.handbook-subject-main");
+  if (subjectMain instanceof HTMLElement) {
+    return subjectMain;
+  }
+  return element.closest("main");
+}
+
 function measurePaneHeight(element: HTMLElement | null): number {
   if (typeof window === "undefined") {
     return 640;
+  }
+  const main = indexMainForMeasure(element);
+  const anchor =
+    element?.closest(".concept-index-newspaper-pane-scroll") ??
+    element?.closest(".concept-index-newspaper-columns") ??
+    element?.closest(".handbook-subject-index-body > .min-h-0") ??
+    element;
+  if (main instanceof HTMLElement && anchor instanceof HTMLElement) {
+    const available = Math.floor(
+      main.getBoundingClientRect().bottom - anchor.getBoundingClientRect().top,
+    );
+    if (available >= 200) {
+      return available;
+    }
   }
   const indexBody = element?.closest(".handbook-subject-index-body");
   if (indexBody instanceof HTMLElement && indexBody.clientHeight >= 120) {
     return indexBody.clientHeight;
   }
-  const subjectMain = element?.closest("main.handbook-subject-main");
-  if (subjectMain instanceof HTMLElement && subjectMain.clientHeight >= 120) {
-    const indexInMain = subjectMain.querySelector(".handbook-subject-index-body");
-    if (indexInMain instanceof HTMLElement && indexInMain.clientHeight >= 120) {
-      return indexInMain.clientHeight;
-    }
-    return subjectMain.clientHeight;
+  if (main instanceof HTMLElement && main.clientHeight >= 120) {
+    return main.clientHeight;
   }
   const handbookMain = document.getElementById(HANDBOOK_MAIN_ID);
   if (handbookMain && handbookMain.clientHeight >= 120) {
@@ -40,9 +66,9 @@ function observeTargets(
   if (indexBody instanceof HTMLElement) {
     observer.observe(indexBody);
   }
-  const subjectMain = gridElement.closest("main.handbook-subject-main");
-  if (subjectMain instanceof HTMLElement) {
-    observer.observe(subjectMain);
+  const main = indexMainForMeasure(gridElement);
+  if (main instanceof HTMLElement) {
+    observer.observe(main);
   }
   const handbookMain = document.getElementById(HANDBOOK_MAIN_ID);
   if (handbookMain) {
