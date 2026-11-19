@@ -6,6 +6,7 @@ import {
   type TrackBrowseIndexBlock,
 } from "@/components/catalog";
 import { ConceptList, SubjectIntroBody } from "@/components/topic";
+import { HANDBOOK_SUBJECT_INDEX_BODY } from "@/components/topic/conceptIndexStyles";
 import {
   SUBJECTS,
   subjectsForTrack,
@@ -161,7 +162,7 @@ export default async function TrackPage({
             clusterIndex={{ sections }}
           />
         ) : (
-          <div className="handbook-subject-index-body w-full">
+          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
             <SubjectClusterHub
               sections={sections}
               titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
@@ -210,7 +211,7 @@ export default async function TrackPage({
   return (
     <main className="handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col px-4 pt-5 pb-10 sm:px-6">
       {browseBlocks.length > 0 || looseCards.length > 0 ? (
-        <div className="handbook-subject-index-body w-full">
+        <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
           <TrackBrowseIndex blocks={browseBlocks} looseCards={looseCards} />
         </div>
       ) : null}

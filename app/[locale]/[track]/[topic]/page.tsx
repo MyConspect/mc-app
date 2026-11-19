@@ -7,6 +7,7 @@ import {
   SubjectPageTitle,
   TopicNavConceptsProvider,
 } from "@/components/topic";
+import { HANDBOOK_SUBJECT_INDEX_BODY } from "@/components/topic/conceptIndexStyles";
 import {
   getSubject,
   getTrack,
@@ -239,7 +240,7 @@ export default async function TopicPage({
             }}
           />
         ) : (
-          <div className="handbook-subject-index-body w-full">
+          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
             <SubjectClusterHub
               sections={sections}
               sectionsNested={sectionsNested}
@@ -273,7 +274,7 @@ export default async function TopicPage({
           </p>
         ) : null}
         {hubCards.length > 0 ? (
-          <div className="handbook-subject-index-body w-full">
+          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
             <NavHubBrowseIndex items={hubCards} />
           </div>
         ) : null}

@@ -43,6 +43,10 @@ export {
 export const CONCEPT_INDEX_CLUSTER_SECTION =
   "concept-index-cluster-section min-w-0 w-full max-w-full scroll-mt-24";
 
+/** Fills `main.handbook-subject-main` for pane measure + column flow. */
+export const HANDBOOK_SUBJECT_INDEX_BODY =
+  "handbook-subject-index-body min-h-0 min-w-0 w-full max-w-full flex-1 basis-0";
+
 /** Legacy grid packing (concept detail flows use pane columns above). */
 export const CONCEPT_INDEX_BALANCED_LAYOUT_BASE =
   "concept-list-index handbook-subject-index-grid grid h-full min-h-0 w-full max-w-full flex-1 items-start justify-start gap-x-5 gap-y-8";

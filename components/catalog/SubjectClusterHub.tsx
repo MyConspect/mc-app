@@ -296,7 +296,10 @@ export function SubjectClusterHub({
 
   if (browseListVariant === "concept-index") {
     return (
-      <div ref={setIndexPaneEl} className="w-full">
+      <div
+        ref={setIndexPaneEl}
+        className="flex min-h-0 w-full min-w-0 flex-1 flex-col"
+      >
         <ConceptIndexBalancedLayout
           entries={balancedEntries}
           layoutMode={indexLayoutMode}

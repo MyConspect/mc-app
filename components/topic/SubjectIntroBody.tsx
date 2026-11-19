@@ -19,6 +19,7 @@ import { ConceptList } from "./ConceptList";
 import { TopicNavConceptsProvider } from "./context/TopicNavConceptsContext";
 import type { Concept } from "@/lib/parse";
 import { ConceptIndexBalancedLayout } from "./ConceptIndexBalancedLayout";
+import { HANDBOOK_SUBJECT_INDEX_BODY } from "./conceptIndexStyles";
 import { buildConceptIndexBalancedEntries } from "./buildConceptIndexBalancedEntries";
 import { resetHandbookReadingScroll } from "./utils/conceptScroll";
 
@@ -133,7 +134,7 @@ export function SubjectIntroBody({
 
   if (hubFocus.kind === "concept-group") {
     return (
-      <div className="handbook-subject-index-body w-full">
+      <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
         {fallbackBanner}
         <SubjectHubFocusedGroupList
           concepts={filteredConcepts}
@@ -160,7 +161,7 @@ export function SubjectIntroBody({
   }
 
   return (
-    <div className="handbook-subject-index-body w-full">
+    <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
       {fallbackBanner}
       <ConceptIndexBalancedLayout
         entries={balancedEntries}
