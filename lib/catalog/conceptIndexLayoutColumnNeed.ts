@@ -10,6 +10,10 @@ export type ConceptIndexLayoutColumnNeedOptions = {
   readonly oneTrackPerEntry?: boolean;
   /** Accurate packing weight for nested cluster lists (headings ≈ 2 rows). */
   readonly totalListWeight?: number;
+  /** Index rows counted for column need (bulleted links). */
+  readonly indexListRowCount?: number;
+  /** Nested topic group headings (`h3`) in the focused cluster. */
+  readonly indexGroupHeadingCount?: number;
 };
 
 /** Width cap × content height, with extra tracks for small cluster hubs. */

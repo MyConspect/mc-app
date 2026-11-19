@@ -26,6 +26,7 @@ export function ConceptIndexBalancedLayout({
   usePaneColumnFlow = false,
   paneHeightPx = 640,
   columnNeedOptions,
+  widthColumnCapacity,
 }: {
   readonly entries: ConceptIndexEntriesSource;
   readonly layoutMode?: ConceptIndexLayoutMode;
@@ -34,6 +35,8 @@ export function ConceptIndexBalancedLayout({
   /** Measured main-column height for packing (client). */
   readonly paneHeightPx?: number;
   readonly columnNeedOptions?: ConceptIndexLayoutColumnNeedOptions;
+  /** Measured index-pane column capacity (parent `.handbook-subject-index-body`). */
+  readonly widthColumnCapacity?: number;
   /** @deprecated Wide grid spans are unused; newspaper flow handles layout. */
   readonly allowWideSectionTracks?: boolean;
 }) {
@@ -77,6 +80,7 @@ export function ConceptIndexBalancedLayout({
       fixedViewportColumns={false}
       columnNeedOptions={columnNeedOptions}
       paneHeightPx={paneHeightPx}
+      widthColumnCapacity={widthColumnCapacity}
     />
   );
 }

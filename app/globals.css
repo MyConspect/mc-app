@@ -222,6 +222,15 @@ article.concept-detail-article > .concept-detail-title {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  flex: 1 1 0%;
+  overflow: hidden !important;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  > .handbook-breadcrumb-bar {
+  flex-shrink: 0;
 }
 
 #handbook-main:has(.handbook-subject-index-body):not(
@@ -232,8 +241,9 @@ article.concept-detail-article > .concept-detail-title {
   flex-direction: column;
   box-sizing: border-box;
   min-height: 0;
-  height: 100%;
+  min-width: 0;
   flex: 1 1 0%;
+  overflow: hidden;
   align-self: stretch;
 }
 
@@ -251,11 +261,13 @@ article.concept-detail-article > .concept-detail-title {
   max-width: 100%;
   min-width: 0;
   min-height: 0;
-  height: 100%;
-  max-height: 100%;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Pack index columns in the tall pane (content stacks downward). */
+/* Index lists grow naturally; .handbook-subject-index-body scrolls when tall. */
 #handbook-main:has(.handbook-subject-index-body):not(
     :has(article.concept-detail-article)
   )
@@ -266,9 +278,9 @@ article.concept-detail-article > .concept-detail-title {
   )
   .handbook-subject-index-body
   .concept-index-newspaper-columns {
-  flex: 1 1 auto;
-  height: 100%;
-  min-height: 100%;
+  flex: 0 0 auto;
+  height: auto;
+  max-height: none;
   align-content: start;
 }
 
@@ -299,10 +311,19 @@ article.concept-detail-article > .concept-detail-title {
   overflow-x: clip;
 }
 
-/* Focused cluster pane pack: fixed pane height so column-fill uses the right. */
-.concept-index-newspaper-pane-pack {
+/* Focused cluster pane pack: pane-fill when it fits; grow + scroll on index body when tall. */
+.concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack {
   column-fill: auto;
   overflow-x: clip;
+}
+
+.concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll {
+  column-count: auto;
+  column-width: var(--concept-index-col-min);
+  column-fill: balance;
+  overflow-y: visible;
+  height: auto !important;
+  max-height: none !important;
 }
 
 /* Flow topic groups in one column until pane height; lists may continue right. */
@@ -328,16 +349,6 @@ article.concept-detail-article > .concept-detail-title {
   -webkit-column-break-inside: avoid;
 }
 
-#handbook-main:has(.handbook-subject-index-body):not(
-    :has(article.concept-detail-article)
-  )
-  .handbook-subject-index-body
-  > .concept-index-newspaper-columns,
-#handbook-main:has(.handbook-subject-index-body):not(
-    :has(article.concept-detail-article)
-  )
-  .handbook-subject-index-body
-  .concept-index-newspaper-columns,
 #handbook-main:has(.handbook-subject-index-body):not(
     :has(article.concept-detail-article)
   )
@@ -396,6 +407,19 @@ article.concept-detail-article > .concept-detail-title {
 
 .concept-index-newspaper-columns .concept-index-cluster-section:last-child {
   margin-bottom: 0;
+}
+
+/* Pane pack must override avoid-column so topic groups flow into lane 2+. */
+.concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack
+  .concept-index-cluster-section {
+  break-inside: auto;
+  -webkit-column-break-inside: auto;
+}
+
+.concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack
+  .concept-index-topic-group-block {
+  break-inside: auto;
+  -webkit-column-break-inside: auto;
 }
 
 .concept-index-link {

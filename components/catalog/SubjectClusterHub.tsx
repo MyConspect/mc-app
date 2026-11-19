@@ -22,8 +22,9 @@ import {
   findSubjectClusterSection,
   mergeNestedClusterSection,
 } from "@/lib/catalog/mergeNestedClusterIndexSection";
-import { clusterSectionListWeight } from "@/lib/catalog/clusterIndexFitsPane";
+import { clusterSectionIndexStats } from "@/lib/catalog/clusterIndexFitsPane";
 import { useConceptIndexPaneHeight } from "@/components/topic/useConceptIndexPaneHeight";
+import { useConceptIndexColumnCount } from "@/components/topic/useConceptIndexColumnCount";
 import type { ConceptIndexLayoutMode } from "@/components/topic/ConceptIndexBalancedLayout";
 import type { Concept } from "@/lib/parse";
 import { ConceptList } from "@/components/topic/ConceptList";
@@ -127,6 +128,7 @@ export function SubjectClusterHub({
 
   const [indexPaneEl, setIndexPaneEl] = useState<HTMLDivElement | null>(null);
   const paneHeightPx = useConceptIndexPaneHeight(indexPaneEl);
+  const widthColumnCapacity = useConceptIndexColumnCount(indexPaneEl);
 
   const nestedClusterLayout = useMemo(() => {
     if (hubFocus.kind !== "cluster" || !sectionsNested?.length) {
@@ -246,7 +248,7 @@ export function SubjectClusterHub({
     ? "newspaper"
     : "stack";
 
-  const focusedClusterListWeight = useMemo(() => {
+  const focusedClusterIndexStats = useMemo(() => {
     if (!focusedClusterPaneFlow || hubFocus.kind !== "cluster") {
       return undefined;
     }
@@ -254,7 +256,7 @@ export function SubjectClusterHub({
       nestedClusterLayout,
       hubFocus.clusterId,
     );
-    return section ? clusterSectionListWeight(section) : undefined;
+    return section ? clusterSectionIndexStats(section) : undefined;
   }, [focusedClusterPaneFlow, hubFocus, nestedClusterLayout]);
 
   if (hubFocus.kind === "concept-group") {
@@ -296,19 +298,20 @@ export function SubjectClusterHub({
 
   if (browseListVariant === "concept-index") {
     return (
-      <div
-        ref={setIndexPaneEl}
-        className="flex min-h-0 w-full min-w-0 flex-1 flex-col"
-      >
+      <div ref={setIndexPaneEl} className="min-h-0 min-w-0 w-full">
         <ConceptIndexBalancedLayout
           entries={balancedEntries}
           layoutMode={indexLayoutMode}
           paneHeightPx={paneHeightPx}
+          widthColumnCapacity={widthColumnCapacity}
           columnNeedOptions={
-            focusedClusterPaneFlow
+            focusedClusterPaneFlow && focusedClusterIndexStats
               ? {
                   oneTrackPerEntry: false,
-                  totalListWeight: focusedClusterListWeight,
+                  totalListWeight: focusedClusterIndexStats.packWeight,
+                  indexListRowCount: focusedClusterIndexStats.listRowCount,
+                  indexGroupHeadingCount:
+                    focusedClusterIndexStats.groupHeadingCount,
                 }
               : undefined
           }

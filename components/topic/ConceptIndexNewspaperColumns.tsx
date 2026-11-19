@@ -1,7 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { conceptIndexColumnCountForContentHeight } from "@/lib/catalog/conceptIndexColumnMetrics";
+import { useCallback, useMemo, useState } from "react";
+import {
+  clusterIndexShouldLockPaneHeight,
+  conceptIndexClusterIndexPackWeight,
+} from "@/lib/catalog/clusterIndexFitsPane";
+import { CONCEPT_INDEX_COL_MIN_PX } from "@/lib/catalog/conceptIndexColumnMetrics";
+import { conceptIndexFocusedClusterColumnCount } from "@/lib/catalog/conceptIndexFocusedClusterColumnCount";
 import { conceptIndexEntryPackWeight } from "@/lib/catalog/conceptIndexEntryPackWeight";
 import type { ConceptIndexLayoutColumnNeedOptions } from "@/lib/catalog/conceptIndexLayoutColumnNeed";
 import type { ConceptIndexBalancedEntry } from "./ConceptIndexBalancedLayout";
@@ -43,18 +48,36 @@ export function ConceptIndexNewspaperColumns({
   fixedViewportColumns = false,
   columnNeedOptions,
   paneHeightPx,
+  widthColumnCapacity,
 }: {
   readonly entries: readonly ConceptIndexBalancedEntry[];
   readonly fixedViewportColumns?: boolean;
   readonly columnNeedOptions?: ConceptIndexLayoutColumnNeedOptions;
   /** Parent-measured pane height (locks multicol box so column-fill can use the right). */
   readonly paneHeightPx?: number;
+  readonly widthColumnCapacity?: number;
 }) {
-  const [rootEl, setRootEl] = useState<HTMLDivElement | null>(null);
-  const widthCapacity = useConceptIndexColumnCount(rootEl);
-  const measuredPaneHeight = useConceptIndexPaneHeight(rootEl);
+  const [rootEl, setRootElState] = useState<HTMLDivElement | null>(null);
+  const [widthMeasureEl, setWidthMeasureEl] = useState<HTMLElement | null>(
+    null,
+  );
+  const setRootEl = useCallback((element: HTMLDivElement | null) => {
+    setRootElState(element);
+    const indexBody = element?.closest(".handbook-subject-index-body");
+    setWidthMeasureEl(
+      indexBody instanceof HTMLElement ? indexBody : element,
+    );
+  }, []);
+  const measuredWidthCapacity = useConceptIndexColumnCount(widthMeasureEl);
+  const widthCapacity = Math.max(
+    measuredWidthCapacity,
+    widthColumnCapacity ?? 0,
+  );
+  const measuredPaneHeight = useConceptIndexPaneHeight(
+    widthMeasureEl ?? rootEl,
+  );
   const layoutCapacity = useConceptIndexLayoutColumnCount(
-    rootEl,
+    widthMeasureEl ?? rootEl,
     entries,
     columnNeedOptions,
   );
@@ -74,60 +97,149 @@ export function ConceptIndexNewspaperColumns({
     return Math.min(...candidates);
   }, [panePack, measuredPaneHeight, paneHeightPx]);
 
+  const indexCounts = useMemo(() => {
+    const listRowCount = columnNeedOptions?.indexListRowCount ?? 0;
+    const groupHeadingCount = columnNeedOptions?.indexGroupHeadingCount ?? 0;
+    if (listRowCount > 0 || groupHeadingCount > 0) {
+      return { listRowCount, groupHeadingCount };
+    }
+    return undefined;
+  }, [
+    columnNeedOptions?.indexListRowCount,
+    columnNeedOptions?.indexGroupHeadingCount,
+  ]);
+
+  const packWeight = useMemo(() => {
+    let weight = 0;
+    if (
+      columnNeedOptions?.totalListWeight &&
+      columnNeedOptions.totalListWeight > 0
+    ) {
+      weight = columnNeedOptions.totalListWeight;
+    } else {
+      weight = totalEntryWeight(entries, widthCapacity);
+    }
+    if (indexCounts) {
+      weight = Math.max(
+        weight,
+        conceptIndexClusterIndexPackWeight(
+          indexCounts.listRowCount,
+          indexCounts.groupHeadingCount,
+          true,
+        ),
+      );
+    }
+    const entryRows = entries.reduce((sum, entry) => sum + entry.listItemCount, 0);
+    if (entryRows > 0) {
+      weight = Math.max(
+        weight,
+        conceptIndexClusterIndexPackWeight(entryRows, 0, true),
+      );
+    }
+    return weight;
+  }, [
+    entries,
+    widthCapacity,
+    columnNeedOptions?.totalListWeight,
+    indexCounts,
+  ]);
+
+  const effectivePaneHeight = useMemo(() => {
+    if (packPaneHeight > 0) {
+      return packPaneHeight;
+    }
+    if (measuredPaneHeight > 0) {
+      return measuredPaneHeight;
+    }
+    return paneHeightPx ?? 0;
+  }, [packPaneHeight, measuredPaneHeight, paneHeightPx]);
+
   const columnCount = useMemo(() => {
     if (fixedViewportColumns) {
       return widthCapacity;
     }
-    let count = layoutCapacity;
-    if (panePack && packPaneHeight > 0 && entries.length > 0) {
-      const weight =
-        columnNeedOptions?.totalListWeight &&
-        columnNeedOptions.totalListWeight > 0
-          ? columnNeedOptions.totalListWeight
-          : totalEntryWeight(entries, widthCapacity);
-      const heightNeed = conceptIndexColumnCountForContentHeight(
-        weight,
-        packPaneHeight,
+    if (panePack && packWeight > 0) {
+      return conceptIndexFocusedClusterColumnCount(
+        widthCapacity,
+        packWeight,
+        effectivePaneHeight,
+        indexCounts,
       );
-      count = Math.min(widthCapacity, Math.max(count, heightNeed));
     }
-    return count;
+    return Math.max(1, layoutCapacity);
   }, [
     fixedViewportColumns,
     widthCapacity,
     layoutCapacity,
     panePack,
-    packPaneHeight,
-    entries,
-    columnNeedOptions?.totalListWeight,
+    packWeight,
+    effectivePaneHeight,
+    indexCounts,
   ]);
+
+  const paneFits = useMemo(
+    () =>
+      panePack &&
+      effectivePaneHeight > 0 &&
+      packWeight > 0 &&
+      clusterIndexShouldLockPaneHeight(
+        packWeight,
+        effectivePaneHeight,
+        columnCount,
+      ),
+    [panePack, effectivePaneHeight, packWeight, columnCount],
+  );
+
+  const lockPaneHeight = useMemo(
+    () =>
+      panePack &&
+      paneFits &&
+      effectivePaneHeight > 0 &&
+      columnCount > 1,
+    [panePack, paneFits, effectivePaneHeight, columnCount],
+  );
 
   const style = useMemo(() => {
     const next: {
       columnCount?: number;
+      columnWidth?: string;
       columnGap?: string;
       height?: number;
       maxHeight?: number;
     } = {};
 
-    if (columnCount > 1) {
+    if (lockPaneHeight) {
       next.columnCount = columnCount;
       next.columnGap = "1.25rem";
-      if (panePack && packPaneHeight > 0) {
-        next.height = packPaneHeight;
-        next.maxHeight = packPaneHeight;
+      next.height = effectivePaneHeight;
+      next.maxHeight = effectivePaneHeight;
+    } else if (panePack) {
+      const scrollColumns = Math.min(
+        widthCapacity,
+        Math.max(columnCount, widthCapacity >= 2 ? 2 : 1),
+      );
+      if (scrollColumns > 1) {
+        next.columnCount = scrollColumns;
+      } else {
+        next.columnWidth = `${CONCEPT_INDEX_COL_MIN_PX}px`;
       }
+      next.columnGap = "1.25rem";
+    } else if (columnCount > 1) {
+      next.columnCount = columnCount;
+      next.columnGap = "1.25rem";
     }
 
     return Object.keys(next).length > 0 ? next : undefined;
-  }, [columnCount, panePack, packPaneHeight]);
+  }, [columnCount, widthCapacity, panePack, lockPaneHeight, effectivePaneHeight]);
 
   if (entries.length === 0) {
     return null;
   }
 
   const className = panePack
-    ? `${NEWSPAPER_COLUMNS_CLASS} concept-index-newspaper-pane-pack`
+    ? `${NEWSPAPER_COLUMNS_CLASS} concept-index-newspaper-pane-pack${
+        paneFits ? "" : " concept-index-newspaper-pane-pack--scroll"
+      }`
     : NEWSPAPER_COLUMNS_CLASS;
 
   return (
