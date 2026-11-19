@@ -1,12 +1,7 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import {
-  TOPICS,
-  TRACKS,
-  hubFileForTrack,
-  type TrackId,
-} from "@/lib/catalog";
+import { TOPICS, TRACKS, hubFileForTrack, type TrackId } from "@/lib/catalog";
 import { LOCALES } from "@/lib/i18n/locales";
 import { PARSE_LOGIC_REVISION } from "@/lib/parse/load";
 import { resourcesRoot } from "@/lib/resourcesRoot";
@@ -87,9 +82,11 @@ export function fingerprintTrack(trackId: TrackId): string {
   const parts = topicFilesForTrack(trackId).flatMap((file) =>
     LOCALES.map((locale) => `${file}\t${localeFileFingerprint(file, locale)}`),
   );
-  const body = [String(PARSE_LOGIC_REVISION), String(BUILD_STATE_VERSION), ...parts].join(
-    "\n",
-  );
+  const body = [
+    String(PARSE_LOGIC_REVISION),
+    String(BUILD_STATE_VERSION),
+    ...parts,
+  ].join("\n");
   return createHash("sha256").update(body).digest("hex").slice(0, 20);
 }
 
@@ -142,9 +139,9 @@ export function tracksNeedingSearchIndexRebuild(
   if (!previous) {
     return TRACKS.map((track) => track.id);
   }
-  return TRACKS.filter((track) => previous.tracks[track.id] !== next[track.id]).map(
-    (track) => track.id,
-  );
+  return TRACKS.filter(
+    (track) => previous.tracks[track.id] !== next[track.id],
+  ).map((track) => track.id);
 }
 
 export function fullContentBuildForced(): boolean {

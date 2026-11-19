@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CardGrid, SubjectClusterHub } from "@/components/catalog";
+import { NavHubBrowseIndex, SubjectClusterHub } from "@/components/catalog";
 import {
   ConceptList,
-  PageTitleHeader,
   SubjectIntroBody,
   SubjectPageTitle,
   TopicNavConceptsProvider,
-  TopicPageTitle,
 } from "@/components/topic";
 import {
   getSubject,
@@ -17,37 +15,39 @@ import {
   isNavHubTopic,
   navChildBrowseCards,
   subjectAfterSectionClusterCards,
-  subjectClusterCards,
   subjectIntroTopicSlug,
   subjectRootClusterCards,
   subjectSectionClusterCards,
   topicRouteParams,
   type Topic,
 } from "@/lib/catalog";
+import {
+  localizedClusterSectionsForSubject,
+  subjectClusterSectionsForLocale,
+} from "@/lib/catalog/localizeSubjectClusters";
+import { filterSubjectClusterSectionsForIntro } from "@/lib/catalog/subjectIntroClusters";
+import {
+  subjectHubDetailConcepts,
+  subjectHubOutlineConcepts,
+} from "@/lib/catalog/subjectHubConcepts";
+import {
+  titleTwinClusterConceptsByClusterId,
+  titleTwinOutlineConceptsForSubject,
+} from "@/lib/catalog/titleTwinHubConcepts";
 import { catalogBlurb } from "@/lib/i18n/catalog";
 import { FALLBACK_NOTE_BADGE } from "@/lib/i18n/chrome";
 import { isLocale, localeStaticParams, type Locale } from "@/lib/i18n/locales";
 import { withLocale } from "@/lib/i18n/paths";
-import { shouldShowTopicIndexTitle } from "@/lib/nav/navUtils";
+import {
+  conceptsForConspectTopic,
+  interviewTopicSubjectTitle,
+} from "@/lib/nav/navUtils";
 import {
   loadTopicPage,
   loadTypesHubConcepts,
   topicUsesGroupedConceptIndex,
   type Concept,
 } from "@/lib/parse";
-
-function conceptsForInterviewTopic(
-  topic: Topic,
-  concepts: readonly Concept[],
-): readonly Concept[] {
-  if (isInterviewTasksTopic(topic)) {
-    return concepts.filter((concept) => concept.interviewSection === "tasks");
-  }
-  if (isInterviewTopic(topic)) {
-    return concepts.filter((concept) => concept.interviewSection !== "tasks");
-  }
-  return concepts;
-}
 
 export const dynamicParams = false;
 
@@ -72,32 +72,21 @@ function localizeCards(
   }));
 }
 
-function localizeClusterSections(
-  locale: Locale,
-  sections: ReturnType<typeof subjectClusterCards>,
-) {
-  return sections.map((section) => ({
-    cluster: {
-      ...section.cluster,
-      blurb: catalogBlurb(locale, section.cluster.blurb),
-    },
-    items: localizeCards(locale, section.items),
-  }));
-}
-
 function localizeGroupedClusterSections(
   locale: Locale,
+  subject: NonNullable<ReturnType<typeof getSubject>>,
   sections: ReturnType<typeof subjectSectionClusterCards>,
 ) {
   return sections.map((section) => ({
     section: section.section,
-    clusters: section.clusters.map((entry) => ({
-      cluster: {
-        ...entry.cluster,
-        blurb: catalogBlurb(locale, entry.cluster.blurb),
-      },
-      items: localizeCards(locale, entry.items),
-    })),
+    clusters: localizedClusterSectionsForSubject(
+      locale,
+      subject,
+      section.clusters.map((entry) => ({
+        cluster: entry.cluster,
+        items: entry.items,
+      })),
+    ),
   }));
 }
 
@@ -150,15 +139,21 @@ export default async function TopicPage({
     const groupedSections = subject.sections?.length
       ? localizeGroupedClusterSections(
           locale,
+          subject,
           subjectSectionClusterCards(subject),
         )
       : undefined;
     const rootSections = subject.sections?.length
-      ? localizeClusterSections(locale, subjectRootClusterCards(subject))
+      ? localizedClusterSectionsForSubject(
+          locale,
+          subject,
+          subjectRootClusterCards(subject),
+        )
       : undefined;
     const afterRootSections = subject.sections?.length
-      ? localizeClusterSections(
+      ? localizedClusterSectionsForSubject(
           locale,
+          subject,
           subjectAfterSectionClusterCards(subject),
         )
       : undefined;
@@ -169,15 +164,49 @@ export default async function TopicPage({
     const clusterSections =
       groupedSections || rootSections || afterRootSections
         ? undefined
-        : localizeClusterSections(locale, subjectClusterCards(subject));
-    const sections =
-      introLoaded && clusterSections
-        ? clusterSections.filter((section) => section.cluster.id !== "platform")
-        : clusterSections;
+        : subjectClusterSectionsForLocale(locale, subject);
+    const clusterSectionsNested =
+      clusterSections === undefined
+        ? undefined
+        : subjectClusterSectionsForLocale(locale, subject, {
+            multiTopicChildren: "nested",
+          });
+    const sections = clusterSections
+      ? filterSubjectClusterSectionsForIntro(
+          subject,
+          clusterSections,
+          Boolean(introLoaded),
+        )
+      : clusterSections;
+    const sectionsNested = clusterSectionsNested
+      ? filterSubjectClusterSectionsForIntro(
+          subject,
+          clusterSectionsNested,
+          Boolean(introLoaded),
+        )
+      : clusterSectionsNested;
+    const titleTwinHubConcepts = titleTwinOutlineConceptsForSubject(
+      subject,
+      locale,
+    );
+    const hubOutlineConcepts = subjectHubOutlineConcepts(subject, locale);
+    const hubDetailConcepts = introLoaded
+      ? conceptsForConspectTopic(introLoaded.topic, introLoaded.parsed.concepts)
+      : await subjectHubDetailConcepts(subject, locale);
+    const hubGroupConcepts = introLoaded
+      ? conceptsForConspectTopic(introLoaded.topic, introLoaded.parsed.concepts)
+      : hubOutlineConcepts;
+    const conceptPoolForTitleTwin = hubDetailConcepts ?? hubOutlineConcepts;
+    const titleTwinConceptsByClusterId = titleTwinClusterConceptsByClusterId(
+      subject,
+      locale,
+      conceptPoolForTitleTwin,
+    );
     return (
-      <main className="handbook-subject-main w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
+      <main className="handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col px-4 pt-5 pb-10 sm:px-6">
         <SubjectPageTitle
           subjectTitle={subject.title}
+          introConcepts={hubGroupConcepts}
           sections={sections}
           rootSections={rootSections}
           groupedSections={groupedSections}
@@ -192,27 +221,36 @@ export default async function TopicPage({
                 </p>
               ) : null
             }
-            concepts={introLoaded.parsed.concepts}
-            emptyMessage="No concepts were parsed from this topic."
-            groupInterviewSections={introLoaded.parsed.concepts.some(
-              (concept) => Boolean(concept.group),
+            concepts={conceptsForConspectTopic(
+              introLoaded.topic,
+              introLoaded.parsed.concepts,
             )}
-            clusterHub={
-              <SubjectClusterHub
-                sections={sections}
-                rootSections={rootSections}
-                groupedSections={groupedSections}
-                afterRootSections={afterRootSections}
-              />
-            }
+            hubOutlineConcepts={titleTwinHubConcepts}
+            emptyMessage="No concepts were parsed from this topic."
+            groupInterviewSections={conceptsForConspectTopic(
+              introLoaded.topic,
+              introLoaded.parsed.concepts,
+            ).some((concept) => Boolean(concept.group))}
+            clusterIndex={{
+              sections,
+              rootSections,
+              groupedSections,
+              afterRootSections,
+            }}
           />
         ) : (
-          <div>
+          <div className="handbook-subject-index-body w-full">
             <SubjectClusterHub
               sections={sections}
+              sectionsNested={sectionsNested}
               rootSections={rootSections}
               groupedSections={groupedSections}
               afterRootSections={afterRootSections}
+              hubOutlineConcepts={hubGroupConcepts}
+              detailConcepts={hubDetailConcepts}
+              titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
+              browseListVariant="concept-index"
+              subjectTitle={subject.title}
             />
           </div>
         )}
@@ -226,48 +264,17 @@ export default async function TopicPage({
   }
 
   if (isNavHubTopic(loaded.topic)) {
-    const pageTitle = loaded.parsed.title;
     const hubCards = localizeCards(locale, navChildBrowseCards(loaded.topic));
-    const hubConcepts = conceptsForInterviewTopic(
-      loaded.topic,
-      loaded.parsed.concepts,
-    );
-    const showHubConcepts = hubConcepts.length > 0;
     return (
-      <main
-        className={
-          showHubConcepts
-            ? "handbook-topic-main w-full max-w-3xl px-4 pt-5 pb-10 sm:px-6"
-            : "w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6"
-        }
-      >
+      <main className="handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col px-4 pt-5 pb-10 sm:px-6">
         {loaded.usedFallback ? (
           <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
             {FALLBACK_NOTE_BADGE[locale]}
           </p>
         ) : null}
-        {showHubConcepts ? (
-          <TopicPageTitle title={loaded.topic.title} />
-        ) : (
-          <PageTitleHeader title={pageTitle} />
-        )}
-        {!showHubConcepts && loaded.parsed.description ? (
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-            {loaded.parsed.description}
-          </p>
-        ) : null}
-        {showHubConcepts ? (
-          <TopicNavConceptsProvider concepts={hubConcepts}>
-            <ConceptList
-              concepts={hubConcepts}
-              emptyMessage="No concepts were parsed from this topic."
-              groupInterviewSections
-            />
-          </TopicNavConceptsProvider>
-        ) : null}
         {hubCards.length > 0 ? (
-          <div className={showHubConcepts ? "mt-10" : "mt-8"}>
-            <CardGrid items={hubCards} />
+          <div className="handbook-subject-index-body w-full">
+            <NavHubBrowseIndex items={hubCards} />
           </div>
         ) : null}
       </main>
@@ -277,35 +284,32 @@ export default async function TopicPage({
   const groupedHubConcepts = topicUsesGroupedConceptIndex(loaded.topic)
     ? await loadTypesHubConcepts(trackId, locale)
     : undefined;
-  const pageConcepts = conceptsForInterviewTopic(
+  const pageConcepts = conceptsForConspectTopic(
     loaded.topic,
     groupedHubConcepts ?? loaded.parsed.concepts,
   );
-  const groupConceptSections =
+  const groupedTheoryLayout =
     groupedHubConcepts !== undefined ||
-    pageConcepts.some((concept) => Boolean(concept.group)) ||
-    (isInterviewTopic(loaded.topic) && !isInterviewTasksTopic(loaded.topic));
-  const showTopicIndexTitle = shouldShowTopicIndexTitle(
-    loaded.topic.title,
-    pageConcepts,
-    groupConceptSections,
-  );
-
+    pageConcepts.some((concept) => Boolean(concept.group));
+  const groupConceptSections =
+    groupedTheoryLayout ||
+    pageConcepts.some((concept) => Boolean(concept.interviewSection));
+  const interviewAccordionIndex =
+    isInterviewTopic(loaded.topic) && !isInterviewTasksTopic(loaded.topic);
   return (
-    <main className="handbook-topic-main w-full max-w-3xl px-4 pt-5 pb-10 sm:px-6">
+    <main className="handbook-topic-main w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
       {loaded.usedFallback ? (
         <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
           {FALLBACK_NOTE_BADGE[locale]}
         </p>
-      ) : null}
-      {showTopicIndexTitle ? (
-        <TopicPageTitle title={loaded.topic.title} />
       ) : null}
       <TopicNavConceptsProvider concepts={pageConcepts}>
         <ConceptList
           concepts={pageConcepts}
           emptyMessage="No concepts were parsed from this topic."
           groupInterviewSections={groupConceptSections}
+          interviewAccordionIndex={interviewAccordionIndex}
+          topicTitle={interviewTopicSubjectTitle(loaded.topic, locale)}
         />
       </TopicNavConceptsProvider>
     </main>

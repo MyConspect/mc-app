@@ -313,6 +313,148 @@ const RU_BLURBS: Readonly<Record<string, string>> = {
     "Дженерики, keyof, typeof, conditional и mapped types.",
   "OpenAPI codegen, Zod, typed HTTP clients, and contract drift.":
     "OpenAPI codegen, Zod, типизированные HTTP-клиенты и расхождение контракта.",
+  "Devinterview.io Q&A plus GFE HTML items (#gfe-html-import).":
+    "Devinterview.io Q&A плюс HTML-материалы GFE (#gfe-html-import).",
+  "Devinterview.io Q&A plus GFE CSS items (#gfe-css-import).":
+    "Devinterview.io Q&A плюс CSS-материалы GFE (#gfe-css-import).",
+  "Devinterview.io Q&A plus GreatFrontEnd import (#gfe-javascript-import).":
+    "Devinterview.io Q&A плюс импорт GreatFrontEnd (#gfe-javascript-import).",
+  "Devinterview.io Q&A plus GreatFrontEnd import (#gfe-react-import).":
+    "Devinterview.io Q&A плюс импорт GreatFrontEnd (#gfe-react-import).",
+  "Devinterview.io Q&A plus GFE Redux import (#gfe-redux-import).":
+    "Devinterview.io Q&A плюс импорт GFE Redux (#gfe-redux-import).",
+  "Hooks reference; GFE hooks Q&A at #gfe-hooks-import.":
+    "Справочник хуков; GFE Q&A по хукам — #gfe-hooks-import.",
+  "GFE REST API Q&A for frontend freshers (on Interview page).":
+    "GFE Q&A по REST API для frontend-джуниоров (на странице Interview).",
+  "Angular Q&A, RU index; GFE basics at #gfe-angular-import.":
+    "Angular Q&A, RU-индекс; основы GFE — #gfe-angular-import.",
+  "All Test topics: kind, level, question count, merge hints.":
+    "Все темы Test: тип, уровень, число вопросов, идеи слияния.",
+  "How to merge Test listicles, career pages, and handbook anchors.":
+    "Как объединять листинги Test, карьерные страницы и якоря handbook.",
+  "GFE JavaScript listicles (Test sandbox).":
+    "GFE: листинги JavaScript (Test).",
+  "GFE React and ecosystem listicles (Test).":
+    "GFE: React и экосистема (Test).",
+  "TypeScript interview listicles (Test sandbox).":
+    "Листинги TypeScript для собеседований (Test).",
+  "Next.js interview listicles (Test sandbox).":
+    "Листинги Next.js для собеседований (Test).",
+  "Vue.js interview listicles (Test sandbox).":
+    "Листинги Vue.js для собеседований (Test).",
+  "Node.js interview listicles (Test sandbox).":
+    "Листинги Node.js для собеседований (Test).",
+  "GraphQL interview listicles (Test sandbox).":
+    "Листинги GraphQL для собеседований (Test).",
+  "REST and API interview listicles (Test sandbox).":
+    "Листинги REST и API для собеседований (Test).",
+  "Frontend testing interview listicles (Test sandbox).":
+    "Листинги по фронтенд-тестированию (Test).",
+  "Web performance interview listicles (Test sandbox).":
+    "Листинги по веб-производительности (Test).",
+  "Accessibility (a11y) interview listicles (Test sandbox).":
+    "Листинги по доступности (a11y) (Test).",
+  "npm, Git, and build-tool interview listicles (Test sandbox).":
+    "Листинги: npm, Git и сборка (Test).",
+  "Machine coding and LLD listicles (Test sandbox).":
+    "Machine coding и LLD (Test).",
+  "Mock interviews, scoring, and take-homes (Test sandbox).":
+    "Моки, оценка и take-home (Test).",
+  "Resume, portfolio, jobs by city, and role switches (Test).":
+    "Резюме, портфолио, вакансии по городам (Test).",
+  "Salary, compensation, and offer evaluation (Test sandbox).":
+    "Зарплата, компенсация и офферы (Test).",
+  "Roadmaps and how-to-learn guides (Test sandbox).":
+    "Роадмапы и гайды по обучению (Test).",
+  "Demand, FAANG vs startup, company picks (Test sandbox).":
+    "Спрос, FAANG vs стартап, выбор компании (Test).",
+  "Company-specific frontend interview guides (Test).":
+    "Подготовка к собеседованиям в конкретных компаниях (Test).",
+  "DSA, security, debugging, and code review (Test sandbox).":
+    "Структуры данных, безопасность, отладка, code review (Test).",
+  "Misc essays, roundups, and quizzes (Test sandbox).":
+    "Эссе, подборки и викторины (Test).",
+  "GFE Redux interview listicles (Test).": "GFE: Redux (Test).",
+  "GFE Angular interview listicles (Test).": "GFE: Angular (Test).",
+  "GFE HTML, CSS, and web-fundamentals listicles (Test).":
+    "GFE: HTML, CSS и веб-основы (Test).",
+  "GFE 30 essential React Hooks interview Q&A.":
+    "GFE: 30 ключевых вопросов по React Hooks для собеседования.",
+  "GFE TypeScript interview questions for freshers (2026).":
+    "GFE: вопросы по TypeScript для джуниоров (2026).",
+  "GFE machine coding interview questions for 3 years of experience.":
+    "GFE: вопросы machine coding для 3 лет опыта.",
+  "GFE REST API interview questions for frontend developers (30, 2026).":
+    "GFE: 30 вопросов по REST API для фронтенд-разработчиков (2026).",
+  "GFE frontend interview tips for freshers (2026).":
+    "GFE: советы по фронтенд-собеседованию для джуниоров (2026).",
+  "GFE npm lockfiles, npm ci, semver, and install scripts for frontend interviews.":
+    "GFE: lockfile, npm ci, semver и install-скрипты для фронтенд-собеседований.",
+  "GFE fresher frontend machine coding: small UI in 45–90 minutes.":
+    "GFE: machine coding для джуниоров — небольшой UI за 45–90 минут.",
+  "GFE 30 fresher frontend testing questions on RTL, mocks, async UI, and E2E.":
+    "GFE: 30 вопросов по фронтенд-тестированию для джуниоров (RTL, моки, async UI, E2E).",
+  "GFE 35 fresher Next.js questions on App Router, Server Components, and caching.":
+    "GFE: 35 вопросов по Next.js для джуниоров (App Router, Server Components, кэш).",
+  "GFE 20 Angular basics: components, modules, binding, DI, routing, and Signals.":
+    "GFE: 20 базовых вопросов по Angular (компоненты, модули, binding, DI, роутинг, Signals).",
+  "GFE 18 JS coding interview implementations from debounce through getElementsByClassName.":
+    "GFE: 18 JS-задач на собеседование от debounce до getElementsByClassName.",
+  "GFE 100+ React and React Native interview questions from ex-interviewers (2026).":
+    "GFE: 100+ вопросов по React и React Native от бывших интервьюеров (2026).",
+  "GFE 59 React UI coding drills with solution approaches (Accordion to Data Table).":
+    "GFE: 59 UI-задач на React с подходами к решению (Accordion → Data Table).",
+  "GFE 50+ HTML, CSS, and JavaScript interview Q&A from ex-interviewers.":
+    "GFE: 50+ вопросов по HTML, CSS и JavaScript от бывших интервьюеров.",
+  "GFE junior JS interview basics: scenarios, pitfalls, and 50 Q&A.":
+    "GFE: базовый JS для джуниоров — сценарии, ошибки и 50 Q&A.",
+  "GFE 20 advanced JS interview questions for experienced engineers.":
+    "GFE: 20 продвинутых вопросов по JS для опытных инженеров.",
+  "GFE Angular interview questions for 5–10 years of experience (2026).":
+    "GFE: вопросы по Angular для 5–10 лет опыта (2026).",
+  "GFE micro-frontends architecture, trade-offs, and patterns (2026).":
+    "GFE: архитектура micro-frontends, компромиссы и паттерны (2026).",
+  "GFE senior Vue.js developer interview questions and answers.":
+    "GFE: вопросы для senior Vue.js разработчика с ответами.",
+  "GFE senior GraphQL developer interview questions (advanced).":
+    "GFE: продвинутые вопросы для senior GraphQL разработчика.",
+  "GFE AI-assisted coding interviews for frontend developers.":
+    "GFE: AI-assisted coding-интервью для фронтенд-разработчиков.",
+  "GFE advanced JavaScript interview questions for 10+ years of experience.":
+    "GFE: продвинутые вопросы по JavaScript для 10+ лет опыта.",
+  "GFE TypeScript interview questions for senior frontend developers (2026).":
+    "GFE: вопросы по TypeScript для senior фронтенд-разработчиков (2026).",
+  "GFE data structures interview questions for senior frontend engineers.":
+    "GFE: вопросы по структурам данных для senior фронтенд-инженеров.",
+  "GFE machine coding for tech leads and principal engineers.":
+    "GFE: machine coding для tech lead и principal инженеров.",
+  "GFE senior CSS developer interview questions (advanced topics).":
+    "GFE: продвинутые вопросы для senior CSS разработчика.",
+  "GFE senior HTML developer interview questions (advanced topics).":
+    "GFE: продвинутые вопросы для senior HTML разработчика.",
+  "GFE 50 React.js interview questions for experienced developers.":
+    "GFE: 50 вопросов по React.js для опытных разработчиков.",
+  "GFE senior Node.js developer interview questions (advanced topics).":
+    "GFE: продвинутые вопросы для senior Node.js разработчика.",
+  "GFE senior REST API developer interview questions (advanced topics).":
+    "GFE: продвинутые вопросы для senior REST API разработчика.",
+  "GFE senior Redux developer interview questions (advanced topics).":
+    "GFE: продвинутые вопросы для senior Redux разработчика.",
+  "GFE senior testing developer interview questions (advanced topics).":
+    "GFE: продвинутые вопросы для senior тестировщика.",
+  "GFE senior web performance interview questions (advanced topics).":
+    "GFE: продвинутые вопросы по web performance для senior.",
+  "GFE senior accessibility developer interview questions with answers.":
+    "GFE: вопросы по accessibility для senior с ответами.",
+  "GFE 30 React Q&A from basic through advanced (2025).":
+    "GFE: 30 вопросов по React от базовых до продвинутых (2025).",
+  "GFE 50 essential React.js Q&A from ex-interviewers.":
+    "GFE: 50 ключевых вопросов по React.js от бывших интервьюеров.",
+  "GFE Top 30 React Q&A for interview prep (2025).":
+    "GFE Top 30 вопросов по React для подготовки к собеседованию (2025).",
+  "GFE-style JavaScript Q&A (1–50) for interview prep.":
+    "GFE-стиль: 50 вопросов по JavaScript для подготовки к собеседованию.",
   "Git, tooling, and adjacent topics.": "Git, тулинг и смежные темы.",
   "Go, Scala, and other backend language interview prep.":
     "Подготовка к собеседованиям по Go, Scala и другим backend-языкам.",
@@ -426,7 +568,12 @@ const RU_BLURBS: Readonly<Record<string, string>> = {
   "Interview Q&A and coding tasks.": "Вопросы/ответы и задачи по коду.",
   "GFE fresher advice: projects, basics, debugging, and interview-day habits.":
     "GFE для новичков: проекты, основы, отладка и привычки на собеседовании.",
+  "Link index to GFE sources; full Q&A lives under Frontend interview topics.":
+    "Индекс GFE; полные вопросы и ответы — в темах Frontend → Interviews.",
   Tips: "Советы",
+  References: "Ссылки",
+  "External interview prep and learning sites (bookmarks).":
+    "Внешние сайты для подготовки к собеседованиям и обучения (закладки).",
   "Git interview questions, answers not filled in.":
     "Вопросы по Git, ответы не заполнены.",
   "Testing interview questions, answers not filled in.":
@@ -633,6 +780,12 @@ const RU_BLURBS: Readonly<Record<string, string>> = {
   "Nine patterns for assigning responsibilities to objects.":
     "Девять паттернов назначения ответственности объектам.",
   "Node.js and databases.": "Node.js и базы данных.",
+  "Node.js, message brokers, and cloud services.":
+    "Node.js, брокеры сообщений и облачные сервисы.",
+  "Node.js and backend language interview prep.":
+    "Node.js и подготовка к собеседованиям по backend-языкам.",
+  "Message brokers and cloud services.":
+    "Брокеры сообщений и облачные сервисы.",
   "Node.js, databases, message brokers, and cloud services.":
     "Node.js, базы данных, брокеры сообщений и облачные сервисы.",
   "NoSQL, ORM, and query builders.": "NoSQL, ORM и query builders.",
@@ -766,6 +919,9 @@ const RU_BLURBS: Readonly<Record<string, string>> = {
   "Soft-skill and HR interview questions with answer frameworks, traps, and sample answers.":
     "Soft-skill и HR-вопросы на собеседовании с фреймворками ответов, ловушками и примерами.",
   "Behavior questions": "Поведенческие вопросы",
+  Test: "Тест",
+  "Sandbox for drafts and experiments.":
+    "Песочница для черновиков и экспериментов.",
   "Sorting, search, and graph algorithms.":
     "Сортировка, поиск и алгоритмы на графах.",
   "Sorting, search, graph traversal, and classic algorithm choices.":
@@ -857,8 +1013,251 @@ const RU_BLURBS: Readonly<Record<string, string>> = {
     "var vs let vs const и деструктуризация с типами.",
   "Working with coding agents and docs tools.":
     "Работа с кодинг-агентами и инструментами документации.",
+  "GFE dump: test-10-best-free-tailwind-based-component-libraries-and-ui-kits.":
+    "Дамп GFE: test-10-best-free-tailwind-based-component-libraries-and-ui-kits.",
+  "GFE dump: test-a-real-world-projects-platform-for-front-end-engineers.":
+    "Дамп GFE: test-a-real-world-projects-platform-for-front-end-engineers.",
+  "GFE dump: test-angular-interview-questions.":
+    "Дамп GFE: test-angular-interview-questions.",
+  "GFE dump: test-best-big-companies-for-front-end-career.":
+    "Дамп GFE: test-best-big-companies-for-front-end-career.",
+  "GFE dump: test-best-large-open-source-nextjs-projects-to-study.":
+    "Дамп GFE: test-best-large-open-source-nextjs-projects-to-study.",
+  "GFE dump: test-best-medium-companies-for-front-end-career.":
+    "Дамп GFE: test-best-medium-companies-for-front-end-career.",
+  "GFE dump: test-best-resources-to-learn-frontend-development.":
+    "Дамп GFE: test-best-resources-to-learn-frontend-development.",
+  "GFE dump: test-code-splitting-and-lazy-loading-in-react.":
+    "Дамп GFE: test-code-splitting-and-lazy-loading-in-react.",
+  "GFE dump: test-core-web-vitals-metrics-in-5-minutes.":
+    "Дамп GFE: test-core-web-vitals-metrics-in-5-minutes.",
+  "GFE dump: test-databricks-frontend-interview-questions.":
+    "Дамп GFE: test-databricks-frontend-interview-questions.",
+  "GFE dump: test-discord-frontend-interview-questions.":
+    "Дамп GFE: test-discord-frontend-interview-questions.",
+  "GFE dump: test-evaluating-companies-as-front-end-engineer.":
+    "Дамп GFE: test-evaluating-companies-as-front-end-engineer.",
+  "GFE dump: test-faang-frontend-developer-compensation-what-to-expect-at-each-level.":
+    "Дамп GFE: test-faang-frontend-developer-compensation-what-to-expect-at-each-level.",
+  "GFE dump: test-faang-frontend-developer-salary-india.":
+    "Дамп GFE: test-faang-frontend-developer-salary-india.",
+  "GFE dump: test-front-end-jobs-with-good-salary-in-india-where-to-target.":
+    "Дамп GFE: test-front-end-jobs-with-good-salary-in-india-where-to-target.",
+  "GFE dump: test-front-end-performance-techniques.":
+    "Дамп GFE: test-front-end-performance-techniques.",
+  "GFE dump: test-frontend-developer-career-path.":
+    "Дамп GFE: test-frontend-developer-career-path.",
+  "GFE dump: test-frontend-developer-cover-letter.":
+    "Дамп GFE: test-frontend-developer-cover-letter.",
+  "GFE dump: test-frontend-developer-demand-a-job-market-reality-check.":
+    "Дамп GFE: test-frontend-developer-demand-a-job-market-reality-check.",
+  "GFE dump: test-frontend-developer-github-profile.":
+    "Дамп GFE: test-frontend-developer-github-profile.",
+  "GFE dump: test-frontend-developer-jobs-for-freshers.":
+    "Дамп GFE: test-frontend-developer-jobs-for-freshers.",
+  "GFE dump: test-frontend-developer-jobs-in-bangalore.":
+    "Дамп GFE: test-frontend-developer-jobs-in-bangalore.",
+  "GFE dump: test-frontend-developer-jobs-in-chennai.":
+    "Дамп GFE: test-frontend-developer-jobs-in-chennai.",
+  "GFE dump: test-frontend-developer-jobs-in-delhi-ncr.":
+    "Дамп GFE: test-frontend-developer-jobs-in-delhi-ncr.",
+  "GFE dump: test-frontend-developer-jobs-in-hyderabad.":
+    "Дамп GFE: test-frontend-developer-jobs-in-hyderabad.",
+  "GFE dump: test-frontend-developer-jobs-in-mumbai.":
+    "Дамп GFE: test-frontend-developer-jobs-in-mumbai.",
+  "GFE dump: test-frontend-developer-jobs-in-pune.":
+    "Дамп GFE: test-frontend-developer-jobs-in-pune.",
+  "GFE dump: test-frontend-developer-linkedin-profile.":
+    "Дамп GFE: test-frontend-developer-linkedin-profile.",
+  "GFE dump: test-frontend-developer-portfolio.":
+    "Дамп GFE: test-frontend-developer-portfolio.",
+  "GFE dump: test-frontend-developer-resume-for-freshers.":
+    "Дамп GFE: test-frontend-developer-resume-for-freshers.",
+  "GFE dump: test-frontend-developer-roadmap.":
+    "Дамп GFE: test-frontend-developer-roadmap.",
+  "GFE dump: test-frontend-developer-salary-in-bangalore.":
+    "Дамп GFE: test-frontend-developer-salary-in-bangalore.",
+  "GFE dump: test-frontend-developer-salary-in-hyderabad.":
+    "Дамп GFE: test-frontend-developer-salary-in-hyderabad.",
+  "GFE dump: test-frontend-developer-salary-india.":
+    "Дамп GFE: test-frontend-developer-salary-india.",
+  "GFE dump: test-frontend-developer-salary-negotiation.":
+    "Дамп GFE: test-frontend-developer-salary-negotiation.",
+  "GFE dump: test-frontend-developer-side-project-ideas.":
+    "Дамп GFE: test-frontend-developer-side-project-ideas.",
+  "GFE dump: test-frontend-developer-to-ai-engineer.":
+    "Дамп GFE: test-frontend-developer-to-ai-engineer.",
+  "GFE dump: test-frontend-developer-to-engineering-manager.":
+    "Дамп GFE: test-frontend-developer-to-engineering-manager.",
+  "GFE dump: test-frontend-developer-to-full-stack-developer.":
+    "Дамп GFE: test-frontend-developer-to-full-stack-developer.",
+  "GFE dump: test-frontend-developer-to-product-manager-how-to-make-the-switch.":
+    "Дамп GFE: test-frontend-developer-to-product-manager-how-to-make-the-switch.",
+  "GFE dump: test-frontend-developer-to-tech-lead.":
+    "Дамп GFE: test-frontend-developer-to-tech-lead.",
+  "GFE dump: test-frontend-development-for-beginners.":
+    "Дамп GFE: test-frontend-development-for-beginners.",
+  "GFE dump: test-frontend-interview-process-at-google-amazon-and-meta-what-to-expect.":
+    "Дамп GFE: test-frontend-interview-process-at-google-amazon-and-meta-what-to-expect.",
+  "GFE dump: test-frontend-mock-interview.":
+    "Дамп GFE: test-frontend-mock-interview.",
+  "GFE dump: test-frontend-project-ideas-for-resume.":
+    "Дамп GFE: test-frontend-project-ideas-for-resume.",
+  "GFE dump: test-frontend-take-home-assignment.":
+    "Дамп GFE: test-frontend-take-home-assignment.",
+  "GFE dump: test-frontend-vs-backend-developer.":
+    "Дамп GFE: test-frontend-vs-backend-developer.",
+  "GFE dump: test-frontend-vs-fullstack-developer.":
+    "Дамп GFE: test-frontend-vs-fullstack-developer.",
+  "GFE dump: test-how-long-does-it-take-to-become-a-frontend-developer.":
+    "Дамп GFE: test-how-long-does-it-take-to-become-a-frontend-developer.",
+  "GFE dump: test-how-to-become-a-frontend-architect.":
+    "Дамп GFE: test-how-to-become-a-frontend-architect.",
+  "GFE dump: test-how-to-become-a-frontend-developer.":
+    "Дамп GFE: test-how-to-become-a-frontend-developer.",
+  "GFE dump: test-how-to-build-frontend-developer-portfolio-with-no-experience.":
+    "Дамп GFE: test-how-to-build-frontend-developer-portfolio-with-no-experience.",
+  "GFE dump: test-how-to-evaluate-tech-job-offer-india.":
+    "Дамп GFE: test-how-to-evaluate-tech-job-offer-india.",
+  "GFE dump: test-how-to-get-frontend-developer-internship.":
+    "Дамп GFE: test-how-to-get-frontend-developer-internship.",
+  "GFE dump: test-how-to-get-frontend-developer-job-at-faang.":
+    "Дамп GFE: test-how-to-get-frontend-developer-job-at-faang.",
+  "GFE dump: test-how-to-get-frontend-developer-job-with-no-experience.":
+    "Дамп GFE: test-how-to-get-frontend-developer-job-with-no-experience.",
+  "GFE dump: test-how-to-grow-as-a-frontend-developer.":
+    "Дамп GFE: test-how-to-grow-as-a-frontend-developer.",
+  "GFE dump: test-how-to-handle-large-datasets-in-front-end-applications.":
+    "Дамп GFE: test-how-to-handle-large-datasets-in-front-end-applications.",
+  "GFE dump: test-how-to-learn-javascript.":
+    "Дамп GFE: test-how-to-learn-javascript.",
+  "GFE dump: test-how-to-learn-react.": "Дамп GFE: test-how-to-learn-react.",
+  "GFE dump: test-how-to-learn-typescript.":
+    "Дамп GFE: test-how-to-learn-typescript.",
+  "GFE dump: test-how-to-start-freelance-frontend-development.":
+    "Дамп GFE: test-how-to-start-freelance-frontend-development.",
+  "GFE dump: test-how-to-switch-from-backend-to-frontend-developer.":
+    "Дамп GFE: test-how-to-switch-from-backend-to-frontend-developer.",
+  "GFE dump: test-how-to-write-frontend-developer-resume.":
+    "Дамп GFE: test-how-to-write-frontend-developer-resume.",
+  "GFE dump: test-image-performance-techniques.":
+    "Дамп GFE: test-image-performance-techniques.",
+  "GFE dump: test-is-frontend-development-a-good-career.":
+    "Дамп GFE: test-is-frontend-development-a-good-career.",
+  "GFE dump: test-is-frontend-development-dying-2026.":
+    "Дамп GFE: test-is-frontend-development-dying-2026.",
+  "GFE dump: test-leveraging-actions-in-react-19-for-enhance-form-handling.":
+    "Дамп GFE: test-leveraging-actions-in-react-19-for-enhance-form-handling.",
+  "GFE dump: test-most-important-javascript-questions-front-end-interviews.":
+    "Дамп GFE: test-most-important-javascript-questions-front-end-interviews.",
+  "GFE dump: test-most-important-user-interface-questions-front-end-interviews.":
+    "Дамп GFE: test-most-important-user-interface-questions-front-end-interviews.",
+  "GFE dump: test-most-useful-and-impactful-react-ecosystem-libraries.":
+    "Дамп GFE: test-most-useful-and-impactful-react-ecosystem-libraries.",
+  "GFE dump: test-netflix-react-interview-questions.":
+    "Дамп GFE: test-netflix-react-interview-questions.",
+  "GFE dump: test-next-js-interview-questions.":
+    "Дамп GFE: test-next-js-interview-questions.",
+  "GFE dump: test-paypal-frontend-interview-questions.":
+    "Дамп GFE: test-paypal-frontend-interview-questions.",
+  "GFE dump: test-react-vs-angular-vs-vue.":
+    "Дамп GFE: test-react-vs-angular-vs-vue.",
+  "GFE dump: test-redux-interview-questions-for-freshers.":
+    "Дамп GFE: test-redux-interview-questions-for-freshers.",
+  "GFE dump: test-remote-frontend-developer-jobs.":
+    "Дамп GFE: test-remote-frontend-developer-jobs.",
+  "GFE dump: test-rippling-frontend-interview-questions.":
+    "Дамп GFE: test-rippling-frontend-interview-questions.",
+  "GFE dump: test-senior-frontend-developer-resume.":
+    "Дамп GFE: test-senior-frontend-developer-resume.",
+  "GFE dump: test-senior-frontend-developer-skills.":
+    "Дамп GFE: test-senior-frontend-developer-skills.",
+  "GFE dump: test-senior-frontend-engineer-to-staff-engineer.":
+    "Дамп GFE: test-senior-frontend-engineer-to-staff-engineer.",
+  "GFE dump: test-snowflake-frontend-interview-questions.":
+    "Дамп GFE: test-snowflake-frontend-interview-questions.",
+  "GFE dump: test-startup-vs-faang-for-frontend-developers.":
+    "Дамп GFE: test-startup-vs-faang-for-frontend-developers.",
+  "GFE dump: test-tips-and-lessons-from-jordan-cutlers-rapid-career-growth.":
+    "Дамп GFE: test-tips-and-lessons-from-jordan-cutlers-rapid-career-growth.",
+  "GFE dump: test-top-css-mistakes-made-by-front-end-engineers.":
+    "Дамп GFE: test-top-css-mistakes-made-by-front-end-engineers.",
+  "GFE dump: test-top-headless-ui-libraries-for-react-in-2026.":
+    "Дамп GFE: test-top-headless-ui-libraries-for-react-in-2026.",
+  "GFE dump: test-top-open-source-design-systems-by-tech-companies-you-can-use-right-away.":
+    "Дамп GFE: test-top-open-source-design-systems-by-tech-companies-you-can-use-right-away.",
+  "GFE dump: test-top-react-ui-component-libraries-in-2024.":
+    "Дамп GFE: test-top-react-ui-component-libraries-in-2024.",
+  "GFE dump: test-vue-interview-questions.":
+    "Дамп GFE: test-vue-interview-questions.",
+  "GFE dump: test-web-apps-at-scale-css.":
+    "Дамп GFE: test-web-apps-at-scale-css.",
+  "GFE dump: test-web-apps-at-scale-introduction.":
+    "Дамп GFE: test-web-apps-at-scale-introduction.",
+  "GFE dump: test-web-apps-at-scale-javascript.":
+    "Дамп GFE: test-web-apps-at-scale-javascript.",
+  "GFE dump: test-web-apps-at-scale-ui-components.":
+    "Дамп GFE: test-web-apps-at-scale-ui-components.",
+  "GFE dump: test-50-must-know-javascript-interview-questions-by-ex-interviewers.":
+    "Дамп GFE: test-50-must-know-javascript-interview-questions-by-ex-interviewers.",
+  "GFE dump: test-accessibility-interview-questions-for-3-years-experience.":
+    "Дамп GFE: test-accessibility-interview-questions-for-3-years-experience.",
+  "GFE dump: test-code-review-interview-for-frontend-developers.":
+    "Дамп GFE: test-code-review-interview-for-frontend-developers.",
+  "GFE dump: test-css-interview-questions.":
+    "Дамп GFE: test-css-interview-questions.",
+  "GFE dump: test-frontend-build-tools-interview-questions-vite-webpack-and-bundling.":
+    "Дамп GFE: test-frontend-build-tools-interview-questions-vite-webpack-and-bundling.",
+  "GFE dump: test-frontend-debugging-interview-questions.":
+    "Дамп GFE: test-frontend-debugging-interview-questions.",
+  "GFE dump: test-frontend-lld-react-machine-coding-questions.":
+    "Дамп GFE: test-frontend-lld-react-machine-coding-questions.",
+  "GFE dump: test-frontend-web-security-interview-questions.":
+    "Дамп GFE: test-frontend-web-security-interview-questions.",
+  "GFE dump: test-git-interview-questions-for-frontend-developers.":
+    "Дамп GFE: test-git-interview-questions-for-frontend-developers.",
+  "GFE dump: test-graphql-interview-questions.":
+    "Дамп GFE: test-graphql-interview-questions.",
+  "GFE dump: test-html-interview-questions-for-3-years-experience.":
+    "Дамп GFE: test-html-interview-questions-for-3-years-experience.",
+  "GFE dump: test-javascript-interview-questions-for-2-years-experience.":
+    "Дамп GFE: test-javascript-interview-questions-for-2-years-experience.",
+  "GFE dump: test-javascript-interview-questions-for-5-years-experience.":
+    "Дамп GFE: test-javascript-interview-questions-for-5-years-experience.",
+  "GFE dump: test-machine-coding-round.":
+    "Дамп GFE: test-machine-coding-round.",
+  "GFE dump: test-nodejs-interview-questions-for-3-years-experience.":
+    "Дамп GFE: test-nodejs-interview-questions-for-3-years-experience.",
+  "GFE dump: test-quiz-useeffect-deps.": "Дамп GFE: test-quiz-useeffect-deps.",
+  "GFE dump: test-senior-angular-developer-interview-questions-advanced-topics-and-answers.":
+    "Дамп GFE: test-senior-angular-developer-interview-questions-advanced-topics-and-answers.",
+  "GFE dump: test-senior-browser-fundamentals-developer-interview-questions-advanced-topics-and-answers.":
+    "Дамп GFE: test-senior-browser-fundamentals-developer-interview-questions-advanced-topics-and-answers.",
+  "GFE dump: test-typescript-for-react-developers.":
+    "Дамп GFE: test-typescript-for-react-developers.",
+  "GFE dump: test-typescript-interview-questions-for-3-years-experience.":
+    "Дамп GFE: test-typescript-interview-questions-for-3-years-experience.",
+  "GFE dump: test-typescript-interview-questions-for-tech-leads.":
+    "Дамп GFE: test-typescript-interview-questions-for-tech-leads.",
+  "GFE dump: test-web-performance-interview-questions.":
+    "Дамп GFE: test-web-performance-interview-questions.",
+  "GFE guide: pair programming format, signals, worked filterUsers session, prep and mistakes.":
+    "Гайд GFE: Frontend Pair Programming Interview: What to Expect and How …",
+  "GFE guide: rubrics, round-by-round signals, debounced search scoring example, mock self-score.":
+    "Гайд GFE: How Frontend Interviews Are Scored: What Interviewers Look F…",
+  "GFE guide: project walkthrough structure, worked example, follow-ups, honesty about AI and libs.":
+    "Гайд GFE: How to Explain Your Projects in a Frontend Interview (With E…",
+  "GFE guide: when to narrate in coding rounds, sample dialogue, stuck-table, practice habits.":
+    "Гайд GFE: How to Think Out Loud in a Frontend Coding Interview",
   Conspect: "Конспект",
   Interviews: "Собеседования",
+  "Computer Science": "Компьютерные науки",
+  "Data structures, algorithms, and system design for interviews.":
+    "Структуры данных, алгоритмы и проектирование систем для собеседований.",
+  "Core CS concepts, data structures, algorithms, and system design for interviews.":
+    "База CS: вычисления и парадигмы, структуры данных, алгоритмы и проектирование систем для собеседований.",
+  "Computation, programming paradigms, imperative vs declarative, and logic programming.":
+    "Вычисления, парадигмы программирования, imperative vs declarative и логическое программирование.",
 };
 
 /** Return localized catalog blurb; falls back to English when RU is missing. */

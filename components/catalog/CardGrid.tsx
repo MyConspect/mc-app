@@ -5,13 +5,31 @@ export type CardItem = {
   readonly title: string;
   readonly description: string;
   readonly id?: string;
+  readonly indexRowKind?: "group-heading";
 };
 
-export function CardGrid({ items }: { items: readonly CardItem[] }) {
+export type CardGridVariant = "catalog" | "concept-index";
+
+export function CardGrid({
+  items,
+  variant = "catalog",
+}: {
+  items: readonly CardItem[];
+  variant?: CardGridVariant;
+}) {
+  const visibleItems = items.filter((item) => item.title.trim().length > 0);
+  if (visibleItems.length === 0) {
+    return null;
+  }
+  const listClass =
+    variant === "concept-index"
+      ? "list-none"
+      : "divide-y divide-zinc-200 dark:divide-zinc-800";
+
   return (
-    <ul className="grid gap-2 sm:grid-cols-2 sm:gap-4">
-      {items.map((item) => (
-        <BrowseCardCell key={item.href} item={item} />
+    <ul className={listClass}>
+      {visibleItems.map((item) => (
+        <BrowseCardCell key={item.href} item={item} variant={variant} />
       ))}
     </ul>
   );

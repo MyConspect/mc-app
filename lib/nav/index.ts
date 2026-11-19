@@ -1,8 +1,10 @@
 export { CHROME, INSTRUCTIONS_HREF } from "./chrome";
 export { resolveConceptId } from "./conceptHash";
 export {
+  areRedundantNavTitles,
   filterInterviewConcepts,
   hashIdFrom,
+  isRedundantSubjectTopicNavRow,
   sameTitle,
   shouldHideSidebarConcepts,
   shouldShowTopicIndexTitle,
@@ -64,6 +66,7 @@ export {
 export type { NavTrackScope } from "./sections";
 export type {
   ChromeCopy,
+  ConspectSidebarSchema,
   Crumb,
   HashCrumb,
   InterviewSection,
@@ -74,7 +77,15 @@ export type {
   NavRootSection,
   NavRootSectionId,
   NavSection,
+  NavSidebarSchema,
   NavSubject,
   NavTopic,
   SearchMode,
 } from "./types";
+export {
+  conspectClusterExpandsInSidebar,
+  conspectClusterLeavesInSidebar,
+  conspectSubjectHubSectionWithConcepts,
+  navSidebarSchema,
+} from "./conspectSidebar";
+export type { InterviewsSidebarSchema } from "./conspectSidebar";

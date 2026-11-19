@@ -1,17 +1,30 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CardGrid, ClusterCardSections } from "@/components/catalog";
-import { ConceptList, PageTitleHeader } from "@/components/topic";
 import {
+  SubjectClusterHub,
+  TrackBrowseIndex,
+  type TrackBrowseIndexBlock,
+} from "@/components/catalog";
+import { ConceptList, SubjectIntroBody } from "@/components/topic";
+import {
+  SUBJECTS,
+  subjectsForTrack,
   TRACKS,
   getTrack,
   isInterviewTopic,
   isTrackId,
   leafTopicForTrack,
-  subjectClusterCards,
   subjectForTrack,
-  trackBrowseCards,
+  subjectHref,
+  trackLooseBrowseCards,
+  trackSubjectBrowseBlocks,
+  type TrackId,
 } from "@/lib/catalog";
+import {
+  localizedClusterSectionsForSubject,
+  subjectClusterSectionsForLocale,
+} from "@/lib/catalog/localizeSubjectClusters";
+import { titleTwinClusterConceptsByClusterId } from "@/lib/catalog/titleTwinHubConcepts";
 import { catalogBlurb } from "@/lib/i18n/catalog";
 import {
   behaviorPageTitle,
@@ -21,6 +34,7 @@ import {
 import { FALLBACK_NOTE_BADGE } from "@/lib/i18n/chrome";
 import { isLocale, localeStaticParams, type Locale } from "@/lib/i18n/locales";
 import { withLocale } from "@/lib/i18n/paths";
+import { interviewTopicSubjectTitle } from "@/lib/nav/navUtils";
 import { loadHubPage, loadParsedTopic, loadTopicPage } from "@/lib/parse";
 
 export const dynamicParams = false;
@@ -42,16 +56,21 @@ function localizeCards(
   }));
 }
 
-function localizeClusterSections(
+function localizeTrackBrowseBlocks(
   locale: Locale,
-  sections: ReturnType<typeof subjectClusterCards>,
-) {
-  return sections.map((section) => ({
-    cluster: {
-      ...section.cluster,
-      blurb: catalogBlurb(locale, section.cluster.blurb),
-    },
-    items: localizeCards(locale, section.items),
+  trackId: TrackId,
+): TrackBrowseIndexBlock[] {
+  const blocks = trackSubjectBrowseBlocks(trackId);
+  return blocks.map(({ subject, sections }) => ({
+    subjectSlug: subject.slug,
+    subjectTitle: subject.title,
+    subjectHref: withLocale(locale, subjectHref(subject)),
+    catalogSubject: subject,
+    locale,
+    sections: localizedClusterSectionsForSubject(locale, subject, sections, {
+      expandTitleTwinTopics: subject.expandTitleTwinOnTrackHub ?? false,
+    }),
+    clusterLinksOnly: true,
   }));
 }
 
@@ -117,31 +136,40 @@ export default async function TrackPage({
   const subject = subjectForTrack(track.id);
   if (subject) {
     const hub = await loadHubPage(track.id, locale);
-    const sections = localizeClusterSections(
+    const sections = subjectClusterSectionsForLocale(locale, subject);
+    const titleTwinConceptsByClusterId = titleTwinClusterConceptsByClusterId(
+      subject,
       locale,
-      subjectClusterCards(subject),
+      [],
     );
     return (
-      <main className="w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
-        <PageTitleHeader title={subject.title} />
+      <main className="handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col px-4 pt-5 pb-10 sm:px-6">
         {hub ? (
-          <>
-            {hub.usedFallback ? (
-              <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
-                {FALLBACK_NOTE_BADGE[locale]}
-              </p>
-            ) : null}
-            <div className="max-w-3xl">
-              <ConceptList
-                concepts={hub.parsed.concepts}
-                emptyMessage="No concepts were parsed from this track hub."
-              />
-            </div>
-          </>
-        ) : null}
-        <div className={hub ? "mt-10" : "mt-8"}>
-          <ClusterCardSections sections={sections} />
-        </div>
+          <SubjectIntroBody
+            fallbackBanner={
+              hub.usedFallback ? (
+                <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
+                  {FALLBACK_NOTE_BADGE[locale]}
+                </p>
+              ) : null
+            }
+            concepts={hub.parsed.concepts}
+            emptyMessage="No concepts were parsed from this track hub."
+            groupInterviewSections={hub.parsed.concepts.some((concept) =>
+              Boolean(concept.group),
+            )}
+            clusterIndex={{ sections }}
+          />
+        ) : (
+          <div className="handbook-subject-index-body w-full">
+            <SubjectClusterHub
+              sections={sections}
+              titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
+              browseListVariant="concept-index"
+              subjectTitle={subject.title}
+            />
+          </div>
+        )}
       </main>
     );
   }
@@ -165,23 +193,27 @@ export default async function TrackPage({
         <ConceptList
           concepts={concepts}
           emptyMessage="No concepts were parsed from this topic."
-          groupInterviewSections={isInterviewTopic(leaf)}
+          groupInterviewSections={
+            isInterviewTopic(leaf) ||
+            concepts.some((concept) => Boolean(concept.group))
+          }
+          interviewAccordionIndex={isInterviewTopic(leaf)}
+          topicTitle={interviewTopicSubjectTitle(leaf, locale)}
         />
       </main>
     );
   }
 
+  const browseBlocks = localizeTrackBrowseBlocks(locale, track.id);
+  const looseCards = localizeCards(locale, trackLooseBrowseCards(track.id));
+
   return (
-    <main className="w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
-      <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-        {track.title}
-      </h1>
-      <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-600 dark:text-zinc-400">
-        {catalogBlurb(locale, track.description)}
-      </p>
-      <div className="mt-8">
-        <CardGrid items={localizeCards(locale, trackBrowseCards(track.id))} />
-      </div>
+    <main className="handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col px-4 pt-5 pb-10 sm:px-6">
+      {browseBlocks.length > 0 || looseCards.length > 0 ? (
+        <div className="handbook-subject-index-body w-full">
+          <TrackBrowseIndex blocks={browseBlocks} looseCards={looseCards} />
+        </div>
+      ) : null}
     </main>
   );
 }

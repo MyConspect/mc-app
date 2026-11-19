@@ -67,6 +67,10 @@ import {
   withNextjsDataConceptGroups,
 } from "@/lib/catalog/nextjsDataHub";
 import {
+  isBehaviorQuestionsTopicSlug,
+  withBehaviorConceptGroups,
+} from "@/lib/catalog/behaviorHub";
+import {
   TYPES_HUB_REFERENCE_GROUP,
   TYPES_HUB_SECTIONS,
   TYPES_HUB_SLUG,
@@ -98,7 +102,7 @@ type ParsedEntry = {
   readonly promise: Promise<ParsedTopic>;
 };
 
-export const PARSE_LOGIC_REVISION = 34;
+export const PARSE_LOGIC_REVISION = 36;
 
 type ParseCache = {
   markdown: Map<string, StoredRead>;
@@ -345,6 +349,9 @@ function outlineForTopic(
   if (isNextjsDataTopicSlug(topic.slug)) {
     return withNextjsDataConceptGroups(outline);
   }
+  if (isBehaviorQuestionsTopicSlug(topic.slug)) {
+    return withBehaviorConceptGroups(outline);
+  }
   return outline;
 }
 
@@ -431,6 +438,12 @@ function parsedForTopic(topic: Topic, parsed: ParsedTopic): ParsedTopic {
     return {
       ...parsed,
       concepts: withNextjsDataConceptGroups(parsed.concepts),
+    };
+  }
+  if (isBehaviorQuestionsTopicSlug(topic.slug)) {
+    return {
+      ...parsed,
+      concepts: withBehaviorConceptGroups(parsed.concepts),
     };
   }
   return parsed;

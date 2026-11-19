@@ -7,9 +7,9 @@ export const CORE_BROWSER_TOPIC_SECTIONS: readonly {
   readonly concepts: readonly string[];
 }[] = [
   {
-    section: "Browser work principles",
+    section: "Work Principles",
     concepts: [
-      "Browser work principles",
+      "Work Principles",
       "Navigation and fetching",
       "HTML parsing and the DOM",
       "CSSOM and style computation",

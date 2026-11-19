@@ -183,6 +183,35 @@ test("structureConceptBody wraps post-how slots when concept-depth optional", as
   assert.match(html, /concept-depth-quick[\s\S]*slot-cases/);
 });
 
+test("structureConceptBody hides a ### TL;DR part from Quick markup", async () => {
+  const html = await structureConceptBody(
+    `<!-- concept-depth:optional -->
+
+**Definition:** Short.
+
+### TL;DR
+
+Executive summary.
+
+### Why it matters
+
+**Detailed:**
+
+Long block.`,
+    renderFragment,
+  );
+
+  const quickBlock = html.includes("concept-depth-quick")
+    ? html.slice(
+        html.indexOf("concept-depth-quick"),
+        html.indexOf("concept-part--detailed-only"),
+      )
+    : html;
+  assert.doesNotMatch(quickBlock, /Executive summary/);
+  assert.doesNotMatch(quickBlock, /concept-part__title[^>]*>TL;DR/);
+  assert.match(html, /concept-part--detailed-only[\s\S]*Executive summary/);
+});
+
 test("structureConceptBody hides ### detailed-only parts from Quick markup", async () => {
   const html = await structureConceptBody(
     `<!-- concept-depth:optional -->
@@ -253,4 +282,69 @@ test("structureConceptBody puts only Detailed slot in concept-depth-detailed", a
   const quick = html.slice(html.indexOf("concept-depth-quick"), quickEnd);
   assert.match(quick, /When to use/);
   assert.match(quick, /Step one/);
+});
+
+test("structureConceptBody keeps Sources in Detailed pane for detailed-only parts", async () => {
+  const html = await structureConceptBody(
+    `<!-- concept-depth:optional -->
+
+**Definition:** Short.
+
+**Sources:** [MDN](https://developer.mozilla.org/)
+
+### GreatFrontEnd quiz
+
+**Detailed:**
+
+1. Long quiz body
+
+**Sources:** [GreatFrontEnd](https://www.greatfrontend.com/questions/quiz/explain-hoisting)`,
+    renderFragment,
+  );
+
+  const quickEnd = html.indexOf("concept-depth-detailed");
+  const firstQuick = html.slice(
+    html.indexOf("concept-depth-quick"),
+    html.indexOf("concept-part__title"),
+  );
+  const detailed = html.slice(quickEnd);
+  assert.match(firstQuick, /slot-sources/);
+  assert.match(firstQuick, /MDN/);
+  assert.doesNotMatch(firstQuick, /GreatFrontEnd/);
+  assert.match(detailed, /slot-sources/);
+  assert.match(detailed, /GreatFrontEnd/);
+  assert.match(detailed, /Long quiz body/);
+  assert.doesNotMatch(html.slice(0, quickEnd), /Long quiz body/);
+});
+
+test("structureConceptBody keeps post-Detailed Sources in Detailed without a part title", async () => {
+  const html = await structureConceptBody(
+    `<!-- concept-depth:optional -->
+
+**Definition:** Short.
+
+**Sources:** [MDN](https://developer.mozilla.org/)
+
+**Interview questions:**
+
+- [Q](./q.md#q)
+
+**Detailed:**
+
+1. Quiz body
+
+**Sources:** [GreatFrontEnd](https://www.greatfrontend.com/questions/quiz/explain-hoisting)`,
+    renderFragment,
+  );
+
+  assert.doesNotMatch(html, /concept-part__title/);
+  const quickEnd = html.indexOf("concept-depth-detailed");
+  const quick = html.slice(html.indexOf("concept-depth-quick"), quickEnd);
+  const detailed = html.slice(quickEnd);
+  assert.match(quick, /MDN/);
+  assert.doesNotMatch(quick, /GreatFrontEnd/);
+  assert.doesNotMatch(quick, /Quiz body/);
+  assert.match(detailed, /slot-sources/);
+  assert.match(detailed, /GreatFrontEnd/);
+  assert.match(detailed, /Quiz body/);
 });

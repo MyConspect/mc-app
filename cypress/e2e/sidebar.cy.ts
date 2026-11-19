@@ -20,10 +20,9 @@ describe("handbook sidebar", () => {
     cy.nav("track", "frontend").should("have.class", "bg-yellow-50");
     cy.nav("subject", "css").should("have.class", "bg-yellow-50");
 
-    cy.nav("track", "frontend").then(($el) => {
-      $el[0].click();
-    });
-    cy.nav("track", "frontend").should("have.attr", "aria-expanded", "false");
+    cy.nav("track", "frontend").click();
+    cy.location("pathname").should("eq", "/en/frontend");
+    cy.contains("h1", "Frontend");
     cy.nav("track", "frontend").should("have.class", "bg-yellow-50");
     cy.nav("track", "backend").should("not.have.class", "bg-yellow-50");
   });
@@ -37,10 +36,18 @@ describe("handbook sidebar", () => {
     cy.location("pathname").should("eq", "/en/backend");
     cy.contains("h1", "Backend");
     cy.contains("h2", "Node.js");
-    cy.contains("h2", "Database");
+    cy.contains("h2", "Database").should("not.exist");
     cy.nav("track", "backend").should("have.attr", "aria-expanded", "true");
     cy.nav("subject", "nodejs").should("be.visible");
-    cy.nav("subject", "database").should("be.visible");
+    cy.nav("subject", "database").should("not.exist");
+  });
+
+  it("opens the Databases track between Backend and System design", () => {
+    cy.visit("/en/backend");
+    cy.nav("track", "databases").click();
+    cy.location("pathname").should("eq", "/en/databases");
+    cy.contains("h1", "Database");
+    cy.contains("h2", "NoSQL");
   });
 
   it("does not keep a concept highlighted after switching tracks", () => {
@@ -191,22 +198,17 @@ describe("handbook sidebar", () => {
     cy.sidebar().contains("MVC (Model-View-Controller)").should("be.visible");
   });
 
-  it("opens Computer science from Other without sending the track to Algorithms", () => {
-    cy.visit("/en/other");
-    cy.nav("subject", "git").should("be.visible");
-    cy.nav("topic", "special-sdlc").should("not.exist");
-    cy.nav("track", "ai").should("be.visible");
-    cy.nav("subject", "web-security").should("not.exist");
+  it("opens Computer science from Core on the computer-science track", () => {
+    cy.visit("/en/computer-science");
+    cy.nav("subject", "core").should("be.visible");
     cy.nav("topic", "computer-science").should("be.visible");
-    cy.nav("subject", "paradigms").should("not.exist");
-    cy.nav("cluster", "additional").should("not.exist");
-    cy.nav("cluster", "engineering").should("not.exist");
-
     cy.nav("topic", "computer-science").click();
 
-    cy.location("pathname").should("eq", "/en/other/computer-science");
+    cy.location("pathname").should(
+      "eq",
+      "/en/computer-science/computer-science",
+    );
     cy.contains("h1", "Computer science");
-    cy.nav("subject", "web-security").should("not.exist");
   });
 
   it("opens Patterns from the Algorithms hub without collapsing the track", () => {
@@ -442,7 +444,7 @@ describe("handbook sidebar", () => {
   it("does not show Back on database foundations topic index", () => {
     cy.viewport(390, 844);
     cy.clearLocalStorage();
-    cy.visit("/en/backend/database-foundations");
+    cy.visit("/en/databases/database-foundations");
     cy.contains("h1", "Core");
     cy.contains("button", "Database overview").should("be.visible");
     cy.conceptNavButton("Back").should("not.exist");
@@ -467,7 +469,7 @@ describe("handbook sidebar", () => {
 
   it("does not show Back on interview topic index with grouped sections", () => {
     cy.visit("/en/frontend/html-interview");
-    cy.contains("h2", "HTML Basics");
+    cy.contains("button", "HTML Basics").should("be.visible");
     cy.conceptNavButton("Back").should("not.exist");
     cy.conceptNavButton("Next").should("not.exist");
   });
@@ -480,46 +482,26 @@ describe("handbook sidebar", () => {
     cy.sidebar().contains("What is TypeScript").should("not.exist");
   });
 
-  it("toggles TypeScript Reference open and closed on the hub", () => {
-    cy.visit("/en/frontend/typescript");
-    cy.nav("section", "reference").should(
-      "have.attr",
-      "aria-expanded",
-      "false",
-    );
+  it("lists HTML Reference appendix under a Reference section row", () => {
+    cy.visit("/en/frontend/html");
+    cy.nav("subject", "html").click();
+    cy.nav("cluster", "additional").should("be.visible");
+    cy.nav("section", "reference").should("be.visible");
     cy.nav("section", "reference").click();
-    cy.nav("section", "reference").should("have.attr", "aria-expanded", "true");
-    cy.get('#handbook-sidebar [data-nav-id="cheat-sheets"]').should(
-      "be.visible",
-    );
-
-    cy.nav("section", "reference").click();
-    cy.nav("section", "reference").should(
-      "have.attr",
-      "aria-expanded",
-      "false",
-    );
+    cy.nav("cluster", "ref-elements").should("be.visible");
+    cy.nav("cluster", "ref-attributes")
+      .should("be.visible")
+      .prevAll('[data-nav-id="ref-elements"]')
+      .should("have.length", 1);
   });
 
-  it("toggles Utility Types closed while a utility topic is open", () => {
-    cy.visit("/en/frontend/ts-utility-object");
-    cy.nav("section", "utility-types").should(
-      "have.attr",
-      "aria-expanded",
-      "true",
-    );
-    cy.nav("section", "utility-types").click();
-    cy.nav("section", "utility-types").should(
-      "have.attr",
-      "aria-expanded",
-      "false",
-    );
-    cy.nav("section", "utility-types").click();
-    cy.nav("section", "utility-types").should(
-      "have.attr",
-      "aria-expanded",
-      "true",
-    );
+  it("lists TypeScript appendix rows under section rows", () => {
+    cy.visit("/en/frontend/typescript");
+    cy.nav("subject", "typescript").click();
+    cy.nav("section", "utility-types").should("be.visible");
+    cy.nav("section", "reference").should("be.visible");
+    cy.nav("section", "reference").click();
+    cy.nav("cluster", "cheat-sheets").should("be.visible");
   });
 
   it("opens an HTML topic menu without navigating away from the current topic", () => {
@@ -595,7 +577,7 @@ describe("handbook sidebar", () => {
 
   it("keeps search mode buttons inside the phone header", () => {
     cy.viewport(384, 844);
-    cy.visit("/en/backend/database");
+    cy.visit("/en/databases");
     cy.get("#handbook-header [data-search-mode]").should(($buttons) => {
       const viewportRight = 384;
       expect($buttons.length).to.be.greaterThan(0);
@@ -687,13 +669,13 @@ describe("handbook sidebar", () => {
 
   it("keeps adjacent mobile subject rows evenly spaced", () => {
     cy.viewport(441, 931);
-    cy.visit("/en/backend/database");
+    cy.visit("/en/backend");
     cy.contains("button", "Open topics").click();
 
     cy.nav("subject", "nodejs").then(($node) => {
-      cy.nav("subject", "database").should(($database) => {
+      cy.nav("subject", "message-broker").should(($broker) => {
         const gap =
-          $database[0].getBoundingClientRect().top -
+          $broker[0].getBoundingClientRect().top -
           $node[0].getBoundingClientRect().bottom;
         expect(gap).to.be.closeTo(6, 1);
       });

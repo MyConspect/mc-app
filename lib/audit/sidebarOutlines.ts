@@ -53,9 +53,7 @@ export function auditSidebarOutlines(
   const indexRoot =
     options.indexRoot ?? path.join(process.cwd(), "public", "search-index");
   const mismatches: SidebarOutlineMismatch[] = [];
-  const trackFilter = options.trackIds
-    ? new Set(options.trackIds)
-    : null;
+  const trackFilter = options.trackIds ? new Set(options.trackIds) : null;
   const tracks = trackFilter
     ? TRACKS.filter((track) => trackFilter.has(track.id))
     : TRACKS;

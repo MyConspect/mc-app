@@ -1,68 +1,48 @@
-"use client";
-
 import Link from "next/link";
-import { useMemo } from "react";
-import { usePathname } from "next/navigation";
 import {
-  BookmarkButton,
-  useIsBookmarked,
-} from "@/components/nav/ui/BookmarkButton";
-import { CopyConceptLinkButton } from "@/components/topic/CopyConceptLinkButton";
-import { chromeFor } from "@/lib/i18n/chrome";
-import { localeFromPathname } from "@/lib/i18n/paths";
+  CONCEPT_INDEX_DOT_INTERACTIVE,
+  CONCEPT_INDEX_LINK,
+  CONCEPT_INDEX_ROW,
+} from "@/components/topic/conceptIndexStyles";
+import type { CardGridVariant } from "./CardGrid";
 import type { CardItem } from "./CardGrid";
+import { BROWSE_LIST_LINK, BROWSE_LIST_ROW } from "./catalogListStyles";
 
-function sharePathFromHref(href: string): string {
-  return href.startsWith("/") ? href : `/${href}`;
+function ConceptIndexListRow({ item }: { item: CardItem }) {
+  return (
+    <li
+      id={item.id}
+      className={`${CONCEPT_INDEX_ROW}${item.id ? " scroll-mt-24" : ""}`}
+    >
+      <Link href={item.href} className={CONCEPT_INDEX_LINK}>
+        <span aria-hidden="true" className={CONCEPT_INDEX_DOT_INTERACTIVE} />
+        <span className="min-w-0 transition-colors group-hover:text-yellow-500 dark:group-hover:text-yellow-300">
+          {item.title}
+        </span>
+      </Link>
+    </li>
+  );
 }
 
-export function BrowseCardCell({ item }: { item: CardItem }) {
-  const pathname = usePathname() ?? "/en";
-  const chrome = useMemo(
-    () => chromeFor(localeFromPathname(pathname)),
-    [pathname],
-  );
-  const sharePath = sharePathFromHref(item.href);
-  const saved = useIsBookmarked(sharePath);
+export function BrowseCardCell({
+  item,
+  variant = "catalog",
+}: {
+  item: CardItem;
+  variant?: CardGridVariant;
+}) {
+  if (variant === "concept-index") {
+    return <ConceptIndexListRow item={item} />;
+  }
 
   return (
     <li
       id={item.id}
-      className={`group relative${item.id ? " scroll-mt-24" : ""}`}
+      className={`${BROWSE_LIST_ROW}${item.id ? " scroll-mt-24" : ""}`}
     >
-      <Link
-        href={item.href}
-        className="block h-full touch-manipulation rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-400 hover:bg-zinc-50 sm:p-5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
-      >
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-          {item.title}
-        </h2>
-        {item.description ? (
-          <p className="mt-1.5 text-sm leading-6 text-zinc-600 sm:mt-2 dark:text-zinc-400">
-            {item.description}
-          </p>
-        ) : null}
+      <Link href={item.href} className={BROWSE_LIST_LINK}>
+        {item.title}
       </Link>
-      <div
-        className={
-          saved
-            ? "absolute top-3 right-3 flex items-center gap-0.5 sm:top-4 sm:right-4"
-            : "pointer-events-none absolute top-3 right-3 flex items-center gap-0.5 max-sm:pointer-events-auto sm:top-4 sm:right-4 group-hover:pointer-events-auto group-focus-within:pointer-events-auto"
-        }
-      >
-        <CopyConceptLinkButton
-          chrome={chrome}
-          sharePathname={sharePath}
-          size="md"
-        />
-        <BookmarkButton
-          pathname={sharePath}
-          title={item.title}
-          chrome={chrome}
-          revealOnHover
-          size="md"
-        />
-      </div>
     </li>
   );
 }

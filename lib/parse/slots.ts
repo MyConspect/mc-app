@@ -337,14 +337,22 @@ function pitfallsMarkdown(section: ConceptSection): string {
 function mergeDuplicateKinds(sections: ConceptSection[]): ConceptSection[] {
   const merged: ConceptSection[] = [];
   const indexByKey = new Map<string, number>();
+  let seenDetailed = false;
 
   for (const section of sections) {
+    if (isDetailedDepthSlot(section)) {
+      seenDetailed = true;
+    }
     const key =
       section.kind === "extra" ||
       section.kind === "cases" ||
       section.kind === "avoid"
         ? `${section.kind}:${normalizeLabel(section.rawLabel)}`
-        : section.kind;
+        : section.kind === "sources"
+          ? seenDetailed
+            ? "sources:detailed"
+            : "sources:quick"
+          : section.kind;
     const existingIndex = indexByKey.get(key);
     if (existingIndex === undefined) {
       indexByKey.set(key, merged.length);
@@ -369,6 +377,11 @@ function stripHeadingText(value: string): string {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isTldrPartHeading(heading: string): boolean {
+  const normalized = stripHeadingText(heading).toLowerCase();
+  return normalized === "tl;dr" || normalized === "tldr" || normalized === "tl dr";
 }
 
 type ConceptPart = {
@@ -586,20 +599,25 @@ export async function structureConceptBody(
 
   const renderedParts = await Promise.all(
     parts.map(async (part) => {
-      const sections = sectionsForMarkdown(part.markdown, hideAnswers);
+      const sections = sectionsForMarkdown(
+        part.markdown,
+        hideAnswers,
+        optionalDepth,
+      );
+      const tldrPart = optionalDepth && isTldrPartHeading(part.heading);
       const { quick, detailed } = splitSectionsForConceptDepth(
         sections,
         optionalDepth,
       );
-      const quickHtml =
-        optionalDepth && quick.length > 0
-          ? `<div class="concept-depth-quick">${await renderSections(quick, renderFragment, locale)}</div>`
-          : await renderSections(quick, renderFragment, locale);
       const detailedRenderOptions: RenderSectionsOptions | undefined =
         optionalDepth
           ? { omitLabelKinds: new Set<SlotKind>(["detailed"]) }
           : undefined;
-      const detailedHtml =
+      let quickHtml =
+        optionalDepth && quick.length > 0
+          ? `<div class="concept-depth-quick">${await renderSections(quick, renderFragment, locale)}</div>`
+          : await renderSections(quick, renderFragment, locale);
+      let detailedHtml =
         detailed.length > 0
           ? `<div class="concept-depth-detailed">${await renderSections(
               detailed,
@@ -608,8 +626,21 @@ export async function structureConceptBody(
               detailedRenderOptions,
             )}</div>`
           : "";
+      if (tldrPart) {
+        const tldrSections = [...quick, ...detailed];
+        quickHtml = "";
+        detailedHtml =
+          tldrSections.length > 0
+            ? `<div class="concept-depth-detailed">${await renderSections(
+                tldrSections,
+                renderFragment,
+                locale,
+                detailedRenderOptions,
+              )}</div>`
+            : "";
+      }
       const detailedOnly =
-        optionalDepth && quick.length === 0 && detailed.length > 0;
+        (optionalDepth && quick.length === 0 && detailed.length > 0) || tldrPart;
       return wrapPart(part.heading, `${quickHtml}${detailedHtml}`, {
         detailedOnly,
       });
@@ -626,7 +657,20 @@ function splitSectionsForConceptDepth(
   if (!optionalDepth) {
     return { quick: sections, detailed: [] };
   }
-  const quick = sections.filter((section) => !isDetailedDepthSlot(section));
-  const detailed = sections.filter((section) => isDetailedDepthSlot(section));
+  const quick: ConceptSection[] = [];
+  const detailed: ConceptSection[] = [];
+  let afterDetailed = false;
+  for (const section of sections) {
+    if (isDetailedDepthSlot(section)) {
+      afterDetailed = true;
+      detailed.push(section);
+      continue;
+    }
+    if (afterDetailed && section.kind === "sources") {
+      detailed.push(section);
+      continue;
+    }
+    quick.push(section);
+  }
   return { quick, detailed };
 }

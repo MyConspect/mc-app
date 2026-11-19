@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { NavGroup } from "@/lib/nav";
+import { handbookNavForTrack } from "@/lib/nav/handbook";
 import {
   adjacentConceptId,
   crumbsForPath,
@@ -185,7 +186,7 @@ test("subject index includes open concept in breadcrumbs", () => {
                       {
                         id: "navigation-and-fetching",
                         title: "Navigation and fetching",
-                        group: "Browser work principles",
+                        group: "Work Principles",
                       },
                     ],
                   },
@@ -204,13 +205,7 @@ test("subject index includes open concept in breadcrumbs", () => {
       "#navigation-and-fetching",
       labels,
     ).map((item) => item.label),
-    [
-      "Home",
-      "Frontend",
-      "Core",
-      "Browser work principles",
-      "Navigation and fetching",
-    ],
+    ["Home", "Frontend", "Core", "Work Principles", "Navigation and fetching"],
   );
   const groupCrumb = crumbsForPath(
     subjectGroups,
@@ -218,10 +213,7 @@ test("subject index includes open concept in breadcrumbs", () => {
     "#navigation-and-fetching",
     labels,
   )[3];
-  assert.equal(
-    groupCrumb?.sectionScrollId,
-    "concept-group-browser-work-principles",
-  );
+  assert.equal(groupCrumb?.sectionScrollId, "concept-group-work-principles");
   assert.equal(groupCrumb?.href, undefined);
 });
 
@@ -253,8 +245,8 @@ test("subject index repeats group label when overview concept shares the group t
                     concepts: [
                       {
                         id: "browser-work-principles",
-                        title: "Browser work principles",
-                        group: "Browser work principles",
+                        title: "Work Principles",
+                        group: "Work Principles",
                       },
                     ],
                   },
@@ -273,13 +265,7 @@ test("subject index repeats group label when overview concept shares the group t
       "#browser-work-principles",
       labels,
     ).map((item) => item.label),
-    [
-      "Home",
-      "Frontend",
-      "Core",
-      "Browser work principles",
-      "Browser work principles",
-    ],
+    ["Home", "Frontend", "Core", "Work Principles", "Work Principles"],
   );
 });
 
@@ -381,26 +367,26 @@ test("siblingNavHrefForPath moves within the scoped cluster and wraps next at th
 test("last concept in a topic returns to the topic list before leaving the cluster", () => {
   const databaseGroups: readonly NavGroup[] = [
     {
-      id: "backend",
-      title: "Backend",
-      href: "/backend",
+      id: "databases",
+      title: "Databases",
+      href: "/databases",
       entries: [
         {
           kind: "subject",
           subject: {
             slug: "database",
-            href: "/backend/database",
+            href: "/databases",
             title: "Database",
             blurb: "",
             clusters: [
               {
                 id: "core",
                 title: "Core",
-                href: "/backend/database-foundations",
+                href: "/databases/database-foundations",
                 topics: [
                   {
                     slug: "database-foundations",
-                    href: "/backend/database-foundations",
+                    href: "/databases/database-foundations",
                     title: "Core",
                     blurb: "",
                     concepts: [],
@@ -410,11 +396,11 @@ test("last concept in a topic returns to the topic list before leaving the clust
               {
                 id: "sql",
                 title: "SQL",
-                href: "/backend/database-sql",
+                href: "/databases/database-sql",
                 topics: [
                   {
                     slug: "database-sql",
-                    href: "/backend/database-sql",
+                    href: "/databases/database-sql",
                     title: "SQL",
                     blurb: "",
                     concepts: [
@@ -427,11 +413,11 @@ test("last concept in a topic returns to the topic list before leaving the clust
               {
                 id: "nosql",
                 title: "NoSQL",
-                href: "/backend/database#nosql",
+                href: "/databases#nosql",
                 topics: [
                   {
                     slug: "nosql-core",
-                    href: "/backend/database-nosql-core",
+                    href: "/databases/database-nosql-core",
                     title: "NoSQL Core",
                     blurb: "",
                     concepts: [
@@ -451,11 +437,11 @@ test("last concept in a topic returns to the topic list before leaving the clust
   assert.equal(
     siblingNavHrefForPath(
       databaseGroups,
-      "/backend/database-sql",
+      "/databases/database-sql",
       "#postgres",
       1,
     ),
-    "/backend/database-sql",
+    "/databases/database-sql",
   );
 });
 
@@ -891,6 +877,23 @@ test("flatNav subject omits cluster from breadcrumbs", () => {
     ),
     ["Home", "AI", "SDLC", "Principles"],
   );
+});
+
+test("nested navParent topics include full trail", () => {
+  const groups = handbookNavForTrack("en", "frontend");
+  const crumbs = crumbsForPath(
+    groups,
+    "/en/frontend/js-browser-extra",
+    "",
+    labels,
+  ).map((crumb) => crumb.label);
+  assert.deepEqual(crumbs, [
+    "Home",
+    "Frontend",
+    "JavaScript",
+    "Browser",
+    "More browser APIs",
+  ]);
 });
 
 test("bookmarkMatchesPage matches topic and concept bookmarks", async () => {

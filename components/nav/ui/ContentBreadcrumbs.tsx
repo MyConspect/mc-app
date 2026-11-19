@@ -6,6 +6,7 @@ import { useConceptFooterActions } from "@/components/topic/conceptFooterActions
 import { HANDBOOK_STICKY_INSET_VAR } from "@/components/topic/utils/conceptScroll";
 import { HANDBOOK_MAIN_ID } from "@/constants";
 import type { ChromeCopy, NavGroup } from "@/lib/nav";
+import { stripLocalePrefix } from "@/lib/i18n/paths";
 import { useHandbookLocation } from "../hooks/useHandbookLocation";
 import { crumbsForPath } from "../utils/location";
 
@@ -79,8 +80,15 @@ export function ContentBreadcrumbs({
     };
   }, [location.pathname, location.hash]);
 
+  const { path } = stripLocalePrefix(location.pathname);
+  const isLocaleHome = path === "/" || path === "";
   if (crumbs.length < 2) {
-    return null;
+    if (isLocaleHome) {
+      return null;
+    }
+    if (crumbs.length < 1) {
+      return null;
+    }
   }
 
   return (

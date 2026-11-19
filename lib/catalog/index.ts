@@ -1,12 +1,12 @@
 export const TRACK_IDS = [
+  "computer-science",
   "frontend",
   "backend",
-  "system-design",
-  "algorithms",
-  "data-structures",
+  "databases",
   "testing",
   "ai",
   "behavior",
+  "advanced",
   "other",
 ] as const;
 
@@ -65,15 +65,25 @@ export type Subject = {
   readonly clusters: readonly TopicCluster[];
   /** When true (and no sections), list cluster topics under the subject — no cluster row. */
   readonly flatNav?: boolean;
+  /** Multi-subject track hub: expand lone hub topic into concept bullets. */
+  readonly expandTitleTwinOnTrackHub?: boolean;
 };
 
 export type BrowseCard = {
   readonly href: string;
   readonly title: string;
   readonly description: string;
+  /** Subject/track hub rows that name a concept group without listing concepts. */
+  readonly indexRowKind?: "group-heading";
 };
 
 export const TRACKS: readonly Track[] = [
+  {
+    id: "computer-science",
+    title: "Computer Science",
+    description:
+      "Core CS concepts, data structures, algorithms, and system design for interviews.",
+  },
   {
     id: "frontend",
     title: "Frontend",
@@ -83,22 +93,12 @@ export const TRACKS: readonly Track[] = [
   {
     id: "backend",
     title: "Backend",
-    description: "Node.js, databases, message brokers, and cloud services.",
+    description: "Node.js and backend language interview prep.",
   },
   {
-    id: "system-design",
-    title: "System design",
-    description: "Architecture, patterns, and scaling.",
-  },
-  {
-    id: "algorithms",
-    title: "Algorithms",
-    description: "Big O, common algorithms, and interview patterns.",
-  },
-  {
-    id: "data-structures",
-    title: "Data Structures",
-    description: "Arrays, trees, graphs, heaps, and structure selection.",
+    id: "databases",
+    title: "Databases",
+    description: "SQL, NoSQL, ORMs, and production data patterns.",
   },
   {
     id: "testing",
@@ -115,6 +115,11 @@ export const TRACKS: readonly Track[] = [
     title: "Behavior questions",
     description:
       "Soft-skill and HR interview questions with answer frameworks, traps, and sample answers.",
+  },
+  {
+    id: "advanced",
+    title: "Advanced",
+    description: "Message brokers and cloud services.",
   },
   {
     id: "other",
@@ -746,7 +751,7 @@ const SUBJECTS_BASE: readonly Subject[] = [
     slug: "database",
     title: "Database",
     blurb: "SQL, NoSQL, ORMs, and production data patterns.",
-    track: "backend",
+    track: "databases",
     clusters: [
       {
         id: "core",
@@ -772,7 +777,7 @@ const SUBJECTS_BASE: readonly Subject[] = [
     slug: "message-broker",
     title: "Message broker",
     blurb: "Kafka, RabbitMQ, NATS, and async messaging patterns.",
-    track: "backend",
+    track: "advanced",
     clusters: [
       {
         id: "core",
@@ -790,7 +795,7 @@ const SUBJECTS_BASE: readonly Subject[] = [
     slug: "cloud",
     title: "Cloud services",
     blurb: "AWS, GCP, Azure, and managed infrastructure.",
-    track: "backend",
+    track: "advanced",
     clusters: [
       {
         id: "core",
@@ -837,51 +842,18 @@ const SUBJECTS_BASE: readonly Subject[] = [
     ],
   },
   {
-    slug: "system-design",
-    title: "System design",
-    blurb: "Architecture, patterns, and scaling.",
-    track: "system-design",
+    slug: "core",
+    title: "Core",
+    blurb:
+      "What computation is, plus programming paradigms and logic programming.",
+    track: "computer-science",
     clusters: [
       {
         id: "core",
-        title: "Core",
-        blurb: "Foundations and distributed systems.",
+        title: "Computer science",
+        blurb:
+          "Computation, programming paradigms, imperative vs declarative, and logic programming.",
       },
-      {
-        id: "architecture",
-        title: "Architecture",
-        blurb: "Styles, app structure, design patterns, data, and infra.",
-      },
-      {
-        id: "principles",
-        title: "Principles",
-        blurb: "OOP, SOLID, DRY, KISS, YAGNI, and GRASP.",
-      },
-      { id: "interview", title: "Interview", blurb: "Q&A for system design." },
-    ],
-  },
-  {
-    slug: "algorithms",
-    title: "Algorithms",
-    blurb: "Big O, common algorithms, and interview patterns.",
-    track: "algorithms",
-    clusters: [
-      {
-        id: "big-o",
-        title: "Big O",
-        blurb: "Algorithm basics and complexity analysis.",
-      },
-      {
-        id: "algorithms",
-        title: "Algorithms",
-        blurb: "Sorting, search, and graph algorithms.",
-      },
-      {
-        id: "patterns",
-        title: "Patterns",
-        blurb: "Two pointers, sliding window, and greedy vs DP.",
-      },
-      { id: "interview", title: "Interview", blurb: "Q&A for algorithms." },
     ],
   },
   {
@@ -889,7 +861,7 @@ const SUBJECTS_BASE: readonly Subject[] = [
     title: "Data Structures",
     blurb:
       "Match access patterns to the right structure, then study linear collections, trees and graphs, and hash-based lookup with heaps.",
-    track: "data-structures",
+    track: "computer-science",
     clusters: [
       {
         id: "linear",
@@ -914,6 +886,55 @@ const SUBJECTS_BASE: readonly Subject[] = [
         title: "Interview",
         blurb: "Q&A for data structures.",
       },
+    ],
+  },
+
+  {
+    slug: "algorithms",
+    title: "Algorithms",
+    blurb: "Big O, common algorithms, and interview patterns.",
+    track: "computer-science",
+    clusters: [
+      {
+        id: "big-o",
+        title: "Big O",
+        blurb: "Algorithm basics and complexity analysis.",
+      },
+      {
+        id: "algorithms",
+        title: "Algorithms",
+        blurb: "Sorting, search, and graph algorithms.",
+      },
+      {
+        id: "patterns",
+        title: "Patterns",
+        blurb: "Two pointers, sliding window, and greedy vs DP.",
+      },
+      { id: "interview", title: "Interview", blurb: "Q&A for algorithms." },
+    ],
+  },
+  {
+    slug: "system-design",
+    title: "System design",
+    blurb: "Architecture, patterns, and scaling.",
+    track: "computer-science",
+    clusters: [
+      {
+        id: "core",
+        title: "Core",
+        blurb: "Foundations and distributed systems.",
+      },
+      {
+        id: "architecture",
+        title: "Architecture",
+        blurb: "Styles, app structure, design patterns, data, and infra.",
+      },
+      {
+        id: "principles",
+        title: "Principles",
+        blurb: "OOP, SOLID, DRY, KISS, YAGNI, and GRASP.",
+      },
+      { id: "interview", title: "Interview", blurb: "Q&A for system design." },
     ],
   },
   {
@@ -962,6 +983,40 @@ const SUBJECTS_BASE: readonly Subject[] = [
         blurb: "Docker and infrastructure.",
       },
       { id: "interview", title: "Interview", blurb: "Q&A for build and CI." },
+    ],
+  },
+  {
+    slug: "workflow",
+    title: "Workflow",
+    blurb:
+      "AI-first vs augmented, editors, context window, Context7/Ref, and RTK.",
+    track: "ai",
+    flatNav: true,
+    expandTitleTwinOnTrackHub: true,
+    clusters: [
+      {
+        id: "hub",
+        title: "",
+        blurb:
+          "AI-first vs augmented, editors, context window, Context7/Ref, and RTK.",
+      },
+    ],
+  },
+  {
+    slug: "engineering",
+    title: "Engineering",
+    blurb:
+      "AI-first developer habits, verification, and spec-driven development (SDD).",
+    track: "ai",
+    flatNav: true,
+    expandTitleTwinOnTrackHub: true,
+    clusters: [
+      {
+        id: "hub",
+        title: "",
+        blurb:
+          "AI-first developer habits, verification, and spec-driven development (SDD).",
+      },
     ],
   },
   {
@@ -1046,22 +1101,21 @@ const HUB_HREFS: Readonly<Record<string, string>> = {
   "5_ts.md": "/frontend/typescript",
   "6_web_api.md": "/frontend/web-api",
   "8_nodejs.md": "/backend/nodejs",
-  "9_database.md": "/backend/database",
-  "12_message_broker.md": "/backend/message-broker",
-  "16_cloud.md": "/backend/cloud",
-  "9_database_nosql.md": "/backend/database-nosql",
+  "9_database.md": "/databases",
+  "12_message_broker.md": "/advanced/message-broker",
+  "16_cloud.md": "/advanced/cloud",
+  "9_database_nosql.md": "/databases#nosql",
   "0_git.md": "/other/git",
-  "0_system_design.md": "/system-design",
-  "7_special_algorithms.md": "/algorithms",
-  "7_special_data_structures.md": "/data-structures",
+  "0_system_design.md": "/computer-science/system-design",
+  "7_special_algorithms.md": "/computer-science/algorithms",
+  "7_special_data_structures.md": "/computer-science/data-structures",
   "7_special_testing.md": "/testing",
-  "7_special.md": "/other/computer-science",
+  "7_special.md": "/computer-science/computer-science",
+  "7_special_cs.md": "/computer-science/computer-science",
   "10_build.md": "/other/build",
 };
 
-const TRACK_HUB_FILES: Partial<Record<TrackId, string>> = {
-  "data-structures": "7_special_data_structures.md",
-};
+const TRACK_HUB_FILES: Partial<Record<TrackId, string>> = {};
 
 export function hubFileForTrack(trackId: TrackId): string | undefined {
   return TRACK_HUB_FILES[trackId];
@@ -2198,7 +2252,7 @@ const TOPICS_BASE: Topic[] = [
     "frontend",
     "react",
     "interview",
-    { hideFromSubjectNav: true },
+    { hideFromSubjectNav: true, navParentSlug: "react-interview" },
   ),
   grouped(
     "redux-questions",
@@ -2580,7 +2634,7 @@ const TOPICS_BASE: Topic[] = [
     "9_database_core.md",
     "Core",
     "ACID, CAP, transactions, and normalization.",
-    "backend",
+    "databases",
     "database",
     "core",
   ),
@@ -2589,7 +2643,7 @@ const TOPICS_BASE: Topic[] = [
     "9_database_sql.md",
     "SQL",
     "SQL language, schema, joins, objects, indexes, and PostgreSQL.",
-    "backend",
+    "databases",
     "database",
     "sql",
   ),
@@ -2598,7 +2652,7 @@ const TOPICS_BASE: Topic[] = [
     "9_database_nosql_core.md",
     "NoSQL Core",
     "NoSQL types, selection matrix, and Elasticsearch.",
-    "backend",
+    "databases",
     "database",
     "nosql",
   ),
@@ -2607,7 +2661,7 @@ const TOPICS_BASE: Topic[] = [
     "9_database_mongodb.md",
     "MongoDB",
     "Documents, aggregation, and Mongoose.",
-    "backend",
+    "databases",
     "database",
     "nosql",
   ),
@@ -2616,7 +2670,7 @@ const TOPICS_BASE: Topic[] = [
     "9_database_redis.md",
     "Redis",
     "Cache, sessions, data structures, and TTL.",
-    "backend",
+    "databases",
     "database",
     "nosql",
   ),
@@ -2625,7 +2679,7 @@ const TOPICS_BASE: Topic[] = [
     "9_database_clickhouse.md",
     "ClickHouse",
     "Column-store OLAP, analytics, and fast aggregates.",
-    "backend",
+    "databases",
     "database",
     "nosql",
   ),
@@ -2634,7 +2688,7 @@ const TOPICS_BASE: Topic[] = [
     "9_database_orm.md",
     "ORM",
     "Prisma, Sequelize, Knex, Drizzle, and query builders.",
-    "backend",
+    "databases",
     "database",
     "orm",
   ),
@@ -2643,7 +2697,7 @@ const TOPICS_BASE: Topic[] = [
     "9_database_production.md",
     "Production",
     "Replication, sharding, caching, and OLTP scaling.",
-    "backend",
+    "databases",
     "database",
     "additional",
   ),
@@ -2652,7 +2706,7 @@ const TOPICS_BASE: Topic[] = [
     "9_database_interview.md",
     "Interview",
     "SQL interview questions, answers not filled in.",
-    "backend",
+    "databases",
     "database",
     "interview",
   ),
@@ -2661,9 +2715,81 @@ const TOPICS_BASE: Topic[] = [
     "17_redis_interview.md",
     "Redis",
     "Redis interview questions, answers not filled in.",
-    "backend",
+    "databases",
     "database",
     "interview",
+  ),
+  grouped(
+    "message-broker-core",
+    "12_message_broker_core.md",
+    "Core",
+    "Broker fundamentals, queue vs log, and broker selection.",
+    "advanced",
+    "message-broker",
+    "core",
+  ),
+  grouped(
+    "message-broker-kafka",
+    "12_message_broker_kafka.md",
+    "Kafka",
+    "Topics, partitions, consumer groups, and event streaming.",
+    "advanced",
+    "message-broker",
+    "brokers",
+  ),
+  grouped(
+    "message-broker-rabbitmq",
+    "12_message_broker_rabbitmq.md",
+    "RabbitMQ",
+    "AMQP exchanges, queues, routing, and task queues.",
+    "advanced",
+    "message-broker",
+    "brokers",
+  ),
+  grouped(
+    "message-broker-nats",
+    "12_message_broker_nats.md",
+    "NATS",
+    "Subjects, pub/sub, request-reply, and JetStream.",
+    "advanced",
+    "message-broker",
+    "brokers",
+  ),
+  grouped(
+    "cloud-core",
+    "16_cloud_core.md",
+    "Core",
+    "IaaS/PaaS/SaaS, regions, shared responsibility, and provider comparison.",
+    "advanced",
+    "cloud",
+    "core",
+  ),
+  grouped(
+    "cloud-aws",
+    "16_cloud_aws.md",
+    "AWS",
+    "EC2, S3, RDS, Lambda, SQS, and common AWS services.",
+    "advanced",
+    "cloud",
+    "providers",
+  ),
+  grouped(
+    "cloud-gcp",
+    "16_cloud_gcp.md",
+    "GCP",
+    "Compute Engine, Cloud Storage, Cloud SQL, Cloud Run, Pub/Sub.",
+    "advanced",
+    "cloud",
+    "providers",
+  ),
+  grouped(
+    "cloud-azure",
+    "16_cloud_azure.md",
+    "Azure",
+    "VMs, Blob Storage, Azure SQL, Functions, and Service Bus.",
+    "advanced",
+    "cloud",
+    "providers",
   ),
   grouped(
     "go-interview",
@@ -2682,78 +2808,6 @@ const TOPICS_BASE: Topic[] = [
     "backend",
     "backend-languages",
     "interview",
-  ),
-  grouped(
-    "message-broker-core",
-    "12_message_broker_core.md",
-    "Core",
-    "Broker fundamentals, queue vs log, and broker selection.",
-    "backend",
-    "message-broker",
-    "core",
-  ),
-  grouped(
-    "message-broker-kafka",
-    "12_message_broker_kafka.md",
-    "Kafka",
-    "Topics, partitions, consumer groups, and event streaming.",
-    "backend",
-    "message-broker",
-    "brokers",
-  ),
-  grouped(
-    "message-broker-rabbitmq",
-    "12_message_broker_rabbitmq.md",
-    "RabbitMQ",
-    "AMQP exchanges, queues, routing, and task queues.",
-    "backend",
-    "message-broker",
-    "brokers",
-  ),
-  grouped(
-    "message-broker-nats",
-    "12_message_broker_nats.md",
-    "NATS",
-    "Subjects, pub/sub, request-reply, and JetStream.",
-    "backend",
-    "message-broker",
-    "brokers",
-  ),
-  grouped(
-    "cloud-core",
-    "16_cloud_core.md",
-    "Core",
-    "IaaS/PaaS/SaaS, regions, shared responsibility, and provider comparison.",
-    "backend",
-    "cloud",
-    "core",
-  ),
-  grouped(
-    "cloud-aws",
-    "16_cloud_aws.md",
-    "AWS",
-    "EC2, S3, RDS, Lambda, SQS, and common AWS services.",
-    "backend",
-    "cloud",
-    "providers",
-  ),
-  grouped(
-    "cloud-gcp",
-    "16_cloud_gcp.md",
-    "GCP",
-    "Compute Engine, Cloud Storage, Cloud SQL, Cloud Run, Pub/Sub.",
-    "backend",
-    "cloud",
-    "providers",
-  ),
-  grouped(
-    "cloud-azure",
-    "16_cloud_azure.md",
-    "Azure",
-    "VMs, Blob Storage, Azure SQL, Functions, and Service Bus.",
-    "backend",
-    "cloud",
-    "providers",
   ),
   grouped(
     "git-core",
@@ -2791,36 +2845,21 @@ const TOPICS_BASE: Topic[] = [
     "git",
     "interview",
   ),
-  {
-    slug: "computer-science",
-    file: "7_special_cs.md",
-    title: "Computer science",
-    blurb:
-      "What computation is, plus programming paradigms and logic programming.",
-    track: "other",
-  },
+  grouped(
+    "computer-science",
+    "7_special_cs.md",
+    "Computer science",
+    "What computation is, plus programming paradigms and logic programming.",
+    "computer-science",
+    "core",
+    "core",
+  ),
   {
     slug: "special-interview",
     file: "7_special_interview.md",
     title: "Interview leftovers",
     blurb:
       "Q&A and leftover tooling notes that still sit outside subject interviews.",
-    track: "other",
-  },
-  {
-    slug: "frontend-interview-tips",
-    file: "0_frontend_interview_tips_freshers.md",
-    title: "Tips",
-    blurb:
-      "GFE fresher advice: projects, basics, debugging, and interview-day habits.",
-    track: "other",
-  },
-  {
-    slug: "greatfrontend-interview-resources",
-    file: "0_greatfrontend_interview_resources.md",
-    title: "GFE interviews",
-    blurb:
-      "Link index to GFE sources; full Q&A lives under Frontend interview topics.",
     track: "other",
   },
   grouped(
@@ -2900,7 +2939,7 @@ const TOPICS_BASE: Topic[] = [
     "0_system_design_core.md",
     "Core",
     "Foundations and distributed-systems basics.",
-    "system-design",
+    "computer-science",
     "system-design",
     "core",
   ),
@@ -2909,7 +2948,7 @@ const TOPICS_BASE: Topic[] = [
     "0_system_design_architecture.md",
     "Styles",
     "Deploy topology and where HTML is built.",
-    "system-design",
+    "computer-science",
     "system-design",
     "architecture",
   ),
@@ -2918,7 +2957,7 @@ const TOPICS_BASE: Topic[] = [
     "7_special_architecture.md",
     "Architecture patterns",
     "Composition, MVC, layers/DDD, data flow, and frontend structure.",
-    "system-design",
+    "computer-science",
     "system-design",
     "architecture",
   ),
@@ -2927,7 +2966,7 @@ const TOPICS_BASE: Topic[] = [
     "7_special_patterns.md",
     "Design patterns",
     "GoF creational, structural, and behavioral patterns.",
-    "system-design",
+    "computer-science",
     "system-design",
     "architecture",
   ),
@@ -2936,7 +2975,7 @@ const TOPICS_BASE: Topic[] = [
     "0_system_design_data.md",
     "Data",
     "Data, caching, and infrastructure building blocks.",
-    "system-design",
+    "computer-science",
     "system-design",
     "architecture",
   ),
@@ -2945,7 +2984,7 @@ const TOPICS_BASE: Topic[] = [
     "7_special_engineering.md",
     "OOP & SOLID",
     "OOP pillars and the five SOLID principles for modules and APIs.",
-    "system-design",
+    "computer-science",
     "system-design",
     "principles",
   ),
@@ -2954,7 +2993,7 @@ const TOPICS_BASE: Topic[] = [
     "0_system_design_principles.md",
     "DRY, KISS, YAGNI",
     "Don't Repeat Yourself, Keep It Simple, You Aren't Gonna Need It.",
-    "system-design",
+    "computer-science",
     "system-design",
     "principles",
   ),
@@ -2963,7 +3002,7 @@ const TOPICS_BASE: Topic[] = [
     "0_system_design_grasp.md",
     "GRASP",
     "Nine patterns for assigning responsibilities to objects.",
-    "system-design",
+    "computer-science",
     "system-design",
     "principles",
   ),
@@ -2972,7 +3011,7 @@ const TOPICS_BASE: Topic[] = [
     "0_system_design_interview.md",
     "Interview",
     "Interview Q&A for system design.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -2981,7 +3020,7 @@ const TOPICS_BASE: Topic[] = [
     "7_oop_interview.md",
     "OOP",
     "OOP interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -2990,7 +3029,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_api_design_interview.md",
     "API Design",
     "API Design interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -2999,7 +3038,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_databases_interview.md",
     "Databases",
     "Databases interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3008,7 +3047,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_microservices_interview.md",
     "Microservices",
     "Microservices interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3017,7 +3056,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_availability_interview.md",
     "Availability & Reliability",
     "Availability & Reliability interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3026,7 +3065,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_docker_interview.md",
     "Docker",
     "Docker interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3035,7 +3074,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_nosql_interview.md",
     "NoSQL",
     "NoSQL interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3044,7 +3083,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_caching_interview.md",
     "Caching",
     "Caching interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3053,7 +3092,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_ddd_interview.md",
     "Domain-Driven Design",
     "Domain-Driven Design interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3062,7 +3101,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_reactive_interview.md",
     "Reactive Systems",
     "Reactive Systems interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3071,7 +3110,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_reactive_programming_interview.md",
     "Reactive Programming",
     "Reactive Programming interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3080,7 +3119,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_cap_interview.md",
     "CAP Theorem",
     "CAP Theorem interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3089,7 +3128,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_kubernetes_interview.md",
     "Kubernetes",
     "Kubernetes interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3098,7 +3137,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_soa_interview.md",
     "SOA",
     "SOA interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3107,7 +3146,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_concurrency_interview.md",
     "Concurrency",
     "Concurrency interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3116,7 +3155,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_layering_interview.md",
     "Layering & Middleware",
     "Layering & Middleware interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3125,7 +3164,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_architecture_interview.md",
     "Software Architecture",
     "Software Architecture interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3134,7 +3173,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_cryptography_interview.md",
     "Cryptography",
     "Cryptography interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3143,7 +3182,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_load_balancing_interview.md",
     "Load Balancing",
     "Load Balancing interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3152,7 +3191,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_xml_interview.md",
     "XML",
     "XML interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3161,7 +3200,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_hadoop_interview.md",
     "Hadoop",
     "Hadoop interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3170,7 +3209,7 @@ const TOPICS_BASE: Topic[] = [
     "0_sd_spark_interview.md",
     "Apache Spark",
     "Apache Spark interview questions, answers not filled in.",
-    "system-design",
+    "computer-science",
     "system-design",
     "interview",
   ),
@@ -3179,7 +3218,7 @@ const TOPICS_BASE: Topic[] = [
     "7_special_algorithms_core.md",
     "Big O",
     "Algorithm basics and complexity analysis.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "big-o",
   ),
@@ -3188,7 +3227,7 @@ const TOPICS_BASE: Topic[] = [
     "7_special_algorithms_common.md",
     "Algorithms",
     "Sorting, search, graph traversal, and classic algorithm choices.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "algorithms",
   ),
@@ -3197,7 +3236,7 @@ const TOPICS_BASE: Topic[] = [
     "7_special_algorithms_patterns.md",
     "Patterns",
     "Two pointers, sliding window, and greedy vs DP decisions.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "patterns",
   ),
@@ -3206,7 +3245,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_divide_conquer_interview.md",
     "Divide & Conquer",
     "Divide & Conquer interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3215,7 +3254,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_sorting_interview.md",
     "Sorting Algorithms",
     "Sorting Algorithms interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3224,7 +3263,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_dp_interview.md",
     "Dynamic Programming",
     "Dynamic Programming interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3233,7 +3272,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_big_o_interview.md",
     "Big-O Notation",
     "Big-O Notation interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3242,7 +3281,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_fibonacci_interview.md",
     "Fibonacci Sequence",
     "Fibonacci Sequence interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3251,7 +3290,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_bits_interview.md",
     "Bit Manipulation",
     "Bit Manipulation interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3260,7 +3299,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_graphs_interview.md",
     "Graph Theory",
     "Graph Theory interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3269,7 +3308,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_recursion_interview.md",
     "Recursion",
     "Recursion interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3278,7 +3317,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_searching_interview.md",
     "Searching Algorithms",
     "Searching Algorithms interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3287,7 +3326,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_greedy_interview.md",
     "Greedy Algorithms",
     "Greedy Algorithms interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3296,7 +3335,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_blockchain_interview.md",
     "Blockchain",
     "Blockchain interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3305,7 +3344,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_backtracking_interview.md",
     "Backtracking",
     "Backtracking interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3314,7 +3353,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_genetic_interview.md",
     "Genetic Algorithms",
     "Genetic Algorithms interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3323,7 +3362,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_linear_algebra_interview.md",
     "Linear Algebra",
     "Linear Algebra interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3332,7 +3371,7 @@ const TOPICS_BASE: Topic[] = [
     "7_algo_probability_interview.md",
     "Probability",
     "Probability interview questions, answers not filled in.",
-    "algorithms",
+    "computer-science",
     "algorithms",
     "interview",
   ),
@@ -3341,7 +3380,7 @@ const TOPICS_BASE: Topic[] = [
     "7_special_data_structures_linear.md",
     "Linear",
     "Index-based arrays, LIFO stacks, FIFO queues, unique sets, and key–value maps — with Big-O costs and JavaScript gotchas like O(n) array.shift().",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "linear",
   ),
@@ -3350,7 +3389,7 @@ const TOPICS_BASE: Topic[] = [
     "7_special_data_structures_trees.md",
     "Trees & graphs",
     "Binary trees, BFS/DFS traversal, graph representations, and tries for prefix search — including recursive vs iterative trade-offs.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "trees",
   ),
@@ -3359,7 +3398,7 @@ const TOPICS_BASE: Topic[] = [
     "7_special_data_structures_advanced.md",
     "Hash & heap",
     "Hash tables for average O(1) lookup, binary heaps for dynamic min/max, and how the DOM maps to trees and node lists.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "advanced",
   ),
@@ -3368,7 +3407,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_arrays_interview.md",
     "Arrays",
     "Arrays interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3377,7 +3416,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_hash_tables_interview.md",
     "Hash Tables",
     "Hash Tables interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3386,7 +3425,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_stacks_interview.md",
     "Stacks",
     "Stacks interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3395,7 +3434,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_heaps_maps_interview.md",
     "Heaps and Maps",
     "Heaps and Maps interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3404,7 +3443,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_binary_tree_interview.md",
     "Binary Tree",
     "Binary Tree interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3413,7 +3452,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_linked_lists_interview.md",
     "Linked Lists",
     "Linked Lists interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3422,7 +3461,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_strings_interview.md",
     "Strings",
     "Strings interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3431,7 +3470,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_trees_interview.md",
     "Tree Data Structure",
     "Tree Data Structure interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3440,7 +3479,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_queues_interview.md",
     "Queues",
     "Queues interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3449,7 +3488,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_tries_interview.md",
     "Trie",
     "Trie interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3458,7 +3497,7 @@ const TOPICS_BASE: Topic[] = [
     "7_ds_overview_interview.md",
     "Data Structures",
     "Data Structures interview questions, answers not filled in.",
-    "data-structures",
+    "computer-science",
     "data-structures",
     "interview",
   ),
@@ -3508,42 +3547,30 @@ const TOPICS_BASE: Topic[] = [
     "interview",
   ),
   {
-    slug: "vscode-devtools",
-    file: "11_vsc_browser.md",
-    title: "VS Code & DevTools",
-    blurb: "Editor and browser developer tools.",
-    track: "other",
-  },
-  {
     slug: "devops",
     file: "15_devops.md",
     title: "DevOps",
     blurb: "Processes, SSH, Unix jobs, and OpenTelemetry.",
     track: "other",
   },
-  {
-    slug: "bash",
-    file: "18_bash.md",
-    title: "Bash",
-    blurb: "Shell fundamentals: scripts, tests, loops, and pipelines.",
-    track: "other",
-  },
-  {
-    slug: "ai",
-    file: "0_ai.md",
-    title: "Workflow",
-    blurb:
-      "AI-first vs augmented, editors, context window, Context7/Ref, and RTK.",
-    track: "ai",
-  },
-  {
-    slug: "ai-engineering",
-    file: "0_ai_engineering.md",
-    title: "Engineering",
-    blurb:
-      "AI-first developer habits, verification, and spec-driven development (SDD).",
-    track: "ai",
-  },
+  grouped(
+    "ai",
+    "0_ai.md",
+    "Workflow",
+    "AI-first vs augmented, editors, context window, Context7/Ref, and RTK.",
+    "ai",
+    "workflow",
+    "hub",
+  ),
+  grouped(
+    "ai-engineering",
+    "0_ai_engineering.md",
+    "Engineering",
+    "AI-first developer habits, verification, and spec-driven development (SDD).",
+    "ai",
+    "engineering",
+    "hub",
+  ),
   grouped(
     "ai-agentic-sdlc",
     "0_ai_agentic_sdlc.md",
@@ -3668,13 +3695,6 @@ const TOPICS_BASE: Topic[] = [
     title: "Full-stack role",
     blurb:
       "Vertical slice, prod triage, Git/CI/Docker/migrations, secrets and access, design patterns — study map with checklists.",
-    track: "other",
-  },
-  {
-    slug: "mvp",
-    file: "0_mvp.md",
-    title: "MVP & product",
-    blurb: "Product judgment versus architecture.",
     track: "other",
   },
   {
@@ -3843,11 +3863,11 @@ export function getSubject(track: string, slug: string): Subject | undefined {
 
 /** Topic slug whose concepts render on the subject index (e.g. Frontend → Core). */
 const SUBJECT_INTRO_TOPIC_SLUG: Partial<Record<string, string>> = {
-  core: "core-browser-platform",
+  "frontend/core": "core-browser-platform",
 };
 
 export function subjectIntroTopicSlug(subject: Subject): string | undefined {
-  return SUBJECT_INTRO_TOPIC_SLUG[subject.slug];
+  return SUBJECT_INTRO_TOPIC_SLUG[`${subject.track}/${subject.slug}`];
 }
 
 export function subjectForTrack(track: TrackId): Subject | undefined {
@@ -3983,27 +4003,20 @@ export function trackHref(track: TrackId): string {
 }
 
 export function trackBrowseCards(track: TrackId): readonly BrowseCard[] {
-  const seenSubjects = new Set<string>();
   const cards: BrowseCard[] = [];
+
+  for (const subject of subjectsForTrack(track)) {
+    cards.push({
+      href: subjectHref(subject),
+      title: subject.title,
+      description: subject.blurb,
+    });
+  }
 
   for (const topic of topicsForTrack(track)) {
     if (topic.grouping) {
-      if (seenSubjects.has(topic.grouping.subject)) {
-        continue;
-      }
-      seenSubjects.add(topic.grouping.subject);
-      const subject = getSubject(topic.track, topic.grouping.subject);
-      if (!subject) {
-        continue;
-      }
-      cards.push({
-        href: subjectHref(subject),
-        title: subject.title,
-        description: subject.blurb,
-      });
       continue;
     }
-
     cards.push({
       href: topicHref(topic),
       title: topic.title,
@@ -4011,6 +4024,68 @@ export function trackBrowseCards(track: TrackId): readonly BrowseCard[] {
     });
   }
 
+  return cards;
+}
+
+export type TrackBrowseSubjectBlock = {
+  readonly subject: Subject;
+  readonly sections: ReturnType<typeof subjectClusterCards>;
+};
+
+/** Conspect subjects on a track in catalog order. */
+export function subjectsForTrack(trackId: TrackId): readonly Subject[] {
+  if (!getTrack(trackId)) {
+    return [];
+  }
+  return SUBJECTS.filter((item) => item.track === trackId);
+}
+
+/** Subject hubs on a track with their topic clusters (conspect hubs, not flat subject cards). */
+export function trackSubjectBrowseBlocks(
+  track: TrackId,
+): readonly TrackBrowseSubjectBlock[] {
+  const blocks: TrackBrowseSubjectBlock[] = [];
+
+  for (const subject of subjectsForTrack(track)) {
+    const sections = subjectClusterCards(subject);
+    if (sections.length === 0) {
+      continue;
+    }
+    blocks.push({ subject, sections });
+  }
+
+  return blocks;
+}
+
+/** Ungrouped topics on a track (listed beside subject hubs on the track index). */
+export function trackLooseBrowseCards(track: TrackId): readonly BrowseCard[] {
+  const cards: BrowseCard[] = [];
+  for (const topic of topicsForTrack(track)) {
+    if (
+      topic.grouping ||
+      topic.hideFromSubjectNav ||
+      isInterviewTopic(topic) ||
+      isInterviewTasksTopic(topic)
+    ) {
+      continue;
+    }
+    cards.push({
+      href: topicHref(topic),
+      title: topic.title,
+      description: topic.blurb,
+    });
+  }
+  return cards;
+}
+
+/** All conspect topics under a subject in one list (no cluster sub-headings). */
+export function subjectFlatBrowseCards(
+  subject: Subject,
+): readonly BrowseCard[] {
+  const cards: BrowseCard[] = [];
+  for (const { items } of subjectClusterCards(subject)) {
+    cards.push(...items);
+  }
   return cards;
 }
 

@@ -5,10 +5,10 @@ import {
   withCoreBrowserConceptGroups,
 } from "./coreBrowserHub";
 
-test("coreBrowserConceptSection maps concepts to Browser work vs platform", () => {
+test("coreBrowserConceptSection maps concepts to Work Principles vs platform", () => {
   assert.equal(
     coreBrowserConceptSection("Navigation and fetching"),
-    "Browser work principles",
+    "Work Principles",
   );
   assert.equal(
     coreBrowserConceptSection("Browser platform architecture"),
@@ -22,15 +22,15 @@ test("coreBrowserConceptSection maps concepts to Browser work vs platform", () =
 
 test("withCoreBrowserConceptGroups assigns groups in handbook order", () => {
   const items = withCoreBrowserConceptGroups([
-    { title: "Browser work principles" },
+    { title: "Work Principles" },
     { title: "Event loop and task queues" },
     { title: "Web platform stack (HTML, CSS, JavaScript)" },
   ]);
   assert.deepEqual(
     items.map((item) => [item.title, item.group ?? null]),
     [
-      ["Browser work principles", "Browser work principles"],
-      ["Event loop and task queues", "Browser work principles"],
+      ["Work Principles", "Work Principles"],
+      ["Event loop and task queues", "Work Principles"],
       ["Web platform stack (HTML, CSS, JavaScript)", "Browser platform"],
     ],
   );

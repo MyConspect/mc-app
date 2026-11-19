@@ -64,6 +64,7 @@ import {
 import {
   SidebarFoldScopeProvider,
   SidebarNavProvider,
+  closeNavSoon,
   navPathPinned,
   trackHeaderClass,
   useSidebarChrome,
@@ -417,7 +418,16 @@ const TrackGroup = memo(function TrackGroup({
 }) {
   const { isTrackOpen, toggleTrackId, ensureTrackOpen } = useScopedTrackOpen();
   const isLeafTrack = Boolean(group.leafTopic) && group.entries.length === 0;
-  const showLeafConcepts = isLeafTrack && !group.leafTopic?.hideSidebarConcepts;
+  const leafHasConceptGroups =
+    (group.leafTopic?.concepts ?? []).some((concept) =>
+      Boolean(concept.group),
+    ) ?? false;
+  const showLeafConcepts =
+    isLeafTrack &&
+    Boolean(group.leafTopic) &&
+    (!group.leafTopic.hideSidebarConcepts ||
+      (group.leafTopic.nestedTopics?.length ?? 0) > 0 ||
+      leafHasConceptGroups);
   const hasSidebarChildren =
     group.entries.length > 0 || Boolean(group.hubTopic) || showLeafConcepts;
   const {
@@ -466,6 +476,38 @@ const TrackGroup = memo(function TrackGroup({
       ? groupNavigateHref(group, rootSectionId)
       : group.href;
 
+  const navigateTrackFromHeader = (event: { preventDefault: () => void }) => {
+    if (!hasSidebarChildren) {
+      onNavigate?.();
+    }
+    const onTrackHub =
+      committedPathname === navigateHref && window.location.hash === "";
+    if (onTrackHub) {
+      return false;
+    }
+    if (committedPathname === navigateHref && window.location.hash) {
+      event.preventDefault();
+      applySameDocumentHref(committedPathname, "", committedPathname);
+      queueHandbookHref(navigateHref);
+      closeNavSoon(onNavigate);
+      return true;
+    }
+    if (!onThisTrack) {
+      patchFold(group.id, {
+        topicHref: null,
+        subjectHref: null,
+        clusterKey: null,
+        sectionKey: null,
+      });
+    }
+    followHandbookHref(navigateHref, committedPathname, goToPath);
+    if (hasSidebarChildren) {
+      ensureTrackOpen(group.id);
+    }
+    closeNavSoon(onNavigate);
+    return true;
+  };
+
   const trackBody = (
     <>
       {asButton ? (
@@ -481,6 +523,9 @@ const TrackGroup = memo(function TrackGroup({
               hold: false,
               scrollIntoView: false,
             });
+            if (navigateTrackFromHeader(event)) {
+              return;
+            }
             if (!searching) {
               toggleTrackId(group.id);
             }
@@ -500,27 +545,7 @@ const TrackGroup = memo(function TrackGroup({
           data-nav-path={pinPath ? "true" : undefined}
           onClick={(event) => {
             pinNavForHref(event.currentTarget, committedPathname, navigateHref);
-            if (!hasSidebarChildren) {
-              onNavigate?.();
-            }
-            if (committedPathname === navigateHref && window.location.hash) {
-              event.preventDefault();
-              applySameDocumentHref(committedPathname, "", committedPathname);
-              queueHandbookHref(navigateHref);
-              return;
-            }
-            if (!onThisTrack) {
-              patchFold(group.id, {
-                topicHref: null,
-                subjectHref: null,
-                clusterKey: null,
-                sectionKey: null,
-              });
-            }
-            followHandbookHref(navigateHref, committedPathname, goToPath);
-            if (hasSidebarChildren) {
-              ensureTrackOpen(group.id);
-            }
+            navigateTrackFromHeader(event);
           }}
           data-search-hit={
             isLeafTrack && first?.pathname === navigateHref && first.hash === ""
@@ -543,9 +568,6 @@ const TrackGroup = memo(function TrackGroup({
             />
           ) : (
             <>
-              {group.hubTopic ? (
-                <TopicRow trackId={group.id} topic={group.hubTopic} hideTitle />
-              ) : null}
               {showLeafConcepts && group.leafTopic ? (
                 <TopicRow
                   trackId={group.id}
@@ -561,6 +583,9 @@ const TrackGroup = memo(function TrackGroup({
                   />
                 ))
               )}
+              {group.hubTopic ? (
+                <TopicRow trackId={group.id} topic={group.hubTopic} hideTitle />
+              ) : null}
             </>
           )}
         </ul>
