@@ -11,6 +11,13 @@ function measureContentWidth(element: HTMLElement): number {
       return paneWidth;
     }
   }
+  const subjectMain = element.closest("main.handbook-subject-main");
+  if (subjectMain instanceof HTMLElement) {
+    const mainWidth = subjectMain.clientWidth;
+    if (mainWidth >= 48) {
+      return mainWidth;
+    }
+  }
   const self = element.clientWidth;
   const parent = element.parentElement?.clientWidth ?? 0;
   if (parent >= 48 && parent > self + 1) {

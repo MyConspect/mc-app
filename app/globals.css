@@ -281,6 +281,7 @@ article.concept-detail-article > .concept-detail-title {
   flex: 0 0 auto;
   height: auto;
   max-height: none;
+  min-height: 0;
   align-content: start;
 }
 
@@ -321,15 +322,20 @@ article.concept-detail-article > .concept-detail-title {
   column-count: auto;
   column-width: var(--concept-index-col-min);
   column-fill: balance;
+  box-sizing: border-box;
+  align-self: stretch;
+  flex: 1 1 auto;
+  min-height: 100%;
   overflow-y: visible;
+  overflow-x: clip;
   height: auto !important;
   max-height: none !important;
 }
 
-/* Flow topic groups in one column until pane height; lists may continue right. */
+/* Topic groups stay whole; shorter groups stack in the same column when there is room. */
 .concept-index-newspaper-pane-pack .concept-index-cluster-section {
-  break-inside: auto;
-  -webkit-column-break-inside: auto;
+  break-inside: avoid-column;
+  -webkit-column-break-inside: avoid;
 }
 
 .concept-index-newspaper-pane-pack .concept-index-topic-group-block {
@@ -407,13 +413,6 @@ article.concept-detail-article > .concept-detail-title {
 
 .concept-index-newspaper-columns .concept-index-cluster-section:last-child {
   margin-bottom: 0;
-}
-
-/* Pane pack must override avoid-column so topic groups flow into lane 2+. */
-.concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack
-  .concept-index-cluster-section {
-  break-inside: auto;
-  -webkit-column-break-inside: auto;
 }
 
 .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack

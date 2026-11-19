@@ -11,8 +11,14 @@ const CONCEPT_INDEX_SECTION_LIST_MAX_COLUMNS = 8;
 export const CONCEPT_INDEX_SECTION_LIST_SPLIT_CLASS =
   "concept-index-section-list-split [&>li]:break-inside-avoid-column";
 
-export function conceptIndexSectionListColumnCount(_itemCount: number): number {
-  return 1;
+export function conceptIndexSectionListColumnCount(itemCount: number): number {
+  if (!Number.isFinite(itemCount) || itemCount < 8) {
+    return 1;
+  }
+  return Math.min(
+    CONCEPT_INDEX_SECTION_LIST_MAX_COLUMNS,
+    Math.ceil(itemCount / CONCEPT_INDEX_SECTION_LIST_MIN_ITEMS_PER_COLUMN),
+  );
 }
 
 export function conceptIndexSectionListLayoutClass(itemCount: number): string {

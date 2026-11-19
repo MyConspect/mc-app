@@ -6,7 +6,7 @@ import {
   CONCEPT_INDEX_GROUP_HEADING,
   CONCEPT_INDEX_HEADING_LINK,
 } from "@/components/topic/conceptIndexStyles";
-import { CardGrid } from "./CardGrid";
+import { ConceptIndexCardGrid } from "./ConceptIndexCardGrid";
 
 export function ClusterTopicGroupIndexSection({
   heading,
@@ -26,7 +26,7 @@ export function ClusterTopicGroupIndexSection({
       </h3>
       {items.length > 0 ? (
         <div className="mt-1.5">
-          <CardGrid items={items} variant="concept-index" />
+          <ConceptIndexCardGrid items={items} />
         </div>
       ) : null}
     </section>

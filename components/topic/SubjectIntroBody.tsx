@@ -14,6 +14,7 @@ import {
   resolveSubjectHubHashFocus,
   subjectHubIndexFocusId,
 } from "@/lib/catalog/filterSubjectHubByHash";
+import { SubjectClusterHub } from "@/components/catalog";
 import { SubjectHubFocusedGroupList } from "@/components/catalog/SubjectHubFocusedGroupList";
 import { ConceptList } from "./ConceptList";
 import { TopicNavConceptsProvider } from "./context/TopicNavConceptsContext";
@@ -49,6 +50,8 @@ export function SubjectIntroBody({
   emptyMessage,
   groupInterviewSections,
   clusterIndex,
+  sectionsNested,
+  titleTwinConceptsByClusterId,
 }: {
   fallbackBanner: ReactNode;
   concepts: readonly Concept[];
@@ -68,6 +71,11 @@ export function SubjectIntroBody({
     }[];
     readonly afterRootSections?: readonly SubjectClusterSection[];
   };
+  /** Nested multi-topic cluster rows (e.g. Architecture topic groups). */
+  sectionsNested?: readonly SubjectClusterSection[];
+  titleTwinConceptsByClusterId?: Readonly<
+    Record<string, readonly Concept[]>
+  >;
 }) {
   const pathname = usePathname() ?? "/en";
   const chrome = useMemo(
@@ -157,6 +165,25 @@ export function SubjectIntroBody({
           />
         </TopicNavConceptsProvider>
       </div>
+    );
+  }
+
+  if (hubFocus.kind === "cluster") {
+    return (
+      <>
+        {fallbackBanner}
+        <SubjectClusterHub
+          sections={clusterIndex.sections}
+          sectionsNested={sectionsNested}
+          rootSections={clusterIndex.rootSections}
+          groupedSections={clusterIndex.groupedSections}
+          afterRootSections={clusterIndex.afterRootSections}
+          hubOutlineConcepts={hubOutlineConcepts}
+          detailConcepts={concepts}
+          titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
+          browseListVariant="concept-index"
+        />
+      </>
     );
   }
 

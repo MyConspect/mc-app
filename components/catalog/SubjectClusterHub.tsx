@@ -198,18 +198,7 @@ export function SubjectClusterHub({
     resetHandbookReadingScroll();
   }, [indexFocusId, location.pathname]);
 
-  const focusedMultiTopicCluster = useMemo(() => {
-    if (hubFocus.kind !== "cluster") {
-      return false;
-    }
-    const section = findSubjectClusterSection(
-      nestedClusterLayout,
-      hubFocus.clusterId,
-    );
-    return Boolean(
-      section?.items.some((item) => item.indexRowKind === "group-heading"),
-    );
-  }, [hubFocus, nestedClusterLayout]);
+  const focusedClusterPaneFlow = hubFocus.kind === "cluster";
 
   const balancedEntries = useMemo(() => {
     if (hubFocus.kind === "concept-group") {
@@ -227,8 +216,8 @@ export function SubjectClusterHub({
       chrome,
       pathname,
       suppressClusterHeadings: focusedClusterId !== null,
-      /** Pane newspaper flows within one section — do not split topic groups. */
-      splitClusterTopicGroups: false,
+      /** One packable unit per topic group (Styles, Data, …) for multi-column grid. */
+      splitClusterTopicGroups: focusedClusterPaneFlow,
       subjectTitle,
     });
   }, [
@@ -239,10 +228,9 @@ export function SubjectClusterHub({
     chrome,
     pathname,
     focusedClusterId,
+    focusedClusterPaneFlow,
     subjectTitle,
   ]);
-
-  const focusedClusterPaneFlow = focusedMultiTopicCluster;
 
   const indexLayoutMode: ConceptIndexLayoutMode = focusedClusterPaneFlow
     ? "newspaper"

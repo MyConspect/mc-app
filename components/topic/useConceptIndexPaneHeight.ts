@@ -4,24 +4,30 @@ import { useCallback, useSyncExternalStore } from "react";
 import { HANDBOOK_MAIN_ID } from "@/constants";
 
 function viewportPaneBudgetPx(): number {
-  return Math.max(400, window.innerHeight * 0.72);
+  return Math.max(400, window.innerHeight * 0.92);
 }
 
 function measurePaneHeight(element: HTMLElement | null): number {
   if (typeof window === "undefined") {
     return 640;
   }
-  const viewportBudget = viewportPaneBudgetPx();
   const indexBody = element?.closest(".handbook-subject-index-body");
+  if (indexBody instanceof HTMLElement && indexBody.clientHeight >= 120) {
+    return indexBody.clientHeight;
+  }
   const subjectMain = element?.closest("main.handbook-subject-main");
   if (subjectMain instanceof HTMLElement && subjectMain.clientHeight >= 120) {
-    return Math.min(subjectMain.clientHeight, viewportBudget);
+    const indexInMain = subjectMain.querySelector(".handbook-subject-index-body");
+    if (indexInMain instanceof HTMLElement && indexInMain.clientHeight >= 120) {
+      return indexInMain.clientHeight;
+    }
+    return subjectMain.clientHeight;
   }
   const handbookMain = document.getElementById(HANDBOOK_MAIN_ID);
   if (handbookMain && handbookMain.clientHeight >= 120) {
-    return Math.min(handbookMain.clientHeight, viewportBudget);
+    return Math.min(handbookMain.clientHeight, viewportPaneBudgetPx());
   }
-  return viewportBudget;
+  return viewportPaneBudgetPx();
 }
 
 function observeTargets(
@@ -33,6 +39,10 @@ function observeTargets(
   const indexBody = gridElement.closest(".handbook-subject-index-body");
   if (indexBody instanceof HTMLElement) {
     observer.observe(indexBody);
+  }
+  const subjectMain = gridElement.closest("main.handbook-subject-main");
+  if (subjectMain instanceof HTMLElement) {
+    observer.observe(subjectMain);
   }
   const handbookMain = document.getElementById(HANDBOOK_MAIN_ID);
   if (handbookMain) {

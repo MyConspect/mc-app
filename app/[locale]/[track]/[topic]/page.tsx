@@ -214,31 +214,35 @@ export default async function TopicPage({
           afterRootSections={afterRootSections}
         />
         {introLoaded ? (
-          <SubjectIntroBody
-            fallbackBanner={
-              introLoaded.usedFallback ? (
-                <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
-                  {FALLBACK_NOTE_BADGE[locale]}
-                </p>
-              ) : null
-            }
-            concepts={conceptsForConspectTopic(
-              introLoaded.topic,
-              introLoaded.parsed.concepts,
-            )}
-            hubOutlineConcepts={titleTwinHubConcepts}
-            emptyMessage="No concepts were parsed from this topic."
-            groupInterviewSections={conceptsForConspectTopic(
-              introLoaded.topic,
-              introLoaded.parsed.concepts,
-            ).some((concept) => Boolean(concept.group))}
-            clusterIndex={{
-              sections,
-              rootSections,
-              groupedSections,
-              afterRootSections,
-            }}
-          />
+          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
+            <SubjectIntroBody
+              fallbackBanner={
+                introLoaded.usedFallback ? (
+                  <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
+                    {FALLBACK_NOTE_BADGE[locale]}
+                  </p>
+                ) : null
+              }
+              concepts={conceptsForConspectTopic(
+                introLoaded.topic,
+                introLoaded.parsed.concepts,
+              )}
+              hubOutlineConcepts={titleTwinHubConcepts}
+              emptyMessage="No concepts were parsed from this topic."
+              groupInterviewSections={conceptsForConspectTopic(
+                introLoaded.topic,
+                introLoaded.parsed.concepts,
+              ).some((concept) => Boolean(concept.group))}
+              clusterIndex={{
+                sections,
+                rootSections,
+                groupedSections,
+                afterRootSections,
+              }}
+              sectionsNested={sectionsNested}
+              titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
+            />
+          </div>
         ) : (
           <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
             <SubjectClusterHub
