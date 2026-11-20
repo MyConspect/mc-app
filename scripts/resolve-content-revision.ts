@@ -1,10 +1,20 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 
-const DEFAULT_RESOURCES_GIT_URL =
+const DEFAULT_RESOURCES_GIT_HTTPS =
   "https://github.com/MyConspect/mc-content.git";
+const DEFAULT_RESOURCES_GIT_SSH =
+  "git@github.com:MyConspect/mc-content.git";
+
+function defaultResourcesGitUrl(): string {
+  if (process.env.GIT_SSH_COMMAND?.trim()) {
+    return DEFAULT_RESOURCES_GIT_SSH;
+  }
+  return DEFAULT_RESOURCES_GIT_HTTPS;
+}
 
 function authenticatedCloneUrl(url: string, token: string | undefined): string {
+  if (url.startsWith("git@")) return url;
   if (!token) return url;
   try {
     const parsed = new URL(url);
@@ -28,7 +38,7 @@ function repoLabel(url: string): string {
 
 const ref = (process.env.RESOURCES_GIT_REF?.trim() || "main").trim();
 const url = (
-  process.env.RESOURCES_GIT_URL?.trim() || DEFAULT_RESOURCES_GIT_URL
+  process.env.RESOURCES_GIT_URL?.trim() || defaultResourcesGitUrl()
 ).trim();
 const token = process.env.RESOURCES_GIT_TOKEN?.trim();
 
@@ -50,9 +60,11 @@ if (/^[0-9a-f]{40}$/i.test(ref)) {
     console.error(
       `::error::Could not ls-remote ${repoLabel(url)} for ref "${ref}". ` +
         `Check RESOURCES_GIT_URL, RESOURCES_GIT_REF, and ` +
-        (hasToken
-          ? "RESOURCES_GIT_TOKEN (repo read on mc-content)."
-          : "set RESOURCES_GIT_TOKEN for this private repo."),
+        (process.env.GIT_SSH_COMMAND?.trim()
+          ? "MC_CONTENT_DEPLOY_KEY and deploy key on mc-content."
+          : hasToken
+            ? "RESOURCES_GIT_TOKEN (repo read on mc-content)."
+            : "MC_CONTENT_DEPLOY_KEY or RESOURCES_GIT_TOKEN."),
     );
     process.exit(1);
   }

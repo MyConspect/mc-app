@@ -22,6 +22,11 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Configure mc-content git access
+        uses: ./.github/actions/configure-mc-content-git
+        with:
+          deploy_key: ${{ secrets.MC_CONTENT_DEPLOY_KEY }}
+          git_token: ${{ secrets.RESOURCES_GIT_TOKEN }}
       - name: Resolve mc-content revision
         id: content-rev
         run: bash scripts/resolve-content-revision.sh
@@ -77,6 +82,11 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Configure mc-content git access
+        uses: ./.github/actions/configure-mc-content-git
+        with:
+          deploy_key: ${{ secrets.MC_CONTENT_DEPLOY_KEY }}
+          git_token: ${{ secrets.RESOURCES_GIT_TOKEN }}
       - name: Resolve mc-content revision
         id: content-rev
         run: bash scripts/resolve-content-revision.sh
@@ -114,6 +124,11 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Configure mc-content git access
+        uses: ./.github/actions/configure-mc-content-git
+        with:
+          deploy_key: ${{ secrets.MC_CONTENT_DEPLOY_KEY }}
+          git_token: ${{ secrets.RESOURCES_GIT_TOKEN }}
       - name: Resolve mc-content revision
         id: content-rev
         run: bash scripts/resolve-content-revision.sh

@@ -58,13 +58,21 @@ Set `NEXT_PUBLIC_SITE_URL` (no trailing slash) for absolute sitemap and robots U
 
 ### Study notes on deploy (mc-app + [mc-content](https://github.com/MyConspect/mc-content))
 
-Notes live in **mc-content** (`en/` + `ru/` at repo root, or the same under `resources/`). Set these **environment variables** on [Vercel](https://vercel.com/docs/projects/environment-variables) (Production + Preview) and as [GitHub Actions secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions) when CI must clone notes:
+Notes live in **mc-content** (`en/` + `ru/` at repo root, or the same under `resources/`). **GitHub Actions** uses the canonical URL `https://github.com/MyConspect/mc-content.git` (or SSH when a deploy key is configured). Set **one** auth method on **MyConspect/mc-app**:
 
-| Variable              | Required | Purpose                                                              |
-| --------------------- | -------- | -------------------------------------------------------------------- |
+| Secret / variable     | Required | Purpose |
+| --------------------- | -------- | ------- |
+| `MC_CONTENT_DEPLOY_KEY` | Optional | Read-only deploy key (SSH) if your org allows deploy keys on **mc-content**; otherwise use the PAT below. |
+| `RESOURCES_GIT_TOKEN` | Fallback | PAT with **Contents: read** on `mc-content` (HTTPS). |
+| `RESOURCES_GIT_REF`     | No       | Branch or tag (default `main`). Optional repo secret. |
+
+On [Vercel](https://vercel.com/docs/projects/environment-variables) (Production + Preview), set `RESOURCES_GIT_URL`, and `RESOURCES_GIT_TOKEN` if the notes repo is private:
+
+| Variable              | Required | Purpose |
+| --------------------- | -------- | ------- |
 | `RESOURCES_GIT_URL`   | Yes      | HTTPS clone URL, e.g. `https://github.com/MyConspect/mc-content.git` |
-| `RESOURCES_GIT_TOKEN` | No       | PAT with repo read access — only if the notes repo is private        |
-| `RESOURCES_GIT_REF`   | No       | Branch or tag (default `main`)                                       |
+| `RESOURCES_GIT_TOKEN` | No       | PAT with repo read access |
+| `RESOURCES_GIT_REF`   | No       | Branch or tag (default `main`) |
 
 For **GitHub Actions production deploy** (`.github/workflows/ci.yml` `deploy` job on `main`), also add [repository secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions):
 
