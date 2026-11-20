@@ -22,7 +22,7 @@ jobs:
     permissions:
       contents: read
     env:
-      RESOURCES_GIT_URL: ${{ secrets.RESOURCES_GIT_URL }}
+      RESOURCES_GIT_URL: https://github.com/MyConspect/mc-content.git
       RESOURCES_GIT_TOKEN: ${{ secrets.RESOURCES_GIT_TOKEN }}
       RESOURCES_GIT_REF: ${{ secrets.RESOURCES_GIT_REF }}
     steps:
