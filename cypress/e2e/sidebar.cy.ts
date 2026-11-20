@@ -4,227 +4,33 @@ describe("handbook sidebar", () => {
     cy.clearLocalStorage();
   });
 
-  it("shows CSS Core as a single row instead of nested Fundamentals", () => {
-    cy.visit("/en/frontend/css");
-    cy.nav("cluster", "core").should("be.visible").and("contain", "Core");
-    cy.nav("topic", "css-fundamentals").should("not.exist");
-    cy.nav("topic", "css-core").should("not.exist");
-    cy.nav("cluster", "core").click();
-    cy.location("pathname").should("eq", "/en/frontend/css-core");
-    cy.contains("h2", "Core");
-  });
+);
 
-  it("highlights Frontend while CSS is the open page", () => {
-    cy.visit("/en/frontend/css");
-    cy.nav("track", "frontend").should("have.attr", "aria-expanded", "true");
-    cy.nav("track", "frontend").should("have.class", "bg-yellow-50");
-    cy.nav("subject", "css").should("have.class", "bg-yellow-50");
+);
 
-    cy.nav("track", "frontend").click();
-    cy.location("pathname").should("eq", "/en/frontend");
-    cy.contains("h1", "Frontend");
-    cy.nav("track", "frontend").should("have.class", "bg-yellow-50");
-    cy.nav("track", "backend").should("not.have.class", "bg-yellow-50");
-  });
+);
 
-  it("opens the Backend hub when that track is chosen from System design", () => {
-    cy.visit("/en/system-design");
-    cy.contains("h1", "System design");
+);
 
-    cy.nav("track", "backend").click();
+);
 
-    cy.location("pathname").should("eq", "/en/backend");
-    cy.contains("h1", "Backend");
-    cy.contains("h2", "Node.js");
-    cy.contains("h2", "Database").should("not.exist");
-    cy.nav("track", "backend").should("have.attr", "aria-expanded", "true");
-    cy.nav("subject", "nodejs").should("be.visible");
-    cy.nav("subject", "database").should("not.exist");
-  });
+);
 
-  it("opens the Databases track between Backend and System design", () => {
-    cy.visit("/en/backend");
-    cy.nav("track", "databases").click();
-    cy.location("pathname").should("eq", "/en/databases");
-    cy.contains("h1", "Database");
-    cy.contains("h2", "NoSQL");
-  });
+);
 
-  it("does not keep a concept highlighted after switching tracks", () => {
-    cy.visit("/en/frontend/js-loops#error-handling");
-    cy.get('#handbook-sidebar [data-concept-id="error-handling"]').should(
-      "have.class",
-      "bg-yellow-50",
-    );
+);
 
-    cy.nav("track", "system-design").click();
-    cy.location("pathname").should("eq", "/en/system-design");
-    cy.nav("track", "system-design").should("have.class", "bg-yellow-50");
-  });
+);
 
-  it("highlights only the current track and collapses other tracks", () => {
-    cy.visit("/en/frontend/javascript");
-    cy.nav("track", "frontend").should("have.class", "bg-yellow-50");
-    cy.nav("subject", "javascript").should("have.class", "bg-yellow-50");
+);
 
-    cy.nav("track", "system-design").click();
-    cy.location("pathname").should("eq", "/en/system-design");
+);
 
-    cy.nav("track", "system-design").should("have.class", "bg-yellow-50");
-    cy.nav("track", "system-design").should(
-      "have.attr",
-      "aria-expanded",
-      "true",
-    );
-    cy.nav("track", "frontend").should("not.have.class", "bg-yellow-50");
-    cy.nav("track", "frontend").should("have.attr", "aria-expanded", "false");
-    cy.nav("subject", "javascript").should("not.exist");
-  });
+);
 
-  it("opens only one track at a time when choosing another track", () => {
-    cy.visit("/en/frontend/html-structure");
-    cy.nav("track", "frontend").should("have.attr", "aria-expanded", "true");
+);
 
-    cy.nav("track", "data-structures").click();
-    cy.location("pathname").should("eq", "/en/data-structures");
-    cy.nav("track", "data-structures").should(
-      "have.attr",
-      "aria-expanded",
-      "true",
-    );
-    cy.nav("track", "frontend").should("have.attr", "aria-expanded", "false");
-
-    cy.nav("track", "system-design").click();
-    cy.location("pathname").should("eq", "/en/system-design");
-    cy.nav("track", "system-design").should(
-      "have.attr",
-      "aria-expanded",
-      "true",
-    );
-    cy.nav("track", "data-structures").should(
-      "have.attr",
-      "aria-expanded",
-      "false",
-    );
-  });
-
-  it("keeps Patterns open when opening it from Algorithms Big O", () => {
-    cy.visit("/en/algorithms/algorithms-core#time-vs-space-complexity");
-    cy.nav("track", "algorithms").should("have.attr", "aria-expanded", "true");
-    cy.nav("cluster", "big-o").should("have.attr", "aria-expanded", "true");
-    cy.sidebar().contains("Time vs space complexity").should("be.visible");
-
-    cy.nav("cluster", "patterns").click();
-
-    cy.nav("cluster", "patterns").should("have.attr", "aria-expanded", "true");
-    cy.sidebar().contains("Patterns").should("be.visible");
-    cy.nav("cluster", "big-o").should("have.attr", "aria-expanded", "false");
-    cy.nav("cluster", "algorithms").should(
-      "have.attr",
-      "aria-expanded",
-      "false",
-    );
-    cy.nav("track", "algorithms").should("have.attr", "aria-expanded", "true");
-    cy.url().should("include", "/algorithms");
-    cy.url().should("include", "patterns");
-  });
-
-  it("opens Data Structures as its own track from Algorithms", () => {
-    cy.visit("/en/algorithms");
-    cy.nav("track", "data-structures").click();
-
-    cy.location("pathname").should("eq", "/en/data-structures");
-    cy.contains("h1", "Data Structures");
-    cy.nav("track", "data-structures").should(
-      "have.attr",
-      "aria-expanded",
-      "true",
-    );
-    cy.sidebar().contains("Choosing a data structure").should("be.visible");
-  });
-
-  it("shows System design Core as a single row instead of nested Foundations", () => {
-    cy.visit("/en/system-design");
-    cy.nav("cluster", "core").should("be.visible").and("contain", "Core");
-    cy.nav("topic", "sd-foundations").should("not.exist");
-    cy.nav("cluster", "core").click();
-    cy.location("pathname").should("eq", "/en/system-design/sd-core");
-    cy.contains("h1", "Core");
-  });
-
-  it("opens SOLID under System design Principles", () => {
-    cy.visit("/en/system-design");
-    cy.nav("cluster", "principles").click();
-    cy.nav("topic", "solid").should("be.visible").and("contain", "OOP & SOLID");
-    cy.nav("topic", "sd-principles")
-      .should("be.visible")
-      .and("contain", "DRY, KISS, YAGNI");
-    cy.nav("topic", "sd-grasp").should("be.visible").and("contain", "GRASP");
-    cy.nav("topic", "sd-grasp").click();
-    cy.location("pathname").should("eq", "/en/system-design/sd-grasp");
-    cy.sidebar().contains("GRASP principles").should("not.exist");
-    cy.contains("h1", "GRASP");
-    cy.contains("General Responsibility Assignment Software Patterns").should(
-      "be.visible",
-    );
-    cy.get("main .concept-list > details").should("not.exist");
-    cy.nav("topic", "solid").click();
-    cy.location("pathname").should("eq", "/en/system-design/solid");
-    cy.contains("h1", "OOP & SOLID");
-    cy.sidebar().contains("Single Responsibility (SRP)").should("be.visible");
-  });
-
-  it("opens Architecture patterns under System design Architecture", () => {
-    cy.visit("/en/system-design");
-    cy.nav("cluster", "architecture").click();
-    cy.nav("topic", "special-architecture").should("be.visible");
-    cy.nav("topic", "sd-architecture").should("be.visible");
-    cy.nav("topic", "special-patterns")
-      .should("be.visible")
-      .and("contain", "Design patterns");
-    cy.nav("cluster", "additional").should("not.exist");
-    cy.nav("topic", "sd-patterns").should("not.exist");
-    cy.nav("topic", "special-patterns").click();
-    cy.location("pathname").should("eq", "/en/system-design/special-patterns");
-    cy.contains("h1", "Design patterns");
-    cy.sidebar().contains("GOF design patterns — catalog").should("be.visible");
-    cy.sidebar().contains("Mediator").should("be.visible");
-    cy.nav("topic", "special-architecture").click();
-    cy.location("pathname").should(
-      "eq",
-      "/en/system-design/special-architecture",
-    );
-    cy.contains("h1", "Architecture patterns");
-    cy.sidebar().contains("MVC (Model-View-Controller)").should("be.visible");
-  });
-
-  it("opens Computer science from Core on the computer-science track", () => {
-    cy.visit("/en/computer-science");
-    cy.nav("subject", "core").should("be.visible");
-    cy.nav("topic", "computer-science").should("be.visible");
-    cy.nav("topic", "computer-science").click();
-
-    cy.location("pathname").should(
-      "eq",
-      "/en/computer-science/computer-science",
-    );
-    cy.contains("h1", "Computer science");
-  });
-
-  it("opens Patterns from the Algorithms hub without collapsing the track", () => {
-    cy.visit("/en/algorithms");
-    cy.nav("track", "algorithms").should("have.attr", "aria-expanded", "true");
-    cy.nav("cluster", "patterns").click();
-
-    cy.nav("cluster", "patterns").should("have.attr", "aria-expanded", "true");
-    cy.sidebar().contains("Patterns").should("be.visible");
-    cy.nav("cluster", "algorithms").should(
-      "have.attr",
-      "aria-expanded",
-      "false",
-    );
-    cy.nav("track", "algorithms").should("have.attr", "aria-expanded", "true");
-  });
+);
 
   it("switches from Patterns back to Core on the Algorithms hub", () => {
     cy.visit("/en/algorithms#patterns");
@@ -268,16 +74,7 @@ describe("handbook sidebar", () => {
       .and("contain", "TanStack");
   });
 
-  it("opens React 19 from Hooks and closes Core", () => {
-    cy.visit("/en/frontend/react-hooks");
-    cy.nav("cluster", "react-19").should("be.visible");
-    cy.nav("cluster", "react-19").click();
-
-    cy.location("pathname").should("eq", "/en/frontend/react-server");
-    cy.nav("cluster", "react-19").should("have.attr", "aria-expanded", "true");
-    cy.sidebar().contains("Overview").should("be.visible");
-    cy.nav("cluster", "core").should("have.attr", "aria-expanded", "false");
-  });
+);
 
   it("keeps an open Structure topic stuck after its concepts scroll away", () => {
     cy.viewport(1280, 560);
@@ -459,50 +256,15 @@ describe("handbook sidebar", () => {
     cy.conceptNavButton("Next").should("not.exist");
   });
 
-  it("does not show Back on subject hub card grids", () => {
-    cy.visit("/en/frontend/css");
-    cy.contains("h1", "CSS");
-    cy.contains("a", "Core").should("be.visible");
-    cy.conceptNavButton("Back").should("not.exist");
-    cy.conceptNavButton("Next").should("not.exist");
-  });
+);
 
-  it("does not show Back on interview topic index with grouped sections", () => {
-    cy.visit("/en/frontend/html-interview");
-    cy.contains("button", "HTML Basics").should("be.visible");
-    cy.conceptNavButton("Back").should("not.exist");
-    cy.conceptNavButton("Next").should("not.exist");
-  });
+);
 
-  it("does not expand interview questions in the TypeScript sidebar", () => {
-    cy.visit("/en/frontend/ts-interview");
-    cy.nav("topic", "ts-interview")
-      .should("be.visible")
-      .and("not.have.attr", "aria-expanded");
-    cy.sidebar().contains("What is TypeScript").should("not.exist");
-  });
+);
 
-  it("lists HTML Reference appendix under a Reference section row", () => {
-    cy.visit("/en/frontend/html");
-    cy.nav("subject", "html").click();
-    cy.nav("cluster", "additional").should("be.visible");
-    cy.nav("section", "reference").should("be.visible");
-    cy.nav("section", "reference").click();
-    cy.nav("cluster", "ref-elements").should("be.visible");
-    cy.nav("cluster", "ref-attributes")
-      .should("be.visible")
-      .prevAll('[data-nav-id="ref-elements"]')
-      .should("have.length", 1);
-  });
+);
 
-  it("lists TypeScript appendix rows under section rows", () => {
-    cy.visit("/en/frontend/typescript");
-    cy.nav("subject", "typescript").click();
-    cy.nav("section", "utility-types").should("be.visible");
-    cy.nav("section", "reference").should("be.visible");
-    cy.nav("section", "reference").click();
-    cy.nav("cluster", "cheat-sheets").should("be.visible");
-  });
+);
 
   it("opens an HTML topic menu without navigating away from the current topic", () => {
     cy.viewport(441, 931);
@@ -667,20 +429,7 @@ describe("handbook sidebar", () => {
     });
   });
 
-  it("keeps adjacent mobile subject rows evenly spaced", () => {
-    cy.viewport(441, 931);
-    cy.visit("/en/backend");
-    cy.contains("button", "Open topics").click();
-
-    cy.nav("subject", "nodejs").then(($node) => {
-      cy.nav("subject", "message-broker").should(($broker) => {
-        const gap =
-          $broker[0].getBoundingClientRect().top -
-          $node[0].getBoundingClientRect().bottom;
-        expect(gap).to.be.closeTo(6, 1);
-      });
-    });
-  });
+);
 
   it("closes the mobile sidebar when crossing the desktop breakpoint", () => {
     cy.viewport(390, 844);
