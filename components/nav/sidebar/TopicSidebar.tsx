@@ -11,7 +11,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HighlightedText, useSearchMode } from "@/components/search";
+import { SidebarHighlightedText, useSearchMode } from "@/components/search";
 import { HANDBOOK_NAV_ASIDE_ID, HANDBOOK_SIDEBAR_ID } from "@/constants";
 import { useSidebarAsideScroll } from "../hooks/useSidebarAsideScroll";
 import {
@@ -49,7 +49,6 @@ import {
 import { useHandbookLocation } from "../hooks/useHandbookLocation";
 import { useStackPathPins } from "../hooks/useMdUp";
 import { isActiveHref, isActiveTrack } from "../utils/location";
-import { SearchHitList } from "./SearchHitList";
 import { pinNavElement, pinNavForHref } from "../utils/sidebarPin";
 import {
   measureNavChromeInset,
@@ -72,6 +71,7 @@ import {
   useScopedSidebarFold,
   useScopedTrackOpen,
 } from "../context/sidebarContext";
+import { SearchHitList } from "./SearchHitList";
 import { ClusterRow, SubjectRow, TopicRow } from "./sidebarRows";
 import { SidebarNavChrome } from "./SidebarNavChrome";
 import { foldRevision, useSidebarOpen } from "../hooks/useSidebarOpen";
@@ -462,7 +462,7 @@ const TrackGroup = memo(function TrackGroup({
   }
 
   const title = (
-    <HighlightedText
+    <SidebarHighlightedText
       text={group.title}
       query={query}
       className="min-w-0 flex-1 truncate"
@@ -584,7 +584,11 @@ const TrackGroup = memo(function TrackGroup({
                 ))
               )}
               {group.hubTopic ? (
-                <TopicRow trackId={group.id} topic={group.hubTopic} hideTitle />
+                <TopicRow
+                  trackId={group.id}
+                  topic={group.hubTopic}
+                  hideTitle
+                />
               ) : null}
             </>
           )}

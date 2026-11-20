@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import Link from "next/link";
-import { HighlightedText } from "@/components/search";
+import { SidebarHighlightedText } from "@/components/search";
 import type { TrackId } from "@/lib/catalog";
 import {
   CHROME,
@@ -148,7 +148,7 @@ function RowTitle({
           {open ? "−" : "+"}
         </span>
       ) : null}
-      <HighlightedText
+      <SidebarHighlightedText
         text={text}
         query={query}
         className="min-w-0 leading-snug"
@@ -241,7 +241,7 @@ export const ConceptLink = memo(function ConceptLink({
     >
       <span className="flex items-baseline justify-between gap-2">
         <span className="min-w-0">
-          <HighlightedText text={concept.title} query={query} />
+          <SidebarHighlightedText text={concept.title} query={query} />
         </span>
         <span className="flex shrink-0 items-baseline gap-1.5">
           {snippet ? (
@@ -254,7 +254,7 @@ export const ConceptLink = memo(function ConceptLink({
       </span>
       {snippet ? (
         <span className="mt-0.5 block text-xs font-normal leading-snug text-zinc-500 dark:text-zinc-400">
-          <HighlightedText text={snippet} query={query} />
+          <SidebarHighlightedText text={snippet} query={query} />
         </span>
       ) : null}
     </a>

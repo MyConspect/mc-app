@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import Link from "next/link";
-import { HighlightedText } from "@/components/search";
+import { SidebarHighlightedText } from "@/components/search";
 import { chromeFor } from "@/lib/i18n/chrome";
 import { localeFromPathname } from "@/lib/i18n/paths";
 import { CHROME, splitHref, type SearchSidebarHit } from "@/lib/nav";
@@ -65,7 +65,7 @@ export const SearchHitList = memo(function SearchHitList({
               }`}
             >
               <span className="flex items-baseline justify-between gap-2">
-                <HighlightedText text={hit.concept.title} query={query} />
+                <SidebarHighlightedText text={hit.concept.title} query={query} />
                 {hit.snippet ? (
                   <span className="shrink-0 text-[10px] font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
                     {CHROME.inNotes}
@@ -74,7 +74,7 @@ export const SearchHitList = memo(function SearchHitList({
               </span>
               {hit.snippet ? (
                 <span className="mt-0.5 block text-xs font-normal leading-snug text-zinc-500 dark:text-zinc-400">
-                  <HighlightedText text={hit.snippet} query={query} />
+                  <SidebarHighlightedText text={hit.snippet} query={query} />
                 </span>
               ) : null}
             </Link>

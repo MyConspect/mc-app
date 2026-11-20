@@ -85,9 +85,17 @@ export function SiteHeader({
                 </svg>
                 <input
                   id={HANDBOOK_SEARCH_INPUT_ID}
-                  type="search"
+                  type="text"
+                  role="searchbox"
+                  name="handbook-search-query"
                   value={query}
                   onChange={(event) => onQueryChange(event.target.value)}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-1p-ignore
+                  data-lpignore="true"
                   placeholder={
                     mode === "notes"
                       ? chrome.searchNotesPlaceholder

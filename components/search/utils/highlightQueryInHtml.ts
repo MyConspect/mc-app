@@ -1,17 +1,25 @@
 "use client";
 
 import { BODY_QUERY_MIN_LENGTH } from "@/lib/nav";
-
-const MARK_CLASS = "rounded-sm bg-amber-100 text-zinc-900 dark:bg-amber-900/50 dark:text-amber-50";
+import { SEARCH_CONTENT_MARK_CLASS } from "../searchMarkClass";
+import {
+  searchHighlightRegExp,
+  searchQueryTokens,
+} from "./searchQueryTokens";
 
 export function highlightQueryInHtml(html: string, query: string): string {
-  const needle = query.trim();
-  if (needle.length < BODY_QUERY_MIN_LENGTH) {
+  const tokens = searchQueryTokens(query).filter(
+    (token) => token.length >= BODY_QUERY_MIN_LENGTH,
+  );
+  if (tokens.length === 0) {
     return html;
   }
 
-  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const re = new RegExp(escaped, "gi");
+  const re = searchHighlightRegExp(tokens);
+  if (!re) {
+    return html;
+  }
+
   let skipDepth = 0;
 
   return html.replace(
@@ -28,7 +36,10 @@ export function highlightQueryInHtml(html: string, query: string): string {
       if (skipDepth > 0 || chunk.startsWith("<")) {
         return chunk;
       }
-      return chunk.replace(re, (match) => `<mark class="${MARK_CLASS}">${match}</mark>`);
+      return chunk.replace(
+        re,
+        (match) => `<mark class="${SEARCH_CONTENT_MARK_CLASS}">${match}</mark>`,
+      );
     },
   );
 }

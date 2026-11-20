@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { SearchHighlightedText } from "@/components/search";
 import {
   CONCEPT_GROUP_SECTION_INSET,
   CONCEPT_INDEX_CLUSTER_SECTION,
@@ -133,10 +134,10 @@ function multiItemSection(
         <h2 className={headingClass}>
           {headingHref ? (
             <Link href={headingHref} className={CONCEPT_INDEX_HEADING_LINK}>
-              {displayClusterTitle}
+              <SearchHighlightedText text={displayClusterTitle} />
             </Link>
           ) : (
-            displayClusterTitle
+            <SearchHighlightedText text={displayClusterTitle} />
           )}
         </h2>
       ) : null}
@@ -349,7 +350,9 @@ export function ClusterCardSections({
                 id={section.id}
                 className="catalog-section min-w-0 w-full max-w-full scroll-mt-24"
               >
-                <h2 className={CATALOG_CLUSTER_HEADING}>{section.title}</h2>
+                <h2 className={CATALOG_CLUSTER_HEADING}>
+                  <SearchHighlightedText text={section.title} />
+                </h2>
                 <div className="mt-3">
                   <CardGrid
                     items={flatNavGroupBrowseCards(clusters)}
@@ -367,7 +370,7 @@ export function ClusterCardSections({
               open={section.defaultOpen ?? true}
             >
               <summary className={CATALOG_SECTION_SUMMARY}>
-                {section.title}
+                <SearchHighlightedText text={section.title} />
               </summary>
               <div className="space-y-8">
                 {clusters.length === 0 ? (

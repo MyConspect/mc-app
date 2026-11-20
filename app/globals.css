@@ -203,6 +203,38 @@ article.concept-detail-article > .concept-detail-title {
   overflow-anchor: none;
 }
 
+/* Search marks: pale fill, body text color (not link hover gold). */
+.search-content-hit {
+  border-radius: 0.125rem;
+  padding: 0 0.06em;
+  background-color: #fffd9b;
+  color: #3f3f46;
+  font-weight: inherit;
+}
+
+.dark .search-content-hit {
+  background-color: #facc15;
+  color: #18181b;
+}
+
+.concept-index-link:hover .search-content-hit,
+.concept-index-link:focus-visible .search-content-hit,
+.concept-index-heading-link:hover .search-content-hit,
+.concept-index-heading-link:focus-visible .search-content-hit,
+.handbook-browse-list-link:hover .search-content-hit,
+.handbook-browse-list-link:focus-visible .search-content-hit {
+  color: #eab308;
+}
+
+.dark .concept-index-link:hover .search-content-hit,
+.dark .concept-index-link:focus-visible .search-content-hit,
+.dark .concept-index-heading-link:hover .search-content-hit,
+.dark .concept-index-heading-link:focus-visible .search-content-hit,
+.dark .handbook-browse-list-link:hover .search-content-hit,
+.dark .handbook-browse-list-link:focus-visible .search-content-hit {
+  color: #09090b;
+}
+
 /* Long section lists: second lane only when the section is wide enough. */
 .concept-index-section-list-split {
   column-count: var(--concept-index-list-split-columns, auto);

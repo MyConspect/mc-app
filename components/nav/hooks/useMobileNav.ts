@@ -1,8 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 const DESKTOP_QUERY = "(min-width: 768px)";
+const MOBILE_VIEWPORT_QUERY = "(max-width: 767px)";
+
+export function useHandbookMobileViewport() {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const mq = window.matchMedia(MOBILE_VIEWPORT_QUERY);
+      mq.addEventListener("change", onStoreChange);
+      return () => mq.removeEventListener("change", onStoreChange);
+    },
+    () => window.matchMedia(MOBILE_VIEWPORT_QUERY).matches,
+    () => false,
+  );
+}
+
+export function isHandbookMobileViewport() {
+  return window.matchMedia(MOBILE_VIEWPORT_QUERY).matches;
+}
 
 export function useMobileNav() {
   const [navOpen, setNavOpen] = useState(false);

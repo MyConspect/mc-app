@@ -11,6 +11,7 @@ import {
   CONCEPT_INDEX_HEADING_LINK,
 } from "@/components/topic/conceptIndexStyles";
 import { ensureConceptIndexListTitles } from "@/lib/catalog/ensureConceptIndexListTitles";
+import { SearchHighlightedText } from "@/components/search";
 import { BrowseCardCell } from "./BrowseCardCell";
 import type { CardItem } from "./CardGrid";
 
@@ -133,7 +134,7 @@ export function ConceptIndexCardGrid({
                   href={block.heading.href}
                   className={CONCEPT_INDEX_HEADING_LINK}
                 >
-                  {block.heading.title}
+                  <SearchHighlightedText text={block.heading.title} />
                 </Link>
               </h3>
             ) : null}

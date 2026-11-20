@@ -1,5 +1,6 @@
 "use client";
 
+import { HighlightedText, useSearchQuery } from "@/components/search";
 import { useHandbookMobileNavOpen } from "@/components/nav/context/handbookMobileNavContext";
 import {
   useLayoutEffect,
@@ -202,8 +203,10 @@ function ConceptTitleHeading({
   variant: "index" | "detail" | "section";
   onTitleActivate?: () => void;
 }) {
+  const query = useSearchQuery();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [expandedTitle, setExpandedTitle] = useState<string | null>(null);
+  const titleContent = <HighlightedText text={title} query={query} />;
   const expanded = expandedTitle === title;
   const [truncated, setTruncated] = useState(false);
 
@@ -246,7 +249,7 @@ function ConceptTitleHeading({
       className={TITLE_TOGGLE_CLASS}
       onClick={onTitleActivate}
     >
-      {title}
+      {titleContent}
     </button>
   ) : showToggle ? (
     <button
@@ -258,10 +261,10 @@ function ConceptTitleHeading({
         setExpandedTitle((current) => (current === title ? null : title))
       }
     >
-      {title}
+      {titleContent}
     </button>
   ) : (
-    title
+    titleContent
   );
 
   const titleBase =

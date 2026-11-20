@@ -20,7 +20,7 @@ export const CONCEPT_INDEX_GROUP_HEADING =
 
 /** Cluster / subject titles on concept-index browse grids. */
 export const CONCEPT_INDEX_HEADING_LINK =
-  "rounded-sm hover:text-yellow-500 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:focus-visible:ring-zinc-500/40 dark:hover:text-yellow-300";
+  "concept-index-heading-link rounded-sm hover:text-yellow-500 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:focus-visible:ring-zinc-500/40 dark:hover:text-yellow-300";
 
 export const CONCEPT_INDEX_ROW_GAP = "gap-2";
 

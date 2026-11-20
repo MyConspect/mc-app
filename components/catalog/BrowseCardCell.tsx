@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { SearchHighlightedText } from "@/components/search";
 import {
   CONCEPT_INDEX_DOT_INTERACTIVE,
   CONCEPT_INDEX_LINK,
@@ -17,7 +20,7 @@ function ConceptIndexListRow({ item }: { item: CardItem }) {
       <Link href={item.href} className={CONCEPT_INDEX_LINK}>
         <span aria-hidden="true" className={CONCEPT_INDEX_DOT_INTERACTIVE} />
         <span className="min-w-0 transition-colors group-hover:text-yellow-500 dark:group-hover:text-yellow-300">
-          {item.title}
+          <SearchHighlightedText text={item.title} />
         </span>
       </Link>
     </li>
@@ -41,7 +44,7 @@ export function BrowseCardCell({
       className={`${BROWSE_LIST_ROW}${item.id ? " scroll-mt-24" : ""}`}
     >
       <Link href={item.href} className={BROWSE_LIST_LINK}>
-        {item.title}
+        <SearchHighlightedText text={item.title} />
       </Link>
     </li>
   );
