@@ -12,9 +12,9 @@ jobs:
     permissions:
       contents: read
     env:
-      RESOURCES_GIT_URL: ${{ secrets.RESOURCES_GIT_URL }}
+      RESOURCES_GIT_URL: https://github.com/MyConspect/mc-content.git
       RESOURCES_GIT_TOKEN: ${{ secrets.RESOURCES_GIT_TOKEN }}
-      RESOURCES_GIT_REF: ${{ secrets.RESOURCES_GIT_REF }}
+      RESOURCES_GIT_REF: main
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,6 +22,22 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Configure mc-content git access
+        uses: ./.github/actions/configure-mc-content-git
+        with:
+          deploy_key: ${{ secrets.MC_CONTENT_DEPLOY_KEY }}
+          git_token: ${{ secrets.RESOURCES_GIT_TOKEN }}
+      - name: Resolve mc-content revision
+        id: content-rev
+        run: bash scripts/resolve-content-revision.sh
+      - name: Cache mc-content and search index
+        if: steps.content-rev.outputs.sha != ''
+        uses: actions/cache@v4
+        with:
+          path: |
+            resources
+            public/search-index
+          key: mc-content-build-${{ steps.content-rev.outputs.sha }}-v1
       - name: Fetch study notes
         run: npm run ensure-resources
       - run: npm run lint
@@ -42,9 +58,9 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      RESOURCES_GIT_URL: ${{ secrets.RESOURCES_GIT_URL }}
+      RESOURCES_GIT_URL: https://github.com/MyConspect/mc-content.git
       RESOURCES_GIT_TOKEN: ${{ secrets.RESOURCES_GIT_TOKEN }}
-      RESOURCES_GIT_REF: ${{ secrets.RESOURCES_GIT_REF }}
+      RESOURCES_GIT_REF: main
     steps:
       - uses: actions/checkout@v4
       - name: Require Vercel secrets
@@ -66,6 +82,22 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Configure mc-content git access
+        uses: ./.github/actions/configure-mc-content-git
+        with:
+          deploy_key: ${{ secrets.MC_CONTENT_DEPLOY_KEY }}
+          git_token: ${{ secrets.RESOURCES_GIT_TOKEN }}
+      - name: Resolve mc-content revision
+        id: content-rev
+        run: bash scripts/resolve-content-revision.sh
+      - name: Cache mc-content and search index
+        if: steps.content-rev.outputs.sha != ''
+        uses: actions/cache@v4
+        with:
+          path: |
+            resources
+            public/search-index
+          key: mc-content-build-${{ steps.content-rev.outputs.sha }}-v1
       - name: Fetch study notes
         run: npm run ensure-resources
       - name: Install Vercel CLI
@@ -82,9 +114,9 @@ jobs:
     permissions:
       contents: read
     env:
-      RESOURCES_GIT_URL: ${{ secrets.RESOURCES_GIT_URL }}
+      RESOURCES_GIT_URL: https://github.com/MyConspect/mc-content.git
       RESOURCES_GIT_TOKEN: ${{ secrets.RESOURCES_GIT_TOKEN }}
-      RESOURCES_GIT_REF: ${{ secrets.RESOURCES_GIT_REF }}
+      RESOURCES_GIT_REF: main
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -92,6 +124,22 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Configure mc-content git access
+        uses: ./.github/actions/configure-mc-content-git
+        with:
+          deploy_key: ${{ secrets.MC_CONTENT_DEPLOY_KEY }}
+          git_token: ${{ secrets.RESOURCES_GIT_TOKEN }}
+      - name: Resolve mc-content revision
+        id: content-rev
+        run: bash scripts/resolve-content-revision.sh
+      - name: Cache mc-content and search index
+        if: steps.content-rev.outputs.sha != ''
+        uses: actions/cache@v4
+        with:
+          path: |
+            resources
+            public/search-index
+          key: mc-content-build-${{ steps.content-rev.outputs.sha }}-v1
       - name: Fetch study notes
         run: npm run ensure-resources
       - uses: cypress-io/github-action@v7.4.6

@@ -8,6 +8,27 @@ import { resourcesRoot } from "../lib/resourcesRoot";
 loadEnvConfig(process.cwd());
 
 const DEFAULT_RESOURCES_DIR = path.join(process.cwd(), "resources");
+const NOTES_REVISION_FILE = path.join(DEFAULT_RESOURCES_DIR, ".notes-revision");
+
+function readNotesRevision(): string | undefined {
+  try {
+    return fs.readFileSync(NOTES_REVISION_FILE, "utf8").trim();
+  } catch {
+    return undefined;
+  }
+}
+
+function writeNotesRevision(commit: string): void {
+  fs.mkdirSync(DEFAULT_RESOURCES_DIR, { recursive: true });
+  fs.writeFileSync(NOTES_REVISION_FILE, `${commit}\n`, "utf8");
+}
+
+function expectedNotesRevision(): string | undefined {
+  return (
+    process.env.CONTENT_REVISION?.trim() ||
+    process.env.RESOURCES_GIT_SHA?.trim()
+  );
+}
 
 function enDir(): string {
   return path.join(resourcesRoot(), "en");
@@ -21,6 +42,25 @@ function enHasCatalogMarkdown(): boolean {
     .some((name) => name.endsWith(".md") && name !== "0_me.md");
 }
 
+function parseGithubRepo(url: string): { owner: string; repo: string } | null {
+  if (url.startsWith("git@github.com:")) {
+    const slug = url.slice("git@github.com:".length).replace(/\.git$/, "");
+    const [owner, repo] = slug.split("/");
+    return owner && repo ? { owner, repo } : null;
+  }
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname
+      .replace(/^\//, "")
+      .replace(/\.git$/, "")
+      .split("/");
+    const [owner, repo] = parts;
+    return owner && repo ? { owner, repo } : null;
+  } catch {
+    return null;
+  }
+}
+
 function authenticatedCloneUrl(url: string, token: string | undefined): string {
   if (!token) return url;
   try {
@@ -32,6 +72,47 @@ function authenticatedCloneUrl(url: string, token: string | undefined): string {
   } catch {
     return url;
   }
+}
+
+function cloneNotesRepository(
+  url: string,
+  ref: string,
+  token: string | undefined,
+  useSsh: boolean,
+  destination: string,
+): void {
+  const slug = parseGithubRepo(url);
+  const ghEnv = {
+    ...process.env,
+    ...(token ? { GH_TOKEN: token, GITHUB_TOKEN: token } : {}),
+    GIT_TERMINAL_PROMPT: "0",
+  };
+
+  if (token && !useSsh && slug) {
+    execFileSync(
+      "gh",
+      [
+        "repo",
+        "clone",
+        `${slug.owner}/${slug.repo}`,
+        destination,
+        "--",
+        "-b",
+        ref,
+        "--depth",
+        "1",
+      ],
+      { stdio: "inherit", env: ghEnv },
+    );
+    return;
+  }
+
+  const cloneUrl = authenticatedCloneUrl(url, token);
+  execFileSync(
+    "git",
+    ["clone", "--depth", "1", "--branch", ref, cloneUrl, destination],
+    { stdio: "inherit", env: ghEnv },
+  );
 }
 
 function resolveCloneLayout(cloneRoot: string): string {
@@ -57,21 +138,18 @@ function fetchFromGit(): void {
 
   const ref = process.env.RESOURCES_GIT_REF?.trim() || "main";
   const token = process.env.RESOURCES_GIT_TOKEN?.trim();
-  const cloneUrl = authenticatedCloneUrl(url, token);
+  const useSsh = Boolean(process.env.GIT_SSH_COMMAND?.trim());
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "myconspect-resources-"));
 
   try {
-    execFileSync(
-      "git",
-      ["clone", "--depth", "1", "--branch", ref, cloneUrl, tmp],
-      { stdio: "inherit" },
-    );
+    cloneNotesRepository(url, ref, token, useSsh, tmp);
     const commit = execFileSync("git", ["-C", tmp, "rev-parse", "HEAD"], {
       encoding: "utf8",
     }).trim();
     const sourceRoot = resolveCloneLayout(tmp);
     fs.rmSync(DEFAULT_RESOURCES_DIR, { recursive: true, force: true });
     fs.cpSync(sourceRoot, DEFAULT_RESOURCES_DIR, { recursive: true });
+    writeNotesRevision(commit);
     console.log(
       `ensure-resources: fetched ref "${ref}" (${commit}) from ${url}`,
     );
@@ -96,6 +174,14 @@ function shouldFetchInCi(): boolean {
 
 function main(): void {
   if (shouldFetchInCi()) {
+    const expected = expectedNotesRevision();
+    const cached = readNotesRevision();
+    if (expected && cached === expected && enHasCatalogMarkdown()) {
+      console.log(
+        `ensure-resources: using cached mc-content at ${expected} (${resourcesRoot()})`,
+      );
+      return;
+    }
     fetchFromGit();
     return;
   }

@@ -11,7 +11,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HighlightedText, useSearchMode } from "@/components/search";
+import { SidebarHighlightedText, useSearchMode } from "@/components/search";
 import { HANDBOOK_NAV_ASIDE_ID, HANDBOOK_SIDEBAR_ID } from "@/constants";
 import { useSidebarAsideScroll } from "../hooks/useSidebarAsideScroll";
 import {
@@ -49,7 +49,6 @@ import {
 import { useHandbookLocation } from "../hooks/useHandbookLocation";
 import { useStackPathPins } from "../hooks/useMdUp";
 import { isActiveHref, isActiveTrack } from "../utils/location";
-import { SearchHitList } from "./SearchHitList";
 import { pinNavElement, pinNavForHref } from "../utils/sidebarPin";
 import {
   measureNavChromeInset,
@@ -64,6 +63,7 @@ import {
 import {
   SidebarFoldScopeProvider,
   SidebarNavProvider,
+  closeNavSoon,
   navPathPinned,
   trackHeaderClass,
   useSidebarChrome,
@@ -71,6 +71,7 @@ import {
   useScopedSidebarFold,
   useScopedTrackOpen,
 } from "../context/sidebarContext";
+import { SearchHitList } from "./SearchHitList";
 import { ClusterRow, SubjectRow, TopicRow } from "./sidebarRows";
 import { SidebarNavChrome } from "./SidebarNavChrome";
 import { foldRevision, useSidebarOpen } from "../hooks/useSidebarOpen";
@@ -417,7 +418,17 @@ const TrackGroup = memo(function TrackGroup({
 }) {
   const { isTrackOpen, toggleTrackId, ensureTrackOpen } = useScopedTrackOpen();
   const isLeafTrack = Boolean(group.leafTopic) && group.entries.length === 0;
-  const showLeafConcepts = isLeafTrack && !group.leafTopic?.hideSidebarConcepts;
+  const leafHasConceptGroups =
+    (group.leafTopic?.concepts ?? []).some((concept) =>
+      Boolean(concept.group),
+    ) ?? false;
+  const leafTopic = group.leafTopic;
+  const showLeafConcepts =
+    isLeafTrack &&
+    leafTopic !== undefined &&
+    (!leafTopic.hideSidebarConcepts ||
+      (leafTopic.nestedTopics?.length ?? 0) > 0 ||
+      leafHasConceptGroups);
   const hasSidebarChildren =
     group.entries.length > 0 || Boolean(group.hubTopic) || showLeafConcepts;
   const {
@@ -452,7 +463,7 @@ const TrackGroup = memo(function TrackGroup({
   }
 
   const title = (
-    <HighlightedText
+    <SidebarHighlightedText
       text={group.title}
       query={query}
       className="min-w-0 flex-1 truncate"
@@ -465,6 +476,38 @@ const TrackGroup = memo(function TrackGroup({
     rootSectionId === "interviews"
       ? groupNavigateHref(group, rootSectionId)
       : group.href;
+
+  const navigateTrackFromHeader = (event: { preventDefault: () => void }) => {
+    if (!hasSidebarChildren) {
+      onNavigate?.();
+    }
+    const onTrackHub =
+      committedPathname === navigateHref && window.location.hash === "";
+    if (onTrackHub) {
+      return false;
+    }
+    if (committedPathname === navigateHref && window.location.hash) {
+      event.preventDefault();
+      applySameDocumentHref(committedPathname, "", committedPathname);
+      queueHandbookHref(navigateHref);
+      closeNavSoon(onNavigate);
+      return true;
+    }
+    if (!onThisTrack) {
+      patchFold(group.id, {
+        topicHref: null,
+        subjectHref: null,
+        clusterKey: null,
+        sectionKey: null,
+      });
+    }
+    followHandbookHref(navigateHref, committedPathname, goToPath);
+    if (hasSidebarChildren) {
+      ensureTrackOpen(group.id);
+    }
+    closeNavSoon(onNavigate);
+    return true;
+  };
 
   const trackBody = (
     <>
@@ -481,6 +524,9 @@ const TrackGroup = memo(function TrackGroup({
               hold: false,
               scrollIntoView: false,
             });
+            if (navigateTrackFromHeader(event)) {
+              return;
+            }
             if (!searching) {
               toggleTrackId(group.id);
             }
@@ -500,27 +546,7 @@ const TrackGroup = memo(function TrackGroup({
           data-nav-path={pinPath ? "true" : undefined}
           onClick={(event) => {
             pinNavForHref(event.currentTarget, committedPathname, navigateHref);
-            if (!hasSidebarChildren) {
-              onNavigate?.();
-            }
-            if (committedPathname === navigateHref && window.location.hash) {
-              event.preventDefault();
-              applySameDocumentHref(committedPathname, "", committedPathname);
-              queueHandbookHref(navigateHref);
-              return;
-            }
-            if (!onThisTrack) {
-              patchFold(group.id, {
-                topicHref: null,
-                subjectHref: null,
-                clusterKey: null,
-                sectionKey: null,
-              });
-            }
-            followHandbookHref(navigateHref, committedPathname, goToPath);
-            if (hasSidebarChildren) {
-              ensureTrackOpen(group.id);
-            }
+            navigateTrackFromHeader(event);
           }}
           data-search-hit={
             isLeafTrack && first?.pathname === navigateHref && first.hash === ""
@@ -543,9 +569,6 @@ const TrackGroup = memo(function TrackGroup({
             />
           ) : (
             <>
-              {group.hubTopic ? (
-                <TopicRow trackId={group.id} topic={group.hubTopic} hideTitle />
-              ) : null}
               {showLeafConcepts && group.leafTopic ? (
                 <TopicRow
                   trackId={group.id}
@@ -561,6 +584,13 @@ const TrackGroup = memo(function TrackGroup({
                   />
                 ))
               )}
+              {group.hubTopic ? (
+                <TopicRow
+                  trackId={group.id}
+                  topic={group.hubTopic}
+                  hideTitle
+                />
+              ) : null}
             </>
           )}
         </ul>

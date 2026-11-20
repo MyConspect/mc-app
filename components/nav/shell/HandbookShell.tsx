@@ -18,7 +18,11 @@ import { useApplyPendingHash } from "../hooks/useApplyPendingHash";
 import { useEnrichedNavSections } from "../hooks/useEnrichedNavSections";
 import { useHandbookSearch } from "../hooks/useHandbookSearch";
 import { useHandbookShortcuts } from "../hooks/useHandbookShortcuts";
-import { useMobileNav } from "../hooks/useMobileNav";
+import {
+  isHandbookMobileViewport,
+  useHandbookMobileViewport,
+  useMobileNav,
+} from "../hooks/useMobileNav";
 import { useRememberLocation } from "../hooks/useRememberLocation";
 import { useResetMainScroll } from "../hooks/useResetMainScroll";
 import { dispatchSidebarCollapseAll } from "../hooks/useSidebarOpen";
@@ -76,12 +80,15 @@ export function HandbookShell({
     [sections, pathname],
   );
   const { navOpen, closeNav, toggleNav, openNav } = useMobileNav();
+  const mobileViewport = useHandbookMobileViewport();
   const { collapsed, expandSidebar, toggleSidebar } = useSidebarCollapsed();
   const [searchSheetDismissed, setSearchSheetDismissed] = useState(true);
   const revealSearchNav = useCallback(() => {
     expandSidebar();
     setSearchSheetDismissed(false);
-    openNav();
+    if (isHandbookMobileViewport()) {
+      openNav();
+    }
   }, [expandSidebar, openNav]);
   const dismissNav = useCallback(() => {
     closeNav();
@@ -284,10 +291,10 @@ export function HandbookShell({
             </aside>
             <div
               id={HANDBOOK_MAIN_ID}
-              inert={navOpen ? true : undefined}
+              inert={navOpen && mobileViewport ? true : undefined}
               aria-busy={routePending || undefined}
               className={
-                navOpen
+                navOpen && mobileViewport
                   ? "relative z-0 min-w-0 flex-1 max-md:pointer-events-none"
                   : "relative min-w-0 flex-1"
               }

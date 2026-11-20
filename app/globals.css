@@ -180,6 +180,14 @@ body {
   scroll-margin-top: var(--handbook-sticky-inset, 0px);
 }
 
+/* Concept detail: title/actions stay fixed; only .concept-detail-body-scroll moves. */
+article.concept-detail-article > .concept-detail-title {
+  flex-shrink: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
 .handbook-breadcrumb-bar {
   box-sizing: border-box;
 }
@@ -195,54 +203,493 @@ body {
   overflow-anchor: none;
 }
 
-/* Concept detail (mobile): nested scroll; desktop keeps #handbook-main as scroller. */
-@media (max-width: 639px) {
-  #handbook-main:has(article.concept-detail-article) {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden !important;
-  }
+/* Search marks: pale fill, body text color (not link hover gold). */
+.search-content-hit {
+  border-radius: 0.125rem;
+  padding: 0 0.06em;
+  background-color: #fffd9b;
+  color: #3f3f46;
+  font-weight: inherit;
+}
 
+.dark .search-content-hit {
+  background-color: #facc15;
+  color: #18181b;
+}
+
+.concept-index-link:hover .search-content-hit,
+.concept-index-link:focus-visible .search-content-hit,
+.concept-index-heading-link:hover .search-content-hit,
+.concept-index-heading-link:focus-visible .search-content-hit,
+.handbook-browse-list-link:hover .search-content-hit,
+.handbook-browse-list-link:focus-visible .search-content-hit {
+  color: #eab308;
+}
+
+.dark .concept-index-link:hover .search-content-hit,
+.dark .concept-index-link:focus-visible .search-content-hit,
+.dark .concept-index-heading-link:hover .search-content-hit,
+.dark .concept-index-heading-link:focus-visible .search-content-hit,
+.dark .handbook-browse-list-link:hover .search-content-hit,
+.dark .handbook-browse-list-link:focus-visible .search-content-hit {
+  color: #09090b;
+}
+
+/* Long section lists: second lane only when the section is wide enough. */
+.concept-index-section-list-split {
+  column-count: var(--concept-index-list-split-columns, auto);
+  column-width: var(--concept-index-list-split-col-width);
+  column-gap: 1.25rem;
+}
+
+.concept-index-section-list-split > li {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+
+/* Subject / track index: main fills the pane; index body ≥ half of main. */
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  ) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 0%;
+  overflow: hidden !important;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  > .handbook-breadcrumb-bar {
+  flex-shrink: 0;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  > main.handbook-subject-main,
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  > main.handbook-topic-main {
+  display: flex !important;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 0;
+  min-width: 0;
+  flex: 1 1 0%;
+  overflow: hidden;
+  align-self: stretch;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body {
+  display: flex;
+  box-sizing: border-box;
+  flex: 1 1 0%;
+  flex-direction: column;
+  align-self: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Index lists grow naturally unless the pane-height multicol box scrolls in place. */
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body
+  > .concept-list-index,
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body
+  .concept-index-newspaper-columns:not(.concept-index-newspaper-pane-scroll) {
+  flex: 0 0 auto;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  align-content: start;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body
+  .concept-index-newspaper-pane-scroll.concept-index-newspaper-columns {
+  flex: 1 1 0%;
+  align-self: stretch;
+  min-height: 0;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body:has(.concept-index-newspaper-pane-scroll) {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: hidden;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body
+  > .concept-index-cluster-section.flex-1 {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .concept-index-cluster-section.flex-1
+  > .concept-index-newspaper-pane-scroll.concept-index-newspaper-columns {
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Concept-index columns: content width clamped (do not pair with Tailwind grid-cols-*). */
+.concept-list-index {
+  --concept-index-col-min: 300px;
+  --concept-index-col-max: 300px;
+  --concept-index-list-split-col-width: 300px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* auto-fit + equal 1fr tracks after min width — fills width with multiple columns. */
+.concept-list-index.concept-index-sections-grid {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(var(--concept-index-col-min), 100%), 1fr)
+  );
+}
+
+/* Subject / track index: fill column 1 top-to-bottom, then column 2 (pane height). */
+.concept-list-index.concept-index-newspaper-columns {
+  box-sizing: border-box;
+  column-width: auto;
+  column-fill: auto;
+  overflow-x: clip;
+}
+
+/* Focused cluster pane pack: pane-fill when it fits; grow + scroll on index body when tall. */
+.concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack {
+  column-fill: auto;
+  overflow-x: clip;
+}
+
+.concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll:not(
+    .concept-index-newspaper-pane-scroll
+  ) {
+  column-count: auto;
+  column-width: var(--concept-index-col-min);
+  column-fill: auto;
+  box-sizing: border-box;
+  align-self: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: visible;
+  overflow-x: clip;
+}
+
+.concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll.concept-index-newspaper-pane-scroll {
+  column-count: auto;
+  column-width: var(--concept-index-col-min);
+  column-fill: auto;
+  box-sizing: border-box;
+  align-self: stretch;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-x: clip;
+  overflow-y: auto;
+}
+
+/* Tall indexes: scroll viewport (outer shell; multicol is a child). */
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .concept-index-newspaper-pane-scroll {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 0%;
+  align-self: stretch;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Legacy: scroll + multicol on one node. */
+.concept-index-newspaper-pane-scroll.concept-index-newspaper-columns {
+  display: block !important;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  flex: 1 1 0%;
+  align-self: stretch;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.concept-index-newspaper-pane-scroll .concept-index-cluster-section {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.concept-index-newspaper-pane-scroll
+  > .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll {
+  display: block;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  min-height: 0;
+  column-width: auto;
+  /* Tall indexes: grow vertically in N tracks; pane-scroll handles overflow. */
+  column-fill: balance;
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+/* Laptop widths (<1320): two newspaper tracks when the main pane is wide enough. */
+@media (min-width: 640px) and (max-width: 1319.98px) {
+  #handbook-main:has(.handbook-subject-index-body):not(
+      :has(article.concept-detail-article)
+    )
+    .handbook-subject-index-body
+    .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack,
+  #handbook-main:has(.handbook-subject-index-body):not(
+      :has(article.concept-detail-article)
+    )
+    .handbook-subject-index-body
+    .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll,
+  #handbook-main:has(.handbook-subject-index-body):not(
+      :has(article.concept-detail-article)
+    )
+    .concept-index-newspaper-pane-scroll
+    > .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll {
+    column-count: 2 !important;
+    column-width: var(--concept-index-col-min) !important;
+    column-fill: balance;
+  }
+}
+
+/* Pane pack: fill column 1 top-to-bottom; long clusters may continue in the next column. */
+.concept-index-newspaper-pane-pack .concept-index-cluster-section {
+  break-inside: auto;
+  -webkit-column-break-inside: auto;
+}
+
+.concept-index-newspaper-pane-pack .concept-index-topic-group-block {
+  break-inside: auto;
+  -webkit-column-break-inside: auto;
+}
+
+.concept-index-newspaper-pane-pack .concept-index-cluster-section h3,
+.concept-index-newspaper-pane-pack .concept-index-topic-group-block h3 {
+  break-inside: avoid-column;
+  -webkit-column-break-inside: avoid;
+  break-after: avoid-column;
+}
+
+.concept-index-newspaper-pane-pack .concept-index-link {
+  break-inside: avoid-column;
+  -webkit-column-break-inside: avoid;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body
+  > .handbook-subject-index-grid,
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body
+  .handbook-subject-index-grid {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.concept-index-newspaper-item {
+  display: contents;
+}
+
+.concept-list-index .concept-index-cluster-section {
+  margin-bottom: 2rem;
+}
+
+.concept-list-index .concept-index-cluster-section:last-child {
+  margin-bottom: 0;
+}
+
+.concept-index-newspaper-columns:not(.concept-index-newspaper-pane-pack)
+  .concept-index-cluster-section {
+  break-inside: avoid-column;
+  -webkit-column-break-inside: avoid;
+  margin-bottom: 2rem;
+}
+
+.concept-index-newspaper-columns.concept-index-newspaper-pane-pack
+  .concept-index-cluster-section {
+  margin-bottom: 2rem;
+}
+
+.concept-index-newspaper-columns .concept-index-newspaper-item > h2,
+.concept-index-newspaper-columns .concept-index-cluster-section > h2,
+.handbook-subject-index-grid .concept-index-newspaper-item > h2,
+.handbook-subject-index-grid .concept-index-cluster-section > h2 {
+  break-inside: avoid-column;
+  break-after: avoid-column;
+}
+
+.concept-index-newspaper-columns .concept-index-newspaper-item > h2,
+.handbook-subject-index-grid .concept-index-newspaper-item > h2 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.concept-index-newspaper-columns .concept-index-cluster-section > h2,
+.handbook-subject-index-grid .concept-index-cluster-section > h2,
+.concept-list-index .concept-index-cluster-section > h2,
+.handbook-subject-index-body .concept-index-cluster-section > h1 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.concept-index-newspaper-columns .concept-index-cluster-section > h3 {
+  break-inside: avoid-column;
+  -webkit-column-break-inside: avoid;
+  margin-top: 0;
+}
+
+/* Subject hubs: outer newspaper columns only. */
+.concept-index-newspaper-columns .concept-index-section-list-split {
+  columns: 1 !important;
+  column-width: auto;
+}
+
+.concept-index-newspaper-columns .concept-index-cluster-section:last-child {
+  margin-bottom: 0;
+}
+
+.concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack
+  .concept-index-topic-group-block {
+  break-inside: auto;
+  -webkit-column-break-inside: auto;
+}
+
+.concept-list-index .concept-index-link {
+  box-sizing: border-box;
+  width: var(--concept-index-col-min);
+  min-width: var(--concept-index-col-min);
+  max-width: var(--concept-index-col-min);
+}
+
+.concept-list-index.handbook-subject-index-grid {
+  grid-template-columns: repeat(
+    1,
+    minmax(
+      min(var(--concept-index-col-min), 100%),
+      min(var(--concept-index-col-max), max-content)
+    )
+  );
+}
+
+/* Concept detail: nested scroll in the body pane (all viewports; beats inline overflow on #handbook-main). */
+#handbook-main:has(article.concept-detail-article) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+
+#handbook-main:has(article.concept-detail-article) > main {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#handbook-main:has(article.concept-detail-article)
+  > main
+  .handbook-intro-concept-pane,
+#handbook-main:has(article.concept-detail-article) > main.handbook-topic-main,
+#handbook-main:has(article.concept-detail-article)
+  > main.handbook-subject-main {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+#handbook-main:has(article.concept-detail-article)
+  > main
+  .handbook-intro-concept-pane
+  > article.concept-detail-article,
+#handbook-main:has(article.concept-detail-article)
+  > main.handbook-topic-main
+  > article.concept-detail-article,
+#handbook-main:has(article.concept-detail-article)
+  > main.handbook-subject-main
+  > article.concept-detail-article,
+#handbook-main:has(article.concept-detail-article)
+  > main.handbook-subject-main
+  .handbook-intro-concept-pane
+  > article.concept-detail-article {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+article.concept-detail-article .concept-detail-body-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 639px) {
   #handbook-main:has(article.concept-detail-article) > main {
-    display: flex;
-    min-height: 0;
-    flex: 1 1 auto;
-    flex-direction: column;
-    overflow: hidden;
     padding-top: 0;
     padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
-  }
-
-  #handbook-main:has(article.concept-detail-article)
-    > main
-    .handbook-intro-concept-pane,
-  #handbook-main:has(article.concept-detail-article) > main.handbook-topic-main,
-  #handbook-main:has(article.concept-detail-article)
-    > main.handbook-subject-main {
-    min-height: 0;
-    flex: 1 1 auto;
-  }
-
-  #handbook-main:has(article.concept-detail-article)
-    > main
-    .handbook-intro-concept-pane
-    > article.concept-detail-article,
-  #handbook-main:has(article.concept-detail-article)
-    > main.handbook-topic-main
-    > article.concept-detail-article {
-    min-height: 0;
-    flex: 1 1 auto;
-  }
-
-  article.concept-detail-article .concept-detail-body-scroll {
-    overflow-y: auto;
-    overscroll-behavior: contain;
   }
 }
 
 @media (min-width: 640px) {
-  #handbook-main:has(article.concept-detail-article) > main {
+  #handbook-main:has(article.concept-detail-article) > main.handbook-topic-main,
+  #handbook-main:has(article.concept-detail-article)
+    > main.handbook-subject-main {
     padding-top: 1.25rem;
+    padding-bottom: 1rem;
   }
 }
 
@@ -256,8 +703,8 @@ article.concept-detail-article .concept-detail-title--under-toolbar {
 }
 
 article.concept-detail-article .concept-detail-title--solo {
-  padding-top: 0.5rem;
-  padding-bottom: 0;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
 }
 
 article.concept-detail-article .concept-detail-panel {
@@ -331,7 +778,8 @@ article.concept-detail-article
 
 @media (min-width: 640px) {
   article.concept-detail-article .concept-detail-title--solo {
-    padding-top: 0.625rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
   }
 }
 
@@ -497,13 +945,10 @@ html[data-concept-hash] nav.concept-list {
   display: none;
 }
 
-html[data-concept-depth="quick"] .concept-depth-detailed,
-article[data-concept-depth="quick"] .concept-depth-detailed {
-  display: none !important;
-}
-
-html[data-concept-depth="quick"] .concept-part--detailed-only,
-article[data-concept-depth="quick"] .concept-part--detailed-only {
+html:not([data-concept-depth="detailed"]) .concept-depth-detailed,
+article:not([data-concept-depth="detailed"]) .concept-depth-detailed,
+html:not([data-concept-depth="detailed"]) .concept-part--detailed-only,
+article:not([data-concept-depth="detailed"]) .concept-part--detailed-only {
   display: none !important;
 }
 
@@ -755,6 +1200,89 @@ article[data-concept-depth="detailed"] .concept-depth-quick {
 
 .concept-slot__body li > p {
   margin: 0;
+}
+
+/* Detailed numbered sections: cards instead of a nested 1.1.1. wall */
+.concept-depth-detailed .slot-detailed > .concept-slot__body > ol {
+  list-style: none;
+  padding: 0;
+  margin: 0.15rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  counter-reset: detailed-section;
+}
+
+.concept-depth-detailed .slot-detailed > .concept-slot__body > ol > li {
+  counter-increment: detailed-section;
+  margin: 0;
+  padding: 0.95rem 1.05rem 1.05rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: color-mix(
+    in srgb,
+    var(--slot-accent-detailed) 9%,
+    var(--background)
+  );
+}
+
+.concept-depth-detailed
+  .slot-detailed
+  > .concept-slot__body
+  > ol
+  > li
+  > p:first-child {
+  display: block;
+  margin: 0 0 0.55rem;
+  font-size: 0.98rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+}
+
+.concept-depth-detailed
+  .slot-detailed
+  > .concept-slot__body
+  > ol
+  > li
+  > p:first-child::before {
+  content: counter(detailed-section) ". ";
+  color: var(--slot-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.concept-depth-detailed
+  .slot-detailed
+  > .concept-slot__body
+  > ol
+  > li
+  > p:not(:first-child),
+.concept-depth-detailed .slot-detailed > .concept-slot__body > ol > li > ul,
+.concept-depth-detailed .slot-detailed > .concept-slot__body > ol > li > ol,
+.concept-depth-detailed
+  .slot-detailed
+  > .concept-slot__body
+  > ol
+  > li
+  > .table-scroll,
+.concept-depth-detailed .slot-detailed > .concept-slot__body > ol > li > pre,
+.concept-depth-detailed
+  .slot-detailed
+  > .concept-slot__body
+  > ol
+  > li
+  > .md-code {
+  margin-top: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.concept-depth-detailed .slot-detailed > .concept-slot__body > ol > li > ul,
+.concept-depth-detailed .slot-detailed > .concept-slot__body > ol > li > ol {
+  padding-left: 1.2rem;
+}
+
+.concept-depth-detailed .slot-detailed > .concept-slot__body > ol > li > ol {
+  list-style-type: lower-alpha;
 }
 
 .slot-intro .concept-slot__body h2,

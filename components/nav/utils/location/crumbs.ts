@@ -1,4 +1,13 @@
 import {
+  getTopic,
+  getTrack,
+  isTrackId,
+  topicHref,
+  trackHref,
+} from "@/lib/catalog";
+import { catalogBlurb } from "@/lib/i18n/catalog";
+import { withLocale } from "@/lib/i18n/paths";
+import {
   isTypesHubSectionSlug,
   typesHubSectionGroup,
   TYPES_HUB_SLUG,
@@ -10,23 +19,32 @@ import {
 import {
   INSTRUCTIONS_HREF,
   type Crumb,
-  type NavConcept,
   type NavCluster,
   type NavGroup,
   type NavSubject,
   type NavTopic,
 } from "@/lib/nav";
+import { findNavClusterInSubject } from "@/lib/nav/findNavCluster";
 import { navSubjectClusters } from "@/lib/nav/subjectClusters";
-import { resolveConceptId } from "@/lib/nav/conceptHash";
+import { navTopicTrailAtPath } from "@/lib/nav/topicTree";
 import { hashIdFrom } from "@/lib/nav/navUtils";
-import { conceptGroupSectionDomId } from "@/lib/nav/conceptGroupSection";
+import {
+  conceptGroupSectionDomId,
+  isConceptGroupSectionId,
+} from "@/lib/nav/conceptGroupSection";
 import {
   homeHref,
   localeFromPathname,
   stripLocalePrefix,
 } from "@/lib/i18n/paths";
 import { isActiveTrack } from "./active";
-import { clusterTrailCrumbs } from "./shared";
+import {
+  clusterForConceptInSubject,
+  clusterTrailCrumbs,
+  conceptById,
+  isTopicAliasCluster,
+  subjectHubClusterCrumbs,
+} from "./shared";
 
 export function crumbsForPath(
   groups: readonly NavGroup[],
@@ -93,7 +111,11 @@ export function crumbsForPath(
                 )
               : undefined;
             if (cluster && pathname === entry.subject.href) {
-              const clusterCrumbs = clusterTrailCrumbs(cluster, entry.subject);
+              const clusterCrumbs = subjectHubClusterCrumbs(
+                cluster,
+                entry.subject,
+                pathname,
+              );
               if (clusterCrumbs.length > 0) {
                 return [
                   home,
@@ -135,13 +157,43 @@ export function crumbsForPath(
         }
         case "subject": {
           if (pathname === entry.subject.href) {
-            const cluster = hashId
-              ? navSubjectClusters(entry.subject).find(
-                  (item) => item.id === hashId,
-                )
+            const clusterHit = hashId
+              ? findNavClusterInSubject(entry.subject, hashId)
               : undefined;
-            if (cluster) {
-              const clusterCrumbs = clusterTrailCrumbs(cluster, entry.subject);
+            if (clusterHit && isConceptGroupSectionId(hashId)) {
+              const clusterCrumbs = subjectHubClusterCrumbs(
+                clusterHit.cluster,
+                entry.subject,
+                pathname,
+              );
+              const parentCrumbs = clusterHit.parent
+                ? subjectHubClusterCrumbs(
+                    clusterHit.parent,
+                    entry.subject,
+                    pathname,
+                  )
+                : [];
+              if (clusterCrumbs.length > 0) {
+                return [
+                  home,
+                  { label: group.title, href: group.href },
+                  { label: entry.subject.title, href: entry.subject.href },
+                  ...parentCrumbs,
+                  ...clusterCrumbs,
+                ];
+              }
+            }
+            if (
+              clusterHit &&
+              !isConceptGroupSectionId(hashId) &&
+              clusterHit.cluster.id === hashId &&
+              !isTopicAliasCluster(clusterHit.cluster)
+            ) {
+              const clusterCrumbs = subjectHubClusterCrumbs(
+                clusterHit.cluster,
+                entry.subject,
+                pathname,
+              );
               if (clusterCrumbs.length > 0) {
                 return [
                   home,
@@ -151,10 +203,10 @@ export function crumbsForPath(
                 ];
               }
             }
-            const conceptTopic = topicForConceptInSubject(
+            const conceptTopic = clusterForConceptInSubject(
               entry.subject,
               hashId,
-            );
+            )?.topic;
             if (conceptTopic) {
               return withConcept(
                 home,
@@ -173,43 +225,51 @@ export function crumbsForPath(
             ];
           }
           for (const cluster of navSubjectClusters(entry.subject)) {
-            const topic = cluster.topics.find((item) => item.href === pathname);
-            if (!topic) {
-              continue;
+            for (const root of cluster.topics) {
+              const trail = navTopicTrailAtPath(root, pathname);
+              if (!trail?.length) {
+                continue;
+              }
+              const topic = trail[trail.length - 1]!;
+              const ancestors = trail.slice(0, -1);
+              const typesHub = findTypesHubTopic(entry.subject);
+              const typesTrail = typesHubSectionTrail(
+                topic,
+                typesHub,
+                entry.subject,
+                group,
+                cluster,
+              );
+              if (typesTrail) {
+                return withConcept(home, typesTrail, topic, hashId);
+              }
+              const utilityHub = findUtilityTypesHubTopic(entry.subject);
+              const utilityTrail = utilityTypesHubSectionTrail(
+                topic,
+                utilityHub,
+                entry.subject,
+                group,
+                cluster,
+              );
+              if (utilityTrail) {
+                return withConcept(home, utilityTrail, topic, hashId);
+              }
+              return withConcept(
+                home,
+                [
+                  { label: group.title, href: group.href },
+                  { label: entry.subject.title, href: entry.subject.href },
+                  ...clusterTrailCrumbs(cluster, entry.subject),
+                  ...ancestors.map((ancestor) => ({
+                    label: ancestor.title,
+                    href: ancestor.href,
+                  })),
+                  { label: topic.title, href: topic.href },
+                ],
+                topic,
+                hashId,
+              );
             }
-            const typesHub = findTypesHubTopic(entry.subject);
-            const typesTrail = typesHubSectionTrail(
-              topic,
-              typesHub,
-              entry.subject,
-              group,
-              cluster,
-            );
-            if (typesTrail) {
-              return withConcept(home, typesTrail, topic, hashId);
-            }
-            const utilityHub = findUtilityTypesHubTopic(entry.subject);
-            const utilityTrail = utilityTypesHubSectionTrail(
-              topic,
-              utilityHub,
-              entry.subject,
-              group,
-              cluster,
-            );
-            if (utilityTrail) {
-              return withConcept(home, utilityTrail, topic, hashId);
-            }
-            return withConcept(
-              home,
-              [
-                { label: group.title, href: group.href },
-                { label: entry.subject.title, href: entry.subject.href },
-                ...clusterTrailCrumbs(cluster, entry.subject),
-                { label: topic.title, href: topic.href },
-              ],
-              topic,
-              hashId,
-            );
           }
           break;
         }
@@ -228,22 +288,29 @@ export function crumbsForPath(
             hubTitle = group.title;
             break;
           }
-          const topic = entry.cluster.topics.find(
-            (item) => item.href === pathname,
-          );
-          if (!topic) {
-            break;
+          for (const root of entry.cluster.topics) {
+            const trail = navTopicTrailAtPath(root, pathname);
+            if (!trail?.length) {
+              continue;
+            }
+            const topic = trail[trail.length - 1]!;
+            const ancestors = trail.slice(0, -1);
+            return withConcept(
+              home,
+              [
+                { label: group.title, href: group.href },
+                ...clusterTrailCrumbs(entry.cluster),
+                ...ancestors.map((ancestor) => ({
+                  label: ancestor.title,
+                  href: ancestor.href,
+                })),
+                { label: topic.title, href: topic.href },
+              ],
+              topic,
+              hashId,
+            );
           }
-          return withConcept(
-            home,
-            [
-              { label: group.title, href: group.href },
-              ...clusterTrailCrumbs(entry.cluster),
-              { label: topic.title, href: topic.href },
-            ],
-            topic,
-            hashId,
-          );
+          break;
         }
         default: {
           const _never: never = entry;
@@ -253,6 +320,27 @@ export function crumbsForPath(
     }
     if (hubTitle) {
       return [home, { label: hubTitle }];
+    }
+  }
+
+  const segments = path.slice(1).split("/").filter(Boolean);
+  const trackSlug = segments[0];
+  const topicSlug = segments[1];
+  if (trackSlug && topicSlug && isTrackId(trackSlug)) {
+    const topic = getTopic(trackSlug, topicSlug);
+    const track = getTrack(trackSlug);
+    if (topic && track) {
+      return [
+        home,
+        {
+          label: catalogBlurb(locale, track.title),
+          href: withLocale(locale, trackHref(trackSlug)),
+        },
+        {
+          label: catalogBlurb(locale, topic.title),
+          href: withLocale(locale, topicHref(topic)),
+        },
+      ];
     }
   }
 
@@ -355,34 +443,4 @@ function withConcept(
     return crumbs;
   }
   return [...crumbs.slice(0, -1), { label: last.label }];
-}
-
-function conceptById(
-  concepts: readonly NavConcept[],
-  id: string,
-): NavConcept | undefined {
-  if (!id) {
-    return undefined;
-  }
-  return (
-    concepts.find((concept) => concept.id === id) ??
-    concepts.find((concept) => concept.id === resolveConceptId(id, concepts))
-  );
-}
-
-function topicForConceptInSubject(
-  subject: NavSubject,
-  hashId: string,
-): NavTopic | undefined {
-  if (!hashId) {
-    return undefined;
-  }
-  for (const cluster of navSubjectClusters(subject)) {
-    for (const topic of cluster.topics) {
-      if (conceptById(topic.concepts, hashId)) {
-        return topic;
-      }
-    }
-  }
-  return undefined;
 }

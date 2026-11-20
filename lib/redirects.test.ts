@@ -30,10 +30,19 @@ test("legacy redirects are registered before the track catch-alls", () => {
   assert.equal(
     redirects.find((redirect) => redirect.source === "/other/system-design")
       ?.destination,
-    "/en/system-design",
+      "/en/computer-science/system-design",
   );
   assert.equal(
     redirects.find((redirect) => redirect.source === "/behavior")?.destination,
     undefined,
+  );
+  assert.equal(
+    redirects.find((redirect) => redirect.source === "/test/test-ts-freshers")
+      ?.destination,
+    "/en/frontend/ts-interview#gfe-test-typescript",
+  );
+  assert.equal(
+    redirects.find((redirect) => redirect.source === "/test/:path*")?.destination,
+    "/en/frontend",
   );
 });

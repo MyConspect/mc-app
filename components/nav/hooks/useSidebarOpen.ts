@@ -25,6 +25,7 @@ import { handbookLocation } from "../utils/hash";
 import {
   isActiveTrack,
   isHomePath,
+  isSubjectForceClosed,
   locationForPath,
   type NavLocation,
 } from "../utils/location";
@@ -77,8 +78,15 @@ function foldFromSync(
     topicHref = location.topicHref;
   }
 
+  const subjectHref =
+    previous?.subjectHref &&
+    location.subjectHref &&
+    isSubjectForceClosed(location.subjectHref, previous.subjectHref)
+      ? previous.subjectHref
+      : location.subjectHref;
+
   return {
-    subjectHref: location.subjectHref,
+    subjectHref,
     clusterKey,
     sectionKey,
     topicHref,

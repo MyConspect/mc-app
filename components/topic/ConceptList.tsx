@@ -2,6 +2,7 @@
 
 import {
   memo,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -17,16 +18,16 @@ import {
   useSearchQuery,
   useSearchQueryEdited,
 } from "@/components/search";
-import {
-  BookmarkButton,
-  useIsBookmarked,
-} from "@/components/nav/ui/BookmarkButton";
 import { highlightQueryInHtml } from "@/components/search/utils/highlightQueryInHtml";
 import { setHashIfChanged, setHashOnPath } from "@/components/nav/utils/hash";
 import { nextConceptHash, resolveConceptId } from "@/lib/nav/conceptHash";
-import { hashIdFrom, sameTitle } from "@/lib/nav/navUtils";
-import { CopyConceptLinkButton } from "./CopyConceptLinkButton";
+import {
+  conceptGroupSectionDomId,
+  findConceptGroupBySectionId,
+} from "@/lib/nav/conceptGroupSection";
+import { hashIdFrom } from "@/lib/nav/navUtils";
 import { resetHandbookReadingScroll } from "@/components/topic/utils/conceptScroll";
+import { CopyConceptLinkButton } from "./CopyConceptLinkButton";
 import { chromeFor } from "@/lib/i18n/chrome";
 import { localeFromPathname } from "@/lib/i18n/paths";
 import type { ChromeCopy } from "@/lib/nav";
@@ -43,67 +44,49 @@ import type { ConceptDepthPreference } from "@/components/nav/utils/uiStorage";
 import { useCodeCopyButtons } from "./hooks/useCodeCopyButtons";
 import { useConceptKeyboardNav } from "./hooks/useConceptKeyboardNav";
 import { useHandbookTopicNav } from "./hooks/useHandbookTopicNav";
-
-type ConceptGroup = {
-  readonly key: string;
-  readonly label: string | null;
-  readonly concepts: Concept[];
-};
-
-function groupLabel(concept: Concept, chrome: ChromeCopy): string | null {
-  if (concept.group) {
-    return concept.group;
-  }
-  if (concept.interviewSection === "tasks") {
-    return chrome.interviewTasks;
-  }
-  if (concept.interviewSection === "questions") {
-    return chrome.interviewQuestions;
-  }
-  return null;
-}
-
-function groupConcepts(
-  concepts: readonly Concept[],
-  groupInterviewSections: boolean,
-  chrome: ChromeCopy,
-): ConceptGroup[] {
-  if (!groupInterviewSections) {
-    return [{ key: "default", label: null, concepts: [...concepts] }];
-  }
-
-  const groups: ConceptGroup[] = [];
-  let current: ConceptGroup | null = null;
-  let currentSectionKey: string | null = null;
-
-  for (const concept of concepts) {
-    const label = groupLabel(concept, chrome);
-    const sectionKey = concept.group
-      ? `topic:${concept.group}`
-      : `section:${concept.interviewSection ?? "default"}`;
-    if (!current || currentSectionKey !== sectionKey) {
-      currentSectionKey = sectionKey;
-      current = {
-        key: `${sectionKey}:${groups.length}`,
-        label,
-        concepts: [],
-      };
-      groups.push(current);
-    }
-    current.concepts.push(concept);
-  }
-
-  return groups;
-}
+import { ConceptIndexList as ConceptIndexNavList } from "./ConceptGroupIndexSection";
+import { ConceptIndexPaneLayout } from "./ConceptIndexPaneLayout";
+import { buildConceptIndexBalancedEntries } from "./buildConceptIndexBalancedEntries";
+import {
+  conceptsForIndexSection,
+  groupConcepts,
+  interviewGroupDisplayTitle,
+} from "./conceptIndexGroups";
+import {
+  CONCEPT_INDEX_DOT_INTERACTIVE,
+  CONCEPT_INDEX_LINK,
+  CONCEPT_INDEX_HEADING_TO_LIST,
+  CONCEPT_INDEX_ROW,
+  CONCEPT_INDEX_CLUSTER_SECTION,
+  HANDBOOK_INDEX_PANE_LIST_SLOT,
+  HANDBOOK_INDEX_PANE_SECTION,
+} from "./conceptIndexStyles";
+import { conceptIndexLayoutModeForEntries } from "@/lib/catalog/conceptIndexPaneLayoutMode";
+import { TopicPageTitle } from "./TopicPageTitle";
 
 export function ConceptList({
   concepts,
   emptyMessage,
   groupInterviewSections = false,
+  embedInParentGrid = false,
+  topicTitle,
+  interviewAccordionIndex = false,
+  usePaneColumnFlow = true,
+  indexHeading,
 }: {
   concepts: readonly Concept[];
   emptyMessage: string;
   groupInterviewSections?: boolean;
+  /** Section `<section>` nodes only — parent supplies {@link CONCEPT_INDEX_SECTIONS_GRID}. */
+  embedInParentGrid?: boolean;
+  /** Catalog topic title — prefixes interview section rows when the heading omits it. */
+  topicTitle?: string;
+  /** Interview Q&A: section list + hash drilldown — not for theory topics with `group`. */
+  interviewAccordionIndex?: boolean;
+  /** Newspaper columns when multiple sections; set false for a vertical stack only. */
+  usePaneColumnFlow?: boolean;
+  /** Leaf topic index H1 — omitted on concept detail (`#hash`). */
+  indexHeading?: string;
 }) {
   const query = useSearchQuery();
   const mode = useSearchMode();
@@ -113,7 +96,7 @@ export function ConceptList({
     () => chromeFor(localeFromPathname(pathname)),
     [pathname],
   );
-  const { activeConceptId } = useHandbookLocation();
+  const { activeConceptId, location } = useHandbookLocation();
   const [bootConceptId, setBootConceptId] = useState("");
   const flat = concepts.length === 1;
   const resolvedConceptId = useMemo(() => {
@@ -124,7 +107,8 @@ export function ConceptList({
     () => concepts.find((concept) => concept.id === resolvedConceptId) ?? null,
     [resolvedConceptId, concepts],
   );
-  const accordionIndex = groupInterviewSections && !flat;
+  const accordionIndex = interviewAccordionIndex && !flat;
+  const locationHashId = hashIdFrom(location.hash);
   useLayoutEffect(() => {
     function syncConceptHashFromUrl() {
       const raw = hashIdFrom(window.location.hash);
@@ -152,6 +136,45 @@ export function ConceptList({
     () => groupConcepts(concepts, groupInterviewSections, chrome),
     [chrome, concepts, groupInterviewSections],
   );
+  const interviewAccordionDrilldown =
+    accordionIndex && query.trim().length === 0;
+  const sectionRowTitle = useCallback(
+    (label: string) =>
+      topicTitle ? interviewGroupDisplayTitle(label, topicTitle) : label,
+    [topicTitle],
+  );
+  const activeInterviewGroup = useMemo(() => {
+    if (!interviewAccordionDrilldown || activeConcept) {
+      return null;
+    }
+    return findConceptGroupBySectionId(groups, locationHashId);
+  }, [activeConcept, groups, interviewAccordionDrilldown, locationHashId]);
+  const activeTheoryGroup = useMemo(() => {
+    if (
+      activeConcept ||
+      interviewAccordionDrilldown ||
+      !groupInterviewSections
+    ) {
+      return null;
+    }
+    return findConceptGroupBySectionId(groups, locationHashId);
+  }, [
+    activeConcept,
+    groupInterviewSections,
+    groups,
+    interviewAccordionDrilldown,
+    locationHashId,
+  ]);
+  const balancedEntries = useMemo(
+    () =>
+      buildConceptIndexBalancedEntries({
+        concepts,
+        groupInterviewSections,
+        chrome,
+        pathname,
+      }),
+    [concepts, groupInterviewSections, chrome, pathname],
+  );
   const notesQuery = mode === "notes" ? query : "";
   const arrivalRef = useRef<{ path: string; hash: string } | null>(null);
 
@@ -176,10 +199,16 @@ export function ConceptList({
   }, [concepts, mode, pathname, query, queryEdited]);
 
   useLayoutEffect(() => {
-    if (flat || activeConcept || !accordionIndex) {
+    if (flat || activeConcept || !interviewAccordionDrilldown) {
       resetHandbookReadingScroll();
     }
-  }, [accordionIndex, activeConcept, flat, pathname, resolvedConceptId]);
+  }, [
+    activeConcept,
+    flat,
+    interviewAccordionDrilldown,
+    pathname,
+    resolvedConceptId,
+  ]);
 
   if (concepts.length === 0) {
     return (
@@ -213,130 +242,200 @@ export function ConceptList({
     );
   }
 
-  return (
-    <div className="space-y-8">
-      {groups.map((group) => {
-        if (group.concepts.length === 0 && !group.label) {
-          return null;
-        }
-        return (
-          <section key={group.key}>
-            {group.label &&
-            !sameTitle(group.label, group.concepts[0]?.title ?? "") ? (
-              <ConceptGroupSectionHeader title={group.label} chrome={chrome} />
-            ) : null}
-            {group.concepts.length > 0 ? (
-              <ConceptIndexList
-                concepts={group.concepts}
-                query={query}
-                chrome={chrome}
-                pathname={pathname}
-              />
-            ) : null}
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
-const CONCEPT_LIST_CARD =
-  "concept-list overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
-
-const CONCEPT_DETAIL_CARD =
-  "concept-detail-article concept-list group relative -mx-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white max-sm:rounded-none sm:mx-0 dark:border-zinc-800 dark:bg-zinc-900";
-
-function ConceptIndexList({
-  concepts,
-  query,
-  chrome,
-  pathname,
-}: {
-  concepts: readonly Concept[];
-  query: string;
-  chrome: ChromeCopy;
-  pathname: string;
-}) {
-  return (
-    <nav
-      aria-label={chrome.topicsNav}
-      className={`${CONCEPT_LIST_CARD} concept-list--accordion`}
-    >
-      <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 [&>li:first-child>button]:pt-2">
-        {concepts.map((concept) => (
-          <ConceptIndexRow
-            key={concept.id}
-            concept={concept}
+  if (interviewAccordionDrilldown && activeInterviewGroup?.label) {
+    const sectionConcepts = conceptsForIndexSection(activeInterviewGroup);
+    return (
+      <div className="concept-list-index w-full space-y-4">
+        <ConceptGroupSectionHeader
+          title={sectionRowTitle(activeInterviewGroup.label)}
+          chrome={chrome}
+        />
+        {sectionConcepts.length > 0 ? (
+          <ConceptIndexNavList
+            concepts={sectionConcepts}
             query={query}
             chrome={chrome}
             pathname={pathname}
           />
-        ))}
-      </ul>
-    </nav>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (activeTheoryGroup?.label) {
+    const sectionConcepts = conceptsForIndexSection(activeTheoryGroup);
+    return (
+      <div className="concept-list-index w-full space-y-4">
+        <ConceptGroupSectionHeader
+          title={sectionRowTitle(activeTheoryGroup.label)}
+          chrome={chrome}
+        />
+        {sectionConcepts.length > 0 ? (
+          <ConceptIndexNavList
+            concepts={sectionConcepts}
+            query={query}
+            chrome={chrome}
+            pathname={pathname}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
+  if (interviewAccordionDrilldown) {
+    const sectionGroups = groups.filter(
+      (group) =>
+        group.label != null && conceptsForIndexSection(group).length > 0,
+    );
+    return (
+      <nav
+        aria-label={chrome.topicsNav}
+        className="concept-list-index concept-list w-full"
+      >
+        <ul className="list-none">
+          {sectionGroups.map((group) => {
+            const label = group.label;
+            if (!label) {
+              return null;
+            }
+            const rowCount = conceptsForIndexSection(group).length;
+            return (
+              <li
+                key={group.key}
+                id={conceptGroupSectionDomId(label)}
+                className={CONCEPT_INDEX_ROW}
+              >
+                <button
+                  type="button"
+                  className={CONCEPT_INDEX_LINK}
+                  onClick={() =>
+                    setHashOnPath(
+                      pathname,
+                      conceptGroupSectionDomId(label),
+                      false,
+                    )
+                  }
+                >
+                  <span
+                    aria-hidden="true"
+                    className={CONCEPT_INDEX_DOT_INTERACTIVE}
+                  />
+                  <span className="flex-1 text-pretty transition-colors group-hover:text-yellow-500 dark:group-hover:text-yellow-300">
+                    <HighlightedText
+                      text={sectionRowTitle(label)}
+                      query={query}
+                    />
+                    <span className="ml-1.5 text-sm font-normal text-zinc-500 dark:text-zinc-400">
+                      ({rowCount})
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    );
+  }
+
+  const indexSections = groups.map((group) => {
+    const sectionConcepts = conceptsForIndexSection(group);
+    if (sectionConcepts.length === 0 && !group.label) {
+      return null;
+    }
+    return (
+      <section key={group.key} className={CONCEPT_INDEX_CLUSTER_SECTION}>
+        {group.label ? (
+          <ConceptGroupSectionHeader
+            title={sectionRowTitle(group.label)}
+            chrome={chrome}
+          />
+        ) : null}
+        {sectionConcepts.length > 0 ? (
+          <div className={group.label ? CONCEPT_INDEX_HEADING_TO_LIST : undefined}>
+            <ConceptIndexNavList
+              concepts={sectionConcepts}
+              query={query}
+              chrome={chrome}
+              pathname={pathname}
+            />
+          </div>
+        ) : null}
+      </section>
+    );
+  });
+
+  const indexBody = (
+    <>
+      {indexSections}
+    </>
   );
-}
 
-const CONCEPT_INDEX_BUTTON =
-  "concept-index-link flex min-h-11 w-full touch-manipulation cursor-pointer items-center gap-2 px-4 py-3 text-left text-base font-medium text-zinc-900 dark:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:focus-visible:ring-zinc-500/40";
+  if (embedInParentGrid) {
+    if (!indexHeading?.trim()) {
+      return indexBody;
+    }
+    return (
+      <section className={CONCEPT_INDEX_CLUSTER_SECTION}>
+        <TopicPageTitle title={indexHeading} />
+        <div className={CONCEPT_INDEX_HEADING_TO_LIST}>{indexBody}</div>
+      </section>
+    );
+  }
 
-function ConceptIndexRow({
-  concept,
-  query,
-  chrome,
-  pathname,
-}: {
-  concept: Concept;
-  query: string;
-  chrome: ChromeCopy;
-  pathname: string;
-}) {
-  const saved = useIsBookmarked(pathname, concept.id);
+  const paneLayoutMode = usePaneColumnFlow
+    ? conceptIndexLayoutModeForEntries(balancedEntries, {
+        preferNewspaperFrom: 1,
+      })
+    : conceptIndexLayoutModeForEntries(balancedEntries);
+  if (
+    !interviewAccordionDrilldown &&
+    paneLayoutMode === "newspaper"
+  ) {
+    if (!indexHeading?.trim()) {
+      return (
+        <ConceptIndexPaneLayout
+          entries={balancedEntries}
+          layoutMode={paneLayoutMode}
+        />
+      );
+    }
+    return (
+      <section className={HANDBOOK_INDEX_PANE_SECTION}>
+        <TopicPageTitle title={indexHeading} />
+        <ConceptIndexPaneLayout
+          entries={balancedEntries}
+          layoutMode={paneLayoutMode}
+          className={HANDBOOK_INDEX_PANE_LIST_SLOT}
+        />
+      </section>
+    );
+  }
+
+  if (indexHeading?.trim()) {
+    return (
+      <section
+        className={`${CONCEPT_INDEX_CLUSTER_SECTION} concept-list-index w-full`}
+      >
+        <TopicPageTitle title={indexHeading} />
+        <div className={CONCEPT_INDEX_HEADING_TO_LIST}>{indexSections}</div>
+      </section>
+    );
+  }
 
   return (
-    <li
-      id={concept.id}
-      className="group relative transition-colors hover:bg-yellow-50 dark:hover:bg-yellow-950/60"
-    >
-      <button
-        type="button"
-        className={CONCEPT_INDEX_BUTTON}
-        onClick={() => setHashOnPath(pathname, concept.id, false)}
-      >
-        <span
-          aria-hidden="true"
-          className="mt-0.5 inline-block size-3 shrink-0 text-zinc-400 dark:text-zinc-500"
-        >
-          <svg viewBox="0 0 12 12" className="size-3 fill-current">
-            <path d="M4.2 1.8 9 6l-4.8 4.2V1.8Z" />
-          </svg>
-        </span>
-        <HighlightedText text={concept.title} query={query} />
-      </button>
-      <div
-        className={
-          saved
-            ? "absolute top-3 right-2 flex items-center gap-0.5 max-sm:pointer-events-auto"
-            : "pointer-events-none absolute top-3 right-2 flex items-center gap-0.5 max-sm:pointer-events-auto group-hover:pointer-events-auto group-focus-within:pointer-events-auto"
-        }
-      >
-        <CopyConceptLinkButton conceptId={concept.id} chrome={chrome} />
-        <BookmarkButton
-          pathname={pathname}
-          title={concept.title}
-          conceptId={concept.id}
-          chrome={chrome}
-          revealOnHover
-        />
-      </div>
-    </li>
+    <div className="concept-list-index w-full">{indexSections}</div>
   );
 }
+
+const CONCEPT_DETAIL_CARD =
+  "concept-detail-article concept-list group relative -mx-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white max-sm:rounded-none sm:mx-0 dark:border-zinc-800 dark:bg-zinc-900";
 
 function conceptHasOptionalDepth(concept: Concept): boolean {
   return (
     concept.hasOptionalDepth === true ||
-    concept.html.includes("concept-depth-detailed")
+    (typeof concept.html === "string" &&
+      concept.html.includes("concept-depth-detailed"))
   );
 }
 
@@ -361,6 +460,14 @@ function ConceptDetail({
   useLayoutEffect(() => {
     resetHandbookReadingScroll();
   }, [concept.id]);
+
+  if (!concept.html) {
+    return (
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        {chrome.pageLoading}
+      </p>
+    );
+  }
   const actionProps = {
     title: concept.title,
     chrome,
@@ -383,27 +490,26 @@ function ConceptDetail({
       {...(hasOptionalDepth ? { "data-concept-depth": conceptDepth } : {})}
     >
       <ConceptFooterActionsRegistrar {...actionProps} />
+      <ConceptDetailTitle
+        title={concept.title}
+        chrome={chrome}
+        toolbarAbove={false}
+        toolbarAboveFromSm={false}
+        hasOptionalDepth={hasOptionalDepth}
+        showShare
+        showBookmark
+        showBack={showBack}
+        backHref={prevHref}
+        onBack={goBack}
+        showNext={showNext}
+        nextHref={nextHref}
+        onNext={goNext}
+        conceptId={concept.id}
+      />
       <div
         className="concept-detail-body-scroll min-h-0 flex-1 overscroll-y-contain"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        <ConceptDetailTitle
-          title={concept.title}
-          chrome={chrome}
-          toolbarAbove={false}
-          toolbarAboveFromSm={false}
-          scrollsWithBody
-          hasOptionalDepth={hasOptionalDepth}
-          showShare
-          showBookmark
-          showBack={showBack}
-          backHref={prevHref}
-          onBack={goBack}
-          showNext={showNext}
-          nextHref={nextHref}
-          onNext={goNext}
-          conceptId={concept.id}
-        />
         <ConceptBody
           html={concept.html}
           query={notesQuery}

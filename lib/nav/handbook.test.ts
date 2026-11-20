@@ -10,6 +10,8 @@ import {
   sectionSwitchHref,
 } from "./sections";
 import type { NavCluster, NavGroup, NavSubject, NavTopic } from "./types";
+import { getTopic, TOPICS } from "@/lib/catalog";
+import { loadTopicOutline } from "@/lib/parse";
 
 function findSubject(
   slug: string,
@@ -94,6 +96,20 @@ describe("handbookNavSections layout", () => {
     );
   });
 
+  it("lists computer science subjects as Data Structures, Algorithms, then System design", () => {
+    const group = findGroup("computer-science", "conspect");
+    assert.ok(group);
+    const subjects = group.entries
+      .filter((entry) => entry.kind === "subject")
+      .map((entry) => (entry.kind === "subject" ? entry.subject.slug : ""));
+    assert.deepEqual(subjects.slice(0, 4), [
+      "core",
+      "data-structures",
+      "algorithms",
+      "system-design",
+    ]);
+  });
+
   it("marks TypeScript Reference as flat appendix nav", () => {
     const typescript = findSubject("typescript");
     const reference = typescript.sections?.find(
@@ -101,6 +117,37 @@ describe("handbookNavSections layout", () => {
     );
     assert.equal(reference?.flatNav, true);
     assert.equal(reference?.collapsible, true);
+  });
+
+  it("lists Advanced as its own conspect track after Behavior questions", () => {
+    const conspect = handbookNavSections("en").find(
+      (section) => section.id === "conspect",
+    );
+    assert.ok(conspect);
+    const trackIds = conspect.groups.map((group) => group.id);
+    const behaviorIndex = trackIds.indexOf("behavior");
+    const advancedIndex = trackIds.indexOf("advanced");
+    assert.ok(behaviorIndex >= 0);
+    assert.ok(advancedIndex > behaviorIndex);
+    assert.ok(trackIds.indexOf("other") > advancedIndex);
+  });
+
+  it("lists message broker and cloud under the Advanced track", () => {
+    const group = findGroup("advanced");
+    assert.ok(group);
+    const subjects = group.entries
+      .filter((entry) => entry.kind === "subject")
+      .map((entry) => (entry.kind === "subject" ? entry.subject.slug : ""));
+    assert.deepEqual(subjects, ["message-broker", "cloud"]);
+    const messageBroker = group.entries.find(
+      (entry) =>
+        entry.kind === "subject" && entry.subject.slug === "message-broker",
+    );
+    assert.ok(messageBroker?.kind === "subject");
+    assert.deepEqual(
+      messageBroker.subject.clusters.map((cluster) => cluster.title),
+      ["Core", "Brokers"],
+    );
   });
 
   it("splits HTML Core principles from Document topics in the sidebar", () => {
@@ -413,7 +460,7 @@ describe("handbookNavSections layout", () => {
     const sections = handbookNavSections("en");
     assert.equal(
       sectionSwitchHref(sections, "/en/unknown-track", "conspect"),
-      findGroup("frontend", "conspect")?.href,
+      findGroup("computer-science", "conspect")?.href,
     );
     assert.equal(
       sectionSwitchHref(sections, "/en/behavior", "conspect"),
@@ -556,6 +603,24 @@ describe("handbookNavSections layout", () => {
     assert.equal(byId.get("advanced-iteration"), "Iteration protocols");
   });
 
+  it("hubs with nested topics expose cards only, not hub concepts", () => {
+    const js = findSubject("javascript");
+    const browser = allSubjectClusters(js).find(
+      (item) => item.id === "browser",
+    );
+    assert.ok(browser);
+    const hub = browser.topics.find((topic) => topic.slug === "js-browser");
+    assert.ok(hub?.nestedTopics);
+    assert.equal(hub.concepts.length, 0);
+    assert.ok(
+      hub.nestedTopics.some((topic) => topic.slug === "js-browser-document"),
+    );
+    const core = allSubjectClusters(js).find((item) => item.id === "core");
+    const coreHub = core?.topics.find((topic) => topic.slug === "js-core-hub");
+    assert.ok(coreHub?.nestedTopics?.length);
+    assert.equal(coreHub.concepts.length, 0);
+  });
+
   it("groups browser document concepts by section", () => {
     const js = findSubject("javascript");
     const browser = allSubjectClusters(js).find(
@@ -640,6 +705,48 @@ describe("handbookNavSections layout", () => {
     );
   });
 
+  it("retires Test track after GFE migration into handbook interviews", () => {
+    assert.equal(
+      TOPICS.some((topic) => (topic.track as string) === "test"),
+      false,
+      "catalog should have no test-track topics",
+    );
+    const conspectGroups = navGroupsForRootSection(
+      handbookNavSections("en"),
+      "conspect",
+    );
+    assert.equal(
+      conspectGroups.some((group) => (group.id as string) === "test"),
+      false,
+      "Test track should not appear in conspect nav",
+    );
+    const interviewsFrontend = interviewTopicsInGroup(
+      findGroup("frontend", "interviews")!,
+    );
+    const jsInterview = interviewsFrontend.find(
+      (topic) => topic.slug === "js-interview",
+    );
+    assert.ok(jsInterview, "js-interview in frontend interviews");
+    const jsTopic = getTopic("frontend", "js-interview");
+    assert.ok(jsTopic);
+    assert.ok(
+      loadTopicOutline(jsTopic, "en").length >= 150,
+      "JS interview includes GFE + migrated Test JS content",
+    );
+    const reactTopic = getTopic("frontend", "react-interview");
+    assert.ok(reactTopic);
+    assert.ok(
+      loadTopicOutline(reactTopic, "en").length >= 600,
+      "React interview file includes GFE + migrated Test React content",
+    );
+    const behaviorTopic = getTopic("behavior", "behavior-questions");
+    assert.ok(behaviorTopic);
+    assert.ok(
+      loadTopicOutline(behaviorTopic, "en").length >= 200,
+      "behavior-questions includes migrated career/process listicles",
+    );
+  });
+
   it("nests machine coding interview under React Interview", () => {
     const frontendInterviews = interviewTopicsInGroup(
       findGroup("frontend", "interviews")!,
@@ -659,5 +766,31 @@ describe("handbookNavSections layout", () => {
       ),
       "machine coding interview must not lift to frontend track interviews",
     );
+  });
+
+  it("exposes Computer science topic concepts on the CS Core subject", () => {
+    const group = findGroup("computer-science", "conspect");
+    assert.ok(group);
+    const coreEntry = group.entries.find(
+      (entry) => entry.kind === "subject" && entry.subject.slug === "core",
+    );
+    assert.equal(coreEntry?.kind, "subject");
+    if (coreEntry?.kind !== "subject") {
+      return;
+    }
+    const cluster = coreEntry.subject.clusters.find(
+      (item) => item.id === "core",
+    );
+    assert.ok(cluster);
+    assert.equal(cluster.title, "Computer Science");
+    const topic = cluster.topics.find(
+      (item) => item.slug === "computer-science",
+    );
+    assert.ok(topic);
+    assert.ok(
+      topic.concepts.some((concept) => concept.title === "Programming"),
+    );
+    assert.notEqual(topic.hideSidebarConcepts, true);
+    assert.equal(cluster.nestedClusters?.length ?? 0, 0);
   });
 });

@@ -2,6 +2,12 @@ import type { TrackId } from "@/lib/catalog";
 
 export type SearchMode = "titles" | "notes";
 
+/** Re-exported shape docs: see `conspectSidebar.ts` (`NavSidebarSchema`). */
+export type {
+  ConspectSidebarSchema,
+  NavSidebarSchema,
+} from "./conspectSidebar";
+
 export type InterviewSection = "questions" | "tasks";
 
 export type NavConcept = {
@@ -28,6 +34,8 @@ export type NavCluster = {
   readonly title: string;
   readonly href: string;
   readonly topics: readonly NavTopic[];
+  /** Markdown section groups under a title-twin cluster (CSS Core → Selectors & Cascade). */
+  readonly nestedClusters?: readonly NavCluster[];
 };
 
 export type NavSection = {

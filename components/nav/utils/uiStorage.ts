@@ -109,10 +109,6 @@ function asTheme(value: unknown): StoredTheme {
   }
 }
 
-function asConceptDepth(value: unknown): ConceptDepthPreference {
-  return value === "detailed" ? "detailed" : "quick";
-}
-
 function parseStoredUi(raw: string): StoredUi {
   const parsed: unknown = JSON.parse(raw);
   if (!parsed || typeof parsed !== "object") {
@@ -125,7 +121,7 @@ function parseStoredUi(raw: string): StoredUi {
     href: asHref(record.href),
     sidebarCollapsed: record.sidebarCollapsed === true,
     theme: asTheme(record.theme),
-    conceptDepth: asConceptDepth(record.conceptDepth),
+    conceptDepth: "quick",
   };
 }
 
@@ -245,5 +241,5 @@ export function writeUi(patch: Partial<StoredUi>, options?: WriteUiOptions) {
 
 /** Inline boot script: apply `.dark` before paint to avoid FOUC. */
 export function themeBootScript(): string {
-  return `(function(){try{var k=${JSON.stringify(UI_STORAGE_KEY)};var t=null;var d="quick";var r=localStorage.getItem(k);if(r){var p=JSON.parse(r);if(p&&(p.theme==="light"||p.theme==="dark"))t=p.theme;if(p&&p.conceptDepth==="detailed")d="detailed";}if(t===null)t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.classList.toggle("dark",t==="dark");document.documentElement.dataset.conceptDepth=d;}catch(e){}})();`;
+  return `(function(){try{var k=${JSON.stringify(UI_STORAGE_KEY)};var t=null;var r=localStorage.getItem(k);if(r){var p=JSON.parse(r);if(p&&(p.theme==="light"||p.theme==="dark"))t=p.theme;}if(t===null)t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.classList.toggle("dark",t==="dark");document.documentElement.dataset.conceptDepth="quick";}catch(e){}})();`;
 }

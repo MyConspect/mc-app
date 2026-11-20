@@ -22,9 +22,9 @@ jobs:
     permissions:
       contents: read
     env:
-      RESOURCES_GIT_URL: ${{ secrets.RESOURCES_GIT_URL }}
+      RESOURCES_GIT_URL: https://github.com/MyConspect/mc-content.git
       RESOURCES_GIT_TOKEN: ${{ secrets.RESOURCES_GIT_TOKEN }}
-      RESOURCES_GIT_REF: ${{ secrets.RESOURCES_GIT_REF }}
+      RESOURCES_GIT_REF: main
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,6 +32,11 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - name: Configure mc-content git access
+        uses: ./.github/actions/configure-mc-content-git
+        with:
+          deploy_key: ${{ secrets.MC_CONTENT_DEPLOY_KEY }}
+          git_token: ${{ secrets.RESOURCES_GIT_TOKEN }}
       - name: Fetch study notes
         run: npx tsx scripts/ensure-resources.ts
       - name: Audit source URLs

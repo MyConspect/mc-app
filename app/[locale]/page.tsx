@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CardGrid } from "@/components/catalog";
+import { NavHubBrowseIndex } from "@/components/catalog";
 import { TRACKS } from "@/lib/catalog";
 import { catalogBlurb } from "@/lib/i18n/catalog";
+import {
+  HANDBOOK_INDEX_MAIN_PAD,
+  HANDBOOK_SUBJECT_INDEX_BODY,
+} from "@/components/topic/conceptIndexStyles";
 import { isLocale, type Locale } from "@/lib/i18n/locales";
 import { withLocale } from "@/lib/i18n/paths";
 import { SITE_DESCRIPTION } from "@/lib/site";
@@ -45,24 +49,18 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     notFound();
   }
   const locale = localeParam;
-  const copy = COPY[locale];
+  const trackCards = TRACKS.map((track) => ({
+    href: withLocale(locale, `/${track.id}`),
+    title: catalogBlurb(locale, track.title),
+    description: catalogBlurb(locale, track.description),
+  }));
 
   return (
-    <main className="w-full max-w-5xl px-4 pt-5 pb-10 sm:px-6">
-      <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-        {copy.title}
-      </h1>
-      <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-600 dark:text-zinc-400">
-        {copy.description}
-      </p>
-      <div className="mt-8">
-        <CardGrid
-          items={TRACKS.map((track) => ({
-            href: withLocale(locale, `/${track.id}`),
-            title: track.title,
-            description: catalogBlurb(locale, track.description),
-          }))}
-        />
+    <main
+      className={`handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
+    >
+      <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
+        <NavHubBrowseIndex items={trackCards} keyPrefix="home-track" />
       </div>
     </main>
   );

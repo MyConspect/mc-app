@@ -8,7 +8,10 @@ import {
   navChildBrowseCards,
   subjectClusterCards,
   trackBrowseCards,
+  trackLooseBrowseCards,
   trackQuestionSections,
+  trackSubjectBrowseBlocks,
+  subjectFlatBrowseCards,
 } from "@/lib/catalog";
 
 test("subjectClusterCards uses topic title for single-topic cluster items", () => {
@@ -163,4 +166,98 @@ test("trackBrowseCards lists Core before HTML on frontend", () => {
   assert.ok(coreIndex >= 0, "missing Core subject card");
   assert.ok(htmlIndex >= 0, "missing HTML subject card");
   assert.ok(coreIndex < htmlIndex);
+});
+
+test("trackBrowseCards lists subject hubs and loose topics on other", () => {
+  const cards = trackBrowseCards("other");
+  assert.ok(cards.length >= 7, `expected topics, got ${cards.length}`);
+  assert.ok(cards.some((card) => card.title === "Git"));
+  assert.ok(cards.some((card) => card.title === "Build & CI"));
+  assert.equal(
+    cards.some((card) => card.title === "Computer Science"),
+    false,
+  );
+});
+
+test("trackBrowseCards lists Core as first computer-science subject", () => {
+  const cards = trackBrowseCards("computer-science");
+  assert.ok(cards[0]?.title === "Core");
+  assert.ok(cards.some((card) => card.title === "Data Structures"));
+});
+
+test("trackSubjectBrowseBlocks expands git and build clusters on other", () => {
+  const blocks = trackSubjectBrowseBlocks("other");
+  assert.equal(blocks.length, 2);
+  assert.ok(blocks.some((block) => block.subject.slug === "git"));
+  assert.ok(blocks.some((block) => block.subject.slug === "build"));
+  const git = blocks.find((block) => block.subject.slug === "git");
+  assert.ok(git && git.sections.length >= 2);
+});
+
+test("trackSubjectBrowseBlocks lists frontend conspect subjects", () => {
+  const blocks = trackSubjectBrowseBlocks("frontend");
+  assert.ok(blocks.length >= 8, `expected subjects, got ${blocks.length}`);
+  assert.ok(blocks.some((block) => block.subject.slug === "core"));
+  assert.ok(blocks.some((block) => block.subject.slug === "html"));
+  const core = blocks.find((block) => block.subject.slug === "core");
+  assert.ok(core && core.sections.length >= 2);
+});
+
+test("trackSubjectBrowseBlocks lists advanced messaging and cloud subjects", () => {
+  const blocks = trackSubjectBrowseBlocks("advanced");
+  assert.deepEqual(
+    blocks.map((block) => block.subject.slug),
+    ["message-broker", "cloud"],
+  );
+  const broker = blocks.find(
+    (block) => block.subject.slug === "message-broker",
+  );
+  assert.ok(broker);
+  assert.deepEqual(
+    broker.sections.map((section) => section.cluster.title),
+    ["Core", "Brokers"],
+  );
+  const cloud = blocks.find((block) => block.subject.slug === "cloud");
+  assert.ok(cloud);
+  assert.deepEqual(
+    cloud.sections.map((section) => section.cluster.title),
+    ["Core", "Providers"],
+  );
+});
+
+test("trackSubjectBrowseBlocks lists Node.js on the backend track", () => {
+  const blocks = trackSubjectBrowseBlocks("backend");
+  assert.deepEqual(
+    blocks.map((block) => block.subject.slug),
+    ["nodejs"],
+  );
+});
+
+test("trackLooseBrowseCards lists ungrouped other topics", () => {
+  const cards = trackLooseBrowseCards("other");
+  assert.equal(
+    cards.some((card) => card.title === "Computer Science"),
+    false,
+  );
+  assert.ok(cards.some((card) => card.title === "VS Code & DevTools"));
+  assert.equal(
+    cards.some((card) => card.title === "Git"),
+    false,
+  );
+  assert.equal(
+    cards.some((card) => card.title === "Interview leftovers"),
+    false,
+  );
+});
+
+test("subjectFlatBrowseCards flattens git clusters into topic links", () => {
+  const git = SUBJECTS.find((subject) => subject.slug === "git");
+  assert.ok(git);
+  const cards = subjectFlatBrowseCards(git);
+  assert.ok(cards.some((card) => card.title === "Core"));
+  assert.ok(cards.some((card) => card.title === "Branching"));
+  assert.equal(
+    cards.some((card) => card.title === "Interview"),
+    false,
+  );
 });

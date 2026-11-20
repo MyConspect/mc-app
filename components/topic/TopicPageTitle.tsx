@@ -1,13 +1,23 @@
 "use client";
 
-import { useHandbookLocation } from "@/components/nav/hooks/useHandbookLocation";
-import { PageTitleHeader } from "./PageTitleHeader";
+import { HighlightedText, useSearchQuery } from "@/components/search";
+import {
+  CONCEPT_GROUP_SECTION_INSET,
+  CONCEPT_INDEX_SECTION_HEADING,
+} from "./conceptIndexStyles";
 
-/** Topic index title; hidden while a concept detail is open. */
+/** Topic index title above concept lists on leaf topic URLs. */
 export function TopicPageTitle({ title }: { title: string }) {
-  const { activeConceptId } = useHandbookLocation();
-  if (activeConceptId) {
+  const query = useSearchQuery();
+  const trimmed = title.trim();
+  if (!trimmed) {
     return null;
   }
-  return <PageTitleHeader title={title} />;
+  return (
+    <h1
+      className={`${CONCEPT_INDEX_SECTION_HEADING} ${CONCEPT_GROUP_SECTION_INSET} scroll-mt-24`}
+    >
+      <HighlightedText text={trimmed} query={query} />
+    </h1>
+  );
 }

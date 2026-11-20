@@ -147,12 +147,14 @@ export function parseTopicOutline(
     : undefined;
   const usedIds = new Set<string>();
   const hideAnswers = options.hideAnswers ?? false;
-  const outline: ConceptOutline[] = regular.map((block) => ({
-    id: uniqueId(slugify(block.title), usedIds),
-    title: block.title,
-    searchText: outlineSearchText(block.body, hideAnswers),
-    ...(block.group ? { group: block.group } : {}),
-  }));
+  const outline: ConceptOutline[] = flattenRegularConceptBlocks(regular).map(
+    (block) => ({
+      id: uniqueId(slugify(block.title), usedIds),
+      title: block.title,
+      searchText: outlineSearchText(block.body, hideAnswers),
+      ...(block.group ? { group: block.group } : {}),
+    }),
+  );
   for (const item of interviewOutlineItems(
     interview,
     usedIds,
@@ -313,7 +315,7 @@ async function collectConcepts(
     ? extractInterviewAnchorTitles(options.anchorMarkdown)
     : undefined;
   const usedIds = new Set<string>();
-  const regularConcepts = regular.map((block) => {
+  const regularConcepts = flattenRegularConceptBlocks(regular).map((block) => {
     const id = uniqueId(slugify(block.title), usedIds);
     const body = options.hideAnswers
       ? stripAnswerSections(block.body)
@@ -622,6 +624,31 @@ function flattenInterviewBlocks(
           : block,
       );
     }
+  }
+  return result;
+}
+
+/** Study topics: expand `interview-group-wrapper` sections into child concepts. */
+function flattenRegularConceptBlocks(
+  blocks: readonly ConceptBlock[],
+  inheritedGroup?: string,
+): ConceptBlock[] {
+  const result: ConceptBlock[] = [];
+  for (const block of blocks) {
+    if (shouldExpandInterviewWrapper(block)) {
+      const group = wrapperGroupName(block) ?? inheritedGroup;
+      const children = collectConceptBlocks(block.body).map((child) => ({
+        ...child,
+        ...(child.group || !group ? {} : { group }),
+      }));
+      result.push(...flattenRegularConceptBlocks(children, group));
+      continue;
+    }
+    result.push(
+      inheritedGroup && !block.group
+        ? { ...block, group: inheritedGroup }
+        : block,
+    );
   }
   return result;
 }

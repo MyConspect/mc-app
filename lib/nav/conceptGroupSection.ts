@@ -9,3 +9,22 @@ export function conceptGroupSectionDomId(groupLabel: string): string {
     .replace(/^-+|-+$/g, "");
   return slug ? `concept-group-${slug}` : "concept-group";
 }
+
+export function isConceptGroupSectionId(id: string): boolean {
+  return id === "concept-group" || id.startsWith("concept-group-");
+}
+
+export function findConceptGroupBySectionId<
+  T extends { readonly label: string | null },
+>(groups: readonly T[], sectionId: string): T | null {
+  if (!isConceptGroupSectionId(sectionId)) {
+    return null;
+  }
+  return (
+    groups.find(
+      (group) =>
+        group.label != null &&
+        conceptGroupSectionDomId(group.label) === sectionId,
+    ) ?? null
+  );
+}

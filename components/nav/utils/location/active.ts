@@ -1,9 +1,10 @@
 import type { NavGroup, NavSubject } from "@/lib/nav";
+import { findNavClusterInSubject } from "@/lib/nav/findNavCluster";
 import { navSubjectClusters } from "@/lib/nav/subjectClusters";
 import { navTopicTreeContainsHref } from "@/lib/nav/topicTree";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { stripLocalePrefix } from "@/lib/i18n/paths";
-import { aliasTopicForCluster } from "./shared";
+import { aliasTopicForCluster, clusterForConceptInSubject } from "./shared";
 
 export type NavLocation = {
   topicHref: string | null;
@@ -96,6 +97,17 @@ export function sectionKey(subjectHref: string, sectionId: string) {
 
 export function closedSectionKey(subjectHref: string, sectionId: string) {
   return `!${sectionKey(subjectHref, sectionId)}`;
+}
+
+export function closedSubjectKey(subjectHref: string) {
+  return `!${subjectHref}`;
+}
+
+export function isSubjectForceClosed(
+  subjectHref: string,
+  openSubjectHref: string | null | undefined,
+): boolean {
+  return openSubjectHref === closedSubjectKey(subjectHref);
 }
 
 export function isNavSectionOpen(
@@ -215,22 +227,48 @@ export function locationForPath(
                 sectionKey: sectionKey(entry.subject.href, navSection.id),
               };
             }
-            const cluster = navSubjectClusters(entry.subject).find(
-              (item) => item.id === clusterId,
+            const clusterHit = findNavClusterInSubject(
+              entry.subject,
+              clusterId,
             );
+            const cluster = clusterHit?.cluster;
             const aliasTopic = cluster
               ? aliasTopicForCluster(cluster)
               : undefined;
-            const parentSection = cluster
-              ? collapsibleSectionForCluster(entry.subject, cluster.id)
+            const catalogClusterId =
+              clusterHit?.parent?.id ?? cluster?.id ?? clusterId;
+            const parentSection = catalogClusterId
+              ? collapsibleSectionForCluster(entry.subject, catalogClusterId)
               : undefined;
             if (cluster) {
               return {
-                topicHref: aliasTopic?.href ?? null,
+                topicHref:
+                  clusterHit?.parent || !aliasTopic ? null : aliasTopic.href,
                 subjectHref: entry.subject.href,
                 clusterKey: clusterKey(entry.subject.href, cluster.id),
                 sectionKey: parentSection
                   ? sectionKey(entry.subject.href, parentSection.id)
+                  : null,
+              };
+            }
+            const conceptHit = clusterForConceptInSubject(
+              entry.subject,
+              clusterId,
+            );
+            if (conceptHit) {
+              const parentSectionForConcept = collapsibleSectionForCluster(
+                entry.subject,
+                conceptHit.cluster.id,
+              );
+              return {
+                topicHref: conceptHit.topic.href,
+                subjectHref: entry.subject.href,
+                clusterKey: clusterKey(
+                  entry.subject.href,
+                  conceptHit.cluster.id,
+                ),
+                sectionKey: parentSectionForConcept
+                  ? sectionKey(entry.subject.href, parentSectionForConcept.id)
                   : null,
               };
             }

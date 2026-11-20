@@ -1,31 +1,33 @@
 "use client";
 
+import { SEARCH_CONTENT_MARK_CLASS } from "./searchMarkClass";
+import { splitTextByQuery } from "./utils/splitTextByQuery";
+
 export function HighlightedText({
   text,
   query,
   className,
+  markClassName = SEARCH_CONTENT_MARK_CLASS,
 }: {
   text: string;
   query: string;
   className?: string;
+  markClassName?: string;
 }) {
-  const needle = query.trim();
-  if (needle.length === 0) {
+  const parts = splitTextByQuery(text, query);
+  if (parts.length === 1 && !parts[0].match) {
     return <span className={className}>{text}</span>;
   }
-
-  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
 
   return (
     <span className={className}>
       {parts.map((part, index) =>
-        part.toLowerCase() === needle.toLowerCase() ? (
-          <mark key={`${part}-${index}`} className="rounded-sm bg-amber-100 text-zinc-900 dark:bg-amber-900/50 dark:text-amber-50">
-            {part}
+        part.match ? (
+          <mark key={`${part.text}-${index}`} className={markClassName}>
+            {part.text}
           </mark>
         ) : (
-          part
+          <span key={`${part.text}-${index}`}>{part.text}</span>
         ),
       )}
     </span>

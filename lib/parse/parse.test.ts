@@ -304,6 +304,33 @@ test("interview collection wrappers stay one block in collectConceptBlocks", () 
   assert.equal(blocks[0].title, "100+ React questions (GFE)");
 });
 
+test("study interview-group-wrapper flattens nested concepts before interview region", () => {
+  const outline = parseTopicOutline(`
+# React — Hooks
+
+<details>
+<summary>Overview</summary>
+
+<!-- interview-group-wrapper -->
+
+<details>
+<summary>What are React hooks?</summary>
+
+**Definition:** Hooks are functions.
+
+**How it works:**
+
+- Rule one
+</details>
+
+</details>
+`);
+
+  assert.equal(outline.length, 1);
+  assert.equal(outline[0]?.title, "What are React hooks?");
+  assert.equal(outline[0]?.group, "Overview");
+});
+
 test("interview collection wrappers flatten to grouped questions in the outline", () => {
   const outline = parseTopicOutline(`
 ## Interview Practice

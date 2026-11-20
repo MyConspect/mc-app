@@ -26,13 +26,22 @@ export function navTopicAtPath(
   topic: NavTopic,
   pathname: string,
 ): NavTopic | undefined {
+  const trail = navTopicTrailAtPath(topic, pathname);
+  return trail?.[trail.length - 1];
+}
+
+/** Root-to-leaf nav topics for a pathname (includes nested `navParentSlug` children). */
+export function navTopicTrailAtPath(
+  topic: NavTopic,
+  pathname: string,
+): readonly NavTopic[] | undefined {
   if (topic.href === pathname) {
-    return topic;
+    return [topic];
   }
   for (const nested of topic.nestedTopics ?? []) {
-    const hit = navTopicAtPath(nested, pathname);
-    if (hit) {
-      return hit;
+    const trail = navTopicTrailAtPath(nested, pathname);
+    if (trail) {
+      return [topic, ...trail];
     }
   }
   return undefined;

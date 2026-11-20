@@ -1,5 +1,6 @@
 "use client";
 
+import { HighlightedText, useSearchQuery } from "@/components/search";
 import { useHandbookMobileNavOpen } from "@/components/nav/context/handbookMobileNavContext";
 import {
   useLayoutEffect,
@@ -21,6 +22,10 @@ import {
   CONCEPT_DETAIL_TOOLBAR_ICON,
   conceptDetailToolbarIconSize,
 } from "./conceptDetailToolbarIcon";
+import {
+  CONCEPT_GROUP_SECTION_INSET,
+  CONCEPT_INDEX_SECTION_HEADING,
+} from "./conceptIndexStyles";
 
 const DETAIL_TOOLBAR =
   "concept-detail-toolbar shrink-0 border-b border-zinc-200 bg-white px-4 py-2.5 max-sm:rounded-t-none sm:rounded-t-[calc(0.75rem-1px)] sm:py-3 dark:border-zinc-800 dark:bg-zinc-900";
@@ -32,7 +37,10 @@ const DETAIL_TITLE_CLASS =
   "m-0 min-w-0 flex-1 text-pretty text-[1.375rem] font-semibold leading-snug tracking-tight text-zinc-900 sm:text-2xl sm:leading-snug dark:text-zinc-50";
 
 const DETAIL_TITLE_ROW =
-  "flex w-full items-start justify-between gap-x-2 gap-y-2";
+  "flex w-full flex-wrap items-start justify-between gap-x-2 gap-y-2";
+
+const DETAIL_TITLE_ACTIONS =
+  "ml-auto flex shrink-0 flex-wrap items-start justify-end gap-x-0.5 gap-y-1 self-start";
 
 const INDEX_HEADER = "flex flex-wrap items-start gap-x-2 gap-y-1";
 
@@ -43,10 +51,9 @@ const TITLE_TOGGLE_CLASS =
   "w-full cursor-pointer border-0 bg-transparent p-0 text-left font-inherit text-inherit";
 
 const INDEX_ACTIONS_CLASS =
-  "ml-auto flex shrink-0 self-start items-center gap-1 sm:gap-1.5";
+  "ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5";
 
-const GROUP_SECTION_HEADER_ROW =
-  "concept-group-section-header group -mx-4 mb-[10px] flex flex-wrap items-start gap-x-2 gap-y-1 px-[18px] py-2 transition-colors hover:bg-yellow-50 focus-within:bg-yellow-50 sm:-mx-6 dark:hover:bg-yellow-950/60 dark:focus-within:bg-yellow-950/60 [&_h2]:transition-colors [&_h2]:text-zinc-900 hover:[&_h2]:text-yellow-950 focus-within:[&_h2]:text-yellow-950 dark:[&_h2]:text-zinc-50 dark:hover:[&_h2]:text-yellow-50 dark:focus-within:[&_h2]:text-yellow-50";
+const GROUP_SECTION_HEADER_ROW = `concept-group-section-header group mb-0 flex min-h-0 flex-nowrap items-center gap-x-2 gap-y-0 ${CONCEPT_GROUP_SECTION_INSET} py-0 [&_h2]:m-0 [&_h2]:min-w-0 [&_h2]:flex-1`;
 
 const NAV_GROUP = "inline-flex shrink-0 items-center gap-1";
 
@@ -70,7 +77,7 @@ const ACTION_DIVIDER_INDEX =
   "mx-0.5 h-6 w-px shrink-0 bg-zinc-200 dark:bg-zinc-700";
 
 const DETAIL_TOOLBAR_CLUSTER =
-  "inline-flex shrink-0 flex-wrap items-center justify-end gap-0.5";
+  "inline-flex shrink-0 flex-wrap items-start justify-end gap-0.5";
 
 function ConceptNavControl({
   href,
@@ -193,11 +200,13 @@ function ConceptTitleHeading({
   title: string;
   chrome: ChromeCopy;
   level: "h1" | "h2";
-  variant: "index" | "detail";
+  variant: "index" | "detail" | "section";
   onTitleActivate?: () => void;
 }) {
+  const query = useSearchQuery();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [expandedTitle, setExpandedTitle] = useState<string | null>(null);
+  const titleContent = <HighlightedText text={title} query={query} />;
   const expanded = expandedTitle === title;
   const [truncated, setTruncated] = useState(false);
 
@@ -240,7 +249,7 @@ function ConceptTitleHeading({
       className={TITLE_TOGGLE_CLASS}
       onClick={onTitleActivate}
     >
-      {title}
+      {titleContent}
     </button>
   ) : showToggle ? (
     <button
@@ -252,14 +261,18 @@ function ConceptTitleHeading({
         setExpandedTitle((current) => (current === title ? null : title))
       }
     >
-      {title}
+      {titleContent}
     </button>
   ) : (
-    title
+    titleContent
   );
 
   const titleBase =
-    variant === "detail" ? DETAIL_TITLE_CLASS : INDEX_TITLE_CLASS;
+    variant === "detail"
+      ? DETAIL_TITLE_CLASS
+      : variant === "section"
+        ? CONCEPT_INDEX_SECTION_HEADING
+        : INDEX_TITLE_CLASS;
   const className = `${titleBase} ${clampClass}`;
 
   if (level === "h1") {
@@ -602,9 +615,9 @@ export function ConceptDetailTitle({
           level="h2"
           variant="detail"
         />
-        <div className="ml-auto flex shrink-0 self-start items-center gap-0.5">
+        <div className={DETAIL_TITLE_ACTIONS}>
           {showTitleActions ? (
-            <div className="hidden shrink-0 self-start sm:flex sm:items-center sm:gap-0.5">
+            <div className="hidden shrink-0 sm:flex sm:flex-wrap sm:items-start sm:justify-end sm:gap-x-0.5 sm:gap-y-1">
               <ConceptHeaderActions
                 title={title}
                 chrome={chrome}
@@ -734,13 +747,13 @@ export function ConceptGroupSectionHeader({
         title={title}
         chrome={chrome}
         level="h2"
-        variant="index"
+        variant="section"
       />
       <span
         className={
           saved
-            ? INDEX_ACTIONS_CLASS
-            : `${INDEX_ACTIONS_CLASS} pointer-events-none max-sm:pointer-events-auto group-hover:pointer-events-auto group-focus-within:pointer-events-auto`
+            ? `${INDEX_ACTIONS_CLASS} gap-0.5`
+            : `${INDEX_ACTIONS_CLASS} gap-0.5 pointer-events-none max-sm:pointer-events-auto group-hover:pointer-events-auto group-focus-within:pointer-events-auto`
         }
       >
         <CopyConceptLinkButton chrome={chrome} size="md" concealed />

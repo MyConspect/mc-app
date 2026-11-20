@@ -1,20 +1,23 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { ResourcesAutoRefresh } from "@/components/dev/ResourcesAutoRefresh";
 import { ConceptHashBootScript } from "@/components/nav/ConceptHashBootScript";
 import { ThemeBootScript } from "@/components/nav/ThemeBootScript";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import "./globals.css";
 
-const geistSans = Geist({
+/* Font preview: … → Manrope → Inter */
+const handbookSans = Inter({
   variable: "--font-geist-sans",
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin", "cyrillic"],
 });
 
-const geistMono = Geist_Mono({
+const handbookMono = JetBrains_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  subsets: ["latin", "cyrillic"],
 });
 
 export const metadata: Metadata = {
@@ -29,8 +32,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      data-concept-depth="quick"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full overflow-hidden antialiased`}
+      className={`${handbookSans.variable} ${handbookMono.variable} h-full overflow-hidden antialiased`}
     >
       <head>
         <ThemeBootScript />

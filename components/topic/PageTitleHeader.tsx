@@ -14,7 +14,7 @@ export function PageTitleHeader({ title }: { title: string }) {
   );
 
   return (
-    <div className="mb-[10px]">
+    <div className="mb-[10px] shrink-0">
       <ConceptTitleHeader
         title={title}
         chrome={chrome}

@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import Link from "next/link";
-import { HighlightedText } from "@/components/search";
+import { SidebarHighlightedText } from "@/components/search";
 import type { TrackId } from "@/lib/catalog";
 import {
   CHROME,
@@ -15,14 +15,16 @@ import {
   type NavSubject,
   type NavTopic,
   type SearchMode,
+  splitHref,
 } from "@/lib/nav";
 import {
+  areRedundantNavTitles,
   filterInterviewConcepts,
+  isRedundantSubjectTopicNavRow,
   isRedundantTopicConceptTitle,
   navTopicWithLiveConcepts,
   sameTitle,
   shouldShowTopicConceptFold,
-  withoutRedundantTopicTitles,
 } from "@/lib/nav/navUtils";
 import { useTopicNavConcepts } from "@/components/topic/context/TopicNavConceptsContext";
 import { navTopicTreeContainsHref } from "@/lib/nav/topicTree";
@@ -32,6 +34,7 @@ import { NavGuide } from "../ui/NavGuide";
 import {
   applySameDocumentHref,
   followHandbookHref,
+  hashIdFrom,
   queueHandbookHref,
   replacePathHash,
   setHashOnPath,
@@ -50,11 +53,24 @@ import {
   sectionKey,
   isActiveHref,
   isConceptActiveOnPage,
+  closedSubjectKey,
   isOnSubjectPath,
+  isSubjectForceClosed,
   topicIsMobileNavLeaf,
 } from "../utils/location";
+import { clusterHasActiveConcept } from "../utils/location/shared";
+import {
+  conceptGroupSectionDomId,
+  isConceptGroupSectionId,
+} from "@/lib/nav/conceptGroupSection";
 import { NavCautionBadge } from "../ui/NavCautionBadge";
 import { clusterNavigateHref } from "@/lib/nav/sections";
+import {
+  conspectClusterExpandsInSidebar,
+  conspectClusterLeavesInSidebar,
+  conspectSubjectHubSectionWithConcepts,
+  navSidebarSchema,
+} from "@/lib/nav/conspectSidebar";
 import {
   closeNavSoon,
   navPathHighlighted,
@@ -69,6 +85,47 @@ import {
   useSidebarHighlight,
 } from "../context/sidebarContext";
 import { useHandbookMobileNavOpen } from "../context/handbookMobileNavContext";
+import {
+  offHubClusterFoldCollapse,
+  subjectHubClusterFoldClick,
+  topicPageClusterFoldClick,
+} from "@/lib/nav/sidebarClusterFoldToggle";
+
+function applySidebarClusterFoldHash(
+  pathname: string,
+  replaceHashWith: string | null,
+): void {
+  if (replaceHashWith === null) {
+    return;
+  }
+  replacePathHash(pathname, replaceHashWith);
+}
+
+function nestedClusterFoldMatches(
+  cluster: NavCluster,
+  subjectPath: string,
+  openClusterKey: string | null,
+  activeConceptId: string,
+  onHub: boolean,
+): boolean {
+  return (cluster.nestedClusters ?? []).some((nested) => {
+    const nestedKey = clusterKey(subjectPath, nested.id);
+    if (openClusterKey === nestedKey) {
+      return true;
+    }
+    if (
+      onHub &&
+      isConceptGroupSectionId(nested.id) &&
+      activeConceptId === nested.id
+    ) {
+      return true;
+    }
+    return (
+      activeConceptId.length > 0 &&
+      clusterHasActiveConcept(nested, activeConceptId)
+    );
+  });
+}
 
 function RowTitle({
   text,
@@ -82,16 +139,20 @@ function RowTitle({
   open?: boolean;
 }) {
   return (
-    <span className="flex min-w-0 flex-1 items-center">
+    <span className="flex min-w-0 flex-1 items-center gap-1.5">
       {marker ? (
         <span
           aria-hidden="true"
-          className="mr-1.5 w-3 shrink-0 text-center text-zinc-500 dark:text-zinc-400"
+          className="w-3 shrink-0 text-center leading-none text-zinc-500 dark:text-zinc-400"
         >
           {open ? "−" : "+"}
         </span>
       ) : null}
-      <HighlightedText text={text} query={query} className="min-w-0" />
+      <SidebarHighlightedText
+        text={text}
+        query={query}
+        className="min-w-0 leading-snug"
+      />
     </span>
   );
 }
@@ -104,13 +165,8 @@ function visibleConcepts(topic: NavTopic, query: string, mode: SearchMode) {
       : topic.concepts.filter((concept) =>
           conceptMatchesQuery(concept, needle, mode),
         );
-  const nested = withoutRedundantTopicTitles(
-    topic.title,
-    matched,
-    (concept) => concept.title,
-  );
-  if (nested.length > 0) {
-    return nested;
+  if (matched.length > 1) {
+    return matched;
   }
   const only = matched.length === 1 ? matched[0] : undefined;
   if (only && isRedundantTopicConceptTitle(topic.title, only.title)) {
@@ -185,7 +241,7 @@ export const ConceptLink = memo(function ConceptLink({
     >
       <span className="flex items-baseline justify-between gap-2">
         <span className="min-w-0">
-          <HighlightedText text={concept.title} query={query} />
+          <SidebarHighlightedText text={concept.title} query={query} />
         </span>
         <span className="flex shrink-0 items-baseline gap-1.5">
           {snippet ? (
@@ -198,14 +254,169 @@ export const ConceptLink = memo(function ConceptLink({
       </span>
       {snippet ? (
         <span className="mt-0.5 block text-xs font-normal leading-snug text-zinc-500 dark:text-zinc-400">
-          <HighlightedText text={snippet} query={query} />
+          <SidebarHighlightedText text={snippet} query={query} />
         </span>
       ) : null}
     </a>
   );
 });
 
-function ConceptItems({
+function conceptsBySidebarGroup(
+  topic: NavTopic,
+  concepts: readonly NavConcept[],
+  ancestorTitle?: string,
+): {
+  readonly ungrouped: readonly NavConcept[];
+  readonly groups: readonly {
+    readonly label: string;
+    readonly concepts: readonly NavConcept[];
+  }[];
+} {
+  const ungrouped: NavConcept[] = [];
+  const order: string[] = [];
+  const byLabel = new Map<string, NavConcept[]>();
+
+  for (const concept of concepts) {
+    const rawGroup = concept.group?.trim();
+    const useGroup =
+      rawGroup != null &&
+      rawGroup.length > 0 &&
+      !sameTitle(rawGroup, topic.title) &&
+      !(ancestorTitle != null && sameTitle(rawGroup, ancestorTitle)) &&
+      !sameTitle(rawGroup, concept.title);
+    if (!useGroup) {
+      ungrouped.push(concept);
+      continue;
+    }
+    if (!byLabel.has(rawGroup)) {
+      order.push(rawGroup);
+      byLabel.set(rawGroup, []);
+    }
+    byLabel.get(rawGroup)?.push(concept);
+  }
+
+  return {
+    ungrouped,
+    groups: order.map((label) => ({
+      label,
+      concepts: byLabel.get(label) ?? [],
+    })),
+  };
+}
+
+const ConceptGroupRow = memo(function ConceptGroupRow({
+  trackId,
+  topic,
+  groupLabel,
+  concepts,
+  indentClass = "pl-4",
+  rowGapClass = "",
+}: {
+  trackId: TrackId;
+  topic: NavTopic;
+  groupLabel: string;
+  concepts: readonly NavConcept[];
+  indentClass?: string;
+  rowGapClass?: string;
+}) {
+  const { query, pathname, searching, first } = useSidebarChrome();
+  const { highlightPathname, stackPathPins } = useSidebarHighlight();
+  const { fold, patchFold } = useScopedSidebarFold();
+  const { activeConceptId } = useSidebarActive();
+  const topicPath = topic.href.split("#")[0] ?? topic.href;
+  const sectionId = conceptGroupSectionDomId(groupLabel);
+  const navigateHref = `${topicPath}#${sectionId}`;
+  const key = clusterKey(topicPath, sectionId);
+  const { clusterKey: openClusterKey } = fold(trackId);
+  const onTopic =
+    pathname === topicPath || navTopicTreeContainsHref(topic, pathname);
+  const groupHashActive = onTopic && activeConceptId === sectionId;
+  const childConceptActive =
+    onTopic && concepts.some((concept) => activeConceptId === concept.id);
+  const groupOpen =
+    searching ||
+    openClusterKey === key ||
+    groupHashActive ||
+    childConceptActive;
+  const isHitCluster =
+    first?.pathname === topicPath && first.hash === `#${sectionId}`;
+  const onPath = !searching && (groupHashActive || childConceptActive);
+  const pinPath = navPathPinned(onPath, groupHashActive, stackPathPins);
+
+  return (
+    <li className="contents">
+      <Link
+        href={navigateHref}
+        prefetch={false}
+        scroll={false}
+        data-nav="cluster"
+        data-nav-id={sectionId}
+        data-nav-path={pinPath ? "true" : undefined}
+        data-nav-pin={pinPath ? "cluster" : undefined}
+        onClick={(event) => {
+          pinNavForHref(event.currentTarget, pathname, navigateHref);
+          if (onTopic) {
+            event.preventDefault();
+            const hashFragment = `#${sectionId}`;
+            const sameHash = window.location.hash === hashFragment;
+            const click = topicPageClusterFoldClick(
+              openClusterKey,
+              key,
+              hashFragment,
+              sameHash,
+              groupHashActive,
+            );
+            if (!searching) {
+              patchFold(trackId, {
+                clusterKey: click.clusterKey,
+                topicHref: topic.href,
+              });
+            }
+            applySidebarClusterFoldHash(pathname, click.replaceHashWith);
+            return;
+          }
+          if (!searching && offHubClusterFoldCollapse(openClusterKey, key)) {
+            event.preventDefault();
+            patchFold(trackId, { clusterKey: null, topicHref: topic.href });
+            return;
+          }
+          patchFold(trackId, { clusterKey: key, topicHref: topic.href });
+          queueHandbookHref(navigateHref);
+        }}
+        data-search-hit={isHitCluster ? "true" : undefined}
+        aria-current={groupHashActive ? "location" : undefined}
+        aria-expanded={groupOpen}
+        className={`${rowClass(
+          navPathHighlighted(
+            isHitCluster || groupHashActive,
+            onPath,
+            stackPathPins,
+          ),
+          pinPath,
+          indentClass,
+        )} ${rowGapClass}`}
+      >
+        <RowTitle text={groupLabel} query={query} marker open={groupOpen} />
+        {groupOpen ? (
+          <span className="mt-0.5 shrink-0">
+            <NavChevron open />
+          </span>
+        ) : null}
+      </Link>
+      <NavFold open={groupOpen} instant={searching} unbox>
+        <ul className="contents">
+          <ConceptFlatLinks
+            topic={topic}
+            concepts={concepts}
+            indentClass={indentClass === "pl-4" ? "pl-8" : "pl-6"}
+          />
+        </ul>
+      </NavFold>
+    </li>
+  );
+});
+
+function ConceptFlatLinks({
   topic,
   concepts,
   indentClass = "pl-4",
@@ -230,24 +441,8 @@ function ConceptItems({
           first?.pathname === topic.href && first.hash === `#${concept.id}`;
         const onPath = conceptActive && !searching;
         const pinPath = navPathPinned(onPath, true, stackPathPins);
-        const group = concept.group;
-        const showGroup =
-          group != null &&
-          group !== concepts[index - 1]?.group &&
-          !sameTitle(group, topic.title) &&
-          !sameTitle(group, concept.title);
-        const groupPad = index === 0 ? "pt-1" : "pt-3";
         return (
           <li key={concept.id} className="contents">
-            {showGroup ? (
-              <p
-                role="heading"
-                aria-level={3}
-                className={`${indentClass} pb-1 ${groupPad} text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400`}
-              >
-                {concept.group}
-              </p>
-            ) : null}
             <ConceptLink
               topicHref={topic.href}
               concept={concept}
@@ -260,6 +455,77 @@ function ConceptItems({
           </li>
         );
       })}
+    </>
+  );
+}
+
+function ConceptItems({
+  trackId,
+  topic,
+  concepts,
+  indentClass = "pl-4",
+  ancestorTitle,
+}: {
+  trackId: TrackId;
+  topic: NavTopic;
+  concepts: readonly NavConcept[];
+  indentClass?: string;
+  /** Subject (or track) title already shown on the parent sidebar row. */
+  ancestorTitle?: string;
+}) {
+  const { searching } = useSidebarChrome();
+  if (searching) {
+    return (
+      <ConceptFlatLinks
+        topic={topic}
+        concepts={concepts}
+        indentClass={indentClass}
+      />
+    );
+  }
+
+  const { ungrouped, groups } = conceptsBySidebarGroup(
+    topic,
+    concepts,
+    ancestorTitle,
+  );
+  if (groups.length === 0) {
+    return (
+      <ConceptFlatLinks
+        topic={topic}
+        concepts={concepts}
+        indentClass={indentClass}
+      />
+    );
+  }
+
+  return (
+    <>
+      {ungrouped.length > 0 ? (
+        <ConceptFlatLinks
+          topic={topic}
+          concepts={ungrouped}
+          indentClass={indentClass}
+        />
+      ) : null}
+      {groups
+        .filter(
+          (group) =>
+            !(ancestorTitle != null && sameTitle(group.label, ancestorTitle)),
+        )
+        .map((group, index) => (
+          <ConceptGroupRow
+            key={group.label}
+            trackId={trackId}
+            topic={topic}
+            groupLabel={group.label}
+            concepts={group.concepts}
+            indentClass={indentClass}
+            rowGapClass={
+              index === 0 && ungrouped.length === 0 ? NAV_ROW_GAP : "mt-0.5"
+            }
+          />
+        ))}
     </>
   );
 }
@@ -289,16 +555,24 @@ const SectionTopicLink = memo(function SectionTopicLink({
   const { isBookmarked } = useSidebarBookmarks();
   const topicNavConcepts = useTopicNavConcepts();
   const navTopic = navTopicWithLiveConcepts(topic, pathname, topicNavConcepts);
+  const nestedTopics = topic.nestedTopics ?? [];
+  const hasNestedTopics = nestedTopics.length > 0;
+  const nestedOnPath =
+    !searching &&
+    nestedTopics.some((nested) => isActiveHref(highlightPathname, nested.href));
+  const nestedOpen =
+    hasNestedTopics &&
+    nestedTopics.some((nested) => openTopicHref === nested.href);
   const active = isActiveHref(highlightPathname, topic.href);
   const isHitTopic = first?.pathname === topic.href;
   const isFirstTopic = isHitTopic && first.hash === "";
-  const onPath = !searching && active;
+  const onPath = !searching && (active || nestedOnPath);
   const mobileLeaf = topicIsMobileNavLeaf(
     active,
     highlightPathname,
     topic.href,
     activeConceptId,
-    false,
+    nestedOnPath,
   );
   const pinPath = navPathPinned(onPath, mobileLeaf, stackPathPins);
   const bookmarked = isBookmarked(topic.href);
@@ -306,17 +580,26 @@ const SectionTopicLink = memo(function SectionTopicLink({
   const sidebarConcepts = searching
     ? concepts
     : filterInterviewConcepts(navTopic, concepts);
+  const hasConceptGroups = navTopic.concepts.some((concept) =>
+    Boolean(concept.group),
+  );
   const showConceptNav =
-    !navTopic.hideSidebarConcepts && sidebarConcepts.length > 0;
+    (!navTopic.hideSidebarConcepts || hasConceptGroups) &&
+    sidebarConcepts.length > 0 &&
+    (!hasNestedTopics || navTopic.concepts.length > 0);
   const showTopicFold =
-    showConceptNav &&
-    shouldShowTopicConceptFold(
-      navTopic.title,
-      navTopic.concepts,
-      sidebarConcepts.length,
-    );
-  const topicFoldOpen = openTopicHref === topic.href;
-  const topicOpen = searching ? showConceptNav : showTopicFold && topicFoldOpen;
+    (showConceptNav &&
+      shouldShowTopicConceptFold(
+        navTopic.title,
+        navTopic.concepts,
+        sidebarConcepts.length,
+      )) ||
+    (hasNestedTopics && nestedTopics.length > 0);
+  const topicFoldOpen =
+    openTopicHref === topic.href || nestedOpen || nestedOnPath;
+  const topicOpen = searching
+    ? showConceptNav || hasNestedTopics
+    : showTopicFold && topicFoldOpen;
 
   const linkClass = `${rowClass(
     navPathHighlighted(isHitTopic || active, onPath, stackPathPins),
@@ -368,7 +651,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
         }}
         className={linkClass}
       >
-        <span className="flex min-w-0 flex-1 items-center gap-1.5">
+        <span className="flex min-w-0 flex-1 items-start gap-1.5">
           <RowTitle
             text={title}
             query={query}
@@ -377,17 +660,33 @@ const SectionTopicLink = memo(function SectionTopicLink({
           />
         </span>
         {bookmarked ? <BookmarkStar /> : null}
-        {showTopicFold ? <NavChevron open={topicOpen} /> : null}
+        {showTopicFold ? (
+          <span className="mt-0.5 shrink-0">
+            <NavChevron open={topicOpen} />
+          </span>
+        ) : null}
       </Link>
       <NavFold open={topicOpen && showTopicFold} instant={searching} unbox>
         <ul className="contents">
           {showConceptNav ? (
             <TopicConceptNav
+              trackId={trackId}
               topic={navTopic}
               concepts={sidebarConcepts}
               indentClass={SECTION_TOPIC_CONCEPT_INDENT}
             />
           ) : null}
+          {nestedTopics.map((nested, index) => (
+            <li key={nested.slug} className="contents">
+              <SectionTopicLink
+                trackId={trackId}
+                topic={nested}
+                title={nested.title}
+                navId={nested.slug}
+                rowGapClass={index === 0 ? NAV_ROW_GAP : "mt-0.5"}
+              />
+            </li>
+          ))}
         </ul>
       </NavFold>
     </>
@@ -396,17 +695,30 @@ const SectionTopicLink = memo(function SectionTopicLink({
 
 function SectionClusterNav({
   flatNav = false,
+  clusterLeafInSidebar = false,
   trackId,
   subjectHref,
   cluster,
   rowGapClass = "",
 }: {
   flatNav?: boolean;
+  clusterLeafInSidebar?: boolean;
   trackId: TrackId;
   subjectHref: string;
   cluster: NavCluster;
   rowGapClass?: string;
 }) {
+  if (flatNav && clusterLeafInSidebar) {
+    return (
+      <ClusterRow
+        trackId={trackId}
+        subjectHref={subjectHref}
+        cluster={cluster}
+        leafInSidebar
+      />
+    );
+  }
+
   if (flatNav) {
     return (
       <>
@@ -426,17 +738,24 @@ function SectionClusterNav({
   }
 
   return (
-    <ClusterRow trackId={trackId} subjectHref={subjectHref} cluster={cluster} />
+    <ClusterRow
+      trackId={trackId}
+      subjectHref={subjectHref}
+      cluster={cluster}
+      leafInSidebar={clusterLeafInSidebar}
+    />
   );
 }
 
 function SectionClusterList({
   flatNav = false,
+  clusterLeafInSidebar = false,
   trackId,
   subjectHref,
   clusters,
 }: {
   flatNav?: boolean;
+  clusterLeafInSidebar?: boolean;
   trackId: TrackId;
   subjectHref: string;
   clusters: readonly NavCluster[];
@@ -447,6 +766,7 @@ function SectionClusterList({
         <SectionClusterNav
           key={cluster.id}
           flatNav={flatNav}
+          clusterLeafInSidebar={clusterLeafInSidebar}
           trackId={trackId}
           subjectHref={subjectHref}
           cluster={cluster}
@@ -458,16 +778,26 @@ function SectionClusterList({
 }
 
 function TopicConceptNav({
+  trackId,
   topic,
   concepts,
   indentClass = "pl-4",
+  ancestorTitle,
 }: {
+  trackId: TrackId;
   topic: NavTopic;
   concepts: readonly NavConcept[];
   indentClass?: string;
+  ancestorTitle?: string;
 }) {
   return (
-    <ConceptItems topic={topic} concepts={concepts} indentClass={indentClass} />
+    <ConceptItems
+      trackId={trackId}
+      topic={topic}
+      concepts={concepts}
+      indentClass={indentClass}
+      ancestorTitle={ancestorTitle}
+    />
   );
 }
 
@@ -478,6 +808,9 @@ export function TopicRow({
   hideTitle = false,
   navKind = "topic",
   navId,
+  linkHref,
+  stackSiblingGap = false,
+  ancestorTitle,
 }: {
   trackId: TrackId;
   topic: NavTopic;
@@ -485,6 +818,12 @@ export function TopicRow({
   hideTitle?: boolean;
   navKind?: "cluster" | "topic";
   navId?: string;
+  /** When set, navigation targets this href while fold state uses `topic.href`. */
+  linkHref?: string;
+  /** Extra bottom gap between this row and the next subject-cluster sibling. */
+  stackSiblingGap?: boolean;
+  /** Parent subject/track title — suppress duplicate group rows. */
+  ancestorTitle?: string;
 }) {
   const { query, mode, pathname, searching, first, onNavigate, goToPath } =
     useSidebarChrome();
@@ -492,10 +831,29 @@ export function TopicRow({
   const { highlightPathname, stackPathPins } = useSidebarHighlight();
   const { activeConceptId } = useSidebarActive();
   const { fold, patchFold } = useScopedSidebarFold();
-  const { topicHref: openTopicHref } = fold(trackId);
+  const { topicHref: openTopicHref, clusterKey: openClusterKey } =
+    fold(trackId);
   const { isBookmarked } = useSidebarBookmarks();
   const topicNavConcepts = useTopicNavConcepts();
-  const navTopic = navTopicWithLiveConcepts(topic, pathname, topicNavConcepts);
+  const navHref = linkHref ?? topic.href;
+  const { pathname: navHrefPath, hash: navHrefHash } = splitHref(navHref);
+  const onSubjectHub =
+    navKind === "cluster" &&
+    Boolean(navId) &&
+    navHrefHash.length > 0 &&
+    pathname === navHrefPath;
+  const onConspectClusterTopicPage =
+    navKind === "cluster" &&
+    Boolean(navId) &&
+    navHrefHash.length === 0 &&
+    pathname === navHrefPath;
+  const hubClusterKey =
+    onSubjectHub && navId ? clusterKey(navHrefPath, navId) : null;
+  const navTopic = navTopicWithLiveConcepts(
+    topic,
+    pathname === topic.href || onSubjectHub ? pathname : navHrefPath,
+    topicNavConcepts,
+  );
   const nestedTopics = topic.nestedTopics ?? [];
   const hasNestedTopics = nestedTopics.length > 0;
   const nestedOnPath =
@@ -504,18 +862,48 @@ export function TopicRow({
   const nestedOpen =
     hasNestedTopics &&
     nestedTopics.some((nested) => openTopicHref === nested.href);
-  const active = isActiveHref(highlightPathname, topic.href);
-  const isHitTopic = first?.pathname === topic.href;
+  const hubClusterActive = onSubjectHub && activeConceptId === navId;
+  const hubConceptActive =
+    (onSubjectHub || onConspectClusterTopicPage) &&
+    Boolean(navId) &&
+    clusterHasActiveConcept(
+      {
+        id: navId ?? "",
+        title: topic.title,
+        href: navHref,
+        topics: [navTopic],
+      },
+      activeConceptId,
+    );
+  const hubClusterOpen = Boolean(
+    hubClusterKey && openClusterKey === hubClusterKey,
+  );
+  /** Intro groups share `topic.href` with the subject hub; only highlight the active section. */
+  const isSubjectHubSectionRow =
+    navKind === "cluster" &&
+    isActiveHref(highlightPathname, topic.href) &&
+    navHrefHash.length > 0;
+  const active = isSubjectHubSectionRow
+    ? hubClusterActive || hubConceptActive
+    : isActiveHref(highlightPathname, topic.href) ||
+      hubClusterActive ||
+      hubConceptActive;
+  const isHitTopic =
+    first?.pathname === navHrefPath &&
+    (navHrefHash.length === 0 ? first.hash === "" : first.hash === navHrefHash);
   const isFirstTopic = isHitTopic && first.hash === "";
   const concepts = visibleConcepts(navTopic, query, mode);
   const hasConcepts = concepts.length > 0;
   const sidebarConcepts = searching
     ? concepts
     : filterInterviewConcepts(navTopic, concepts);
+  const hasConceptGroups = navTopic.concepts.some((concept) =>
+    Boolean(concept.group),
+  );
   const showConceptNav =
-    !navTopic.hideSidebarConcepts &&
+    (!navTopic.hideSidebarConcepts || hasConceptGroups) &&
     sidebarConcepts.length > 0 &&
-    !hasNestedTopics;
+    (!hasNestedTopics || navTopic.concepts.length > 0);
   const showTopicFold =
     (showConceptNav &&
       shouldShowTopicConceptFold(
@@ -523,10 +911,14 @@ export function TopicRow({
         navTopic.concepts,
         sidebarConcepts.length,
       )) ||
-    (hasNestedTopics && nestedTopics.length > 1);
+    (hasNestedTopics && nestedTopics.length > 1) ||
+    (hasNestedTopics && sidebarConcepts.length > 0) ||
+    (onSubjectHub && showConceptNav);
   const showLoneNested =
     hasNestedTopics && nestedTopics.length === 1 && !showConceptNav;
-  const onPath = !searching && (active || nestedOnPath);
+  const onPath =
+    !searching &&
+    (active || nestedOnPath || hubConceptActive || hubClusterOpen);
   const mobileLeaf = topicIsMobileNavLeaf(
     active,
     highlightPathname,
@@ -535,13 +927,22 @@ export function TopicRow({
     nestedOnPath,
   );
   const pinPath = navPathPinned(onPath, mobileLeaf, stackPathPins);
-  const topicFoldOpen =
-    openTopicHref === navTopic.href || nestedOpen || nestedOnPath;
+  /** Intro concept groups share `topic.href` with the subject hub URL — never key off `openTopicHref` alone. */
+  const topicFoldOpen = onSubjectHub
+    ? hubClusterOpen || hubConceptActive || nestedOpen || nestedOnPath
+    : openTopicHref === navTopic.href ||
+      nestedOpen ||
+      nestedOnPath ||
+      hubClusterOpen ||
+      hubConceptActive ||
+      (onConspectClusterTopicPage && hubConceptActive);
   const topicOpen = hideTitle
     ? showConceptNav
     : searching
-      ? !navTopic.hideSidebarConcepts && (hasConcepts || hasNestedTopics)
-      : showTopicFold && topicFoldOpen;
+      ? (!navTopic.hideSidebarConcepts || hasConceptGroups) &&
+        (hasConcepts || hasNestedTopics)
+      : (showTopicFold && topicFoldOpen) ||
+        (onSubjectHub && (hubClusterOpen || hubConceptActive));
   const topicBookmarked = isBookmarked(navTopic.href);
   // Flatten sticky headers into the track list so nested containing blocks cannot
   // drag Core/Structure above Frontend/HTML while siblings scroll.
@@ -549,28 +950,71 @@ export function TopicRow({
   const conceptIndent = compact ? "pl-8" : "pl-4";
 
   if (hideTitle) {
-    if (!showConceptNav) {
+    if (!showConceptNav && !hasNestedTopics) {
       return null;
     }
     return (
-      <TopicConceptNav
-        topic={navTopic}
-        concepts={sidebarConcepts}
-        indentClass={conceptIndent}
-      />
+      <li className="contents">
+        <ul className="contents">
+          {showConceptNav ? (
+            <TopicConceptNav
+              trackId={trackId}
+              topic={navTopic}
+              concepts={sidebarConcepts}
+              indentClass={conceptIndent}
+              ancestorTitle={ancestorTitle}
+            />
+          ) : null}
+          {nestedTopics.map((nested, index) => (
+            <li key={nested.slug} className="contents">
+              <SectionTopicLink
+                trackId={trackId}
+                topic={nested}
+                title={nested.title}
+                navId={nested.slug}
+                rowGapClass={index === 0 ? NAV_ROW_GAP : "mt-0.5"}
+              />
+            </li>
+          ))}
+        </ul>
+      </li>
     );
   }
 
   return (
     <li className="contents">
       <Link
-        href={topic.href}
+        href={navHref}
         prefetch={false}
         scroll={false}
         data-nav={navKind}
         data-nav-id={navId ?? topic.slug}
         data-nav-path={pinPath ? "true" : undefined}
+        data-nav-pin={navKind === "cluster" && pinPath ? "cluster" : undefined}
         onClick={(event) => {
+          if (onSubjectHub && navId) {
+            event.preventDefault();
+            pinNavForHref(event.currentTarget, pathname, navHref);
+            const key = hubClusterKey!;
+            const hashFragment = `#${navId}`;
+            const sameHash = window.location.hash === hashFragment;
+            const click = subjectHubClusterFoldClick(
+              openClusterKey,
+              key,
+              navId,
+              hashFragment,
+              sameHash,
+              hubClusterActive,
+            );
+            if (!searching) {
+              patchFold(trackId, {
+                clusterKey: click.clusterKey,
+                topicHref: null,
+              });
+            }
+            applySidebarClusterFoldHash(pathname, click.replaceHashWith);
+            return;
+          }
           if (mobileNavOpen && !searching && showTopicFold) {
             event.preventDefault();
             pinNavElement(event.currentTarget, {
@@ -616,9 +1060,9 @@ export function TopicRow({
           navPathHighlighted(isHitTopic || active, onPath, stackPathPins),
           pinPath,
           indent,
-        )} ${NAV_ROW_GAP}`}
+        )} ${stackSiblingGap ? `${NAV_ROW_GAP} mb-1.5` : NAV_ROW_GAP}`}
       >
-        <span className="flex min-w-0 flex-1 items-center gap-1.5">
+        <span className="flex min-w-0 flex-1 items-start gap-1.5">
           <RowTitle
             text={topic.title}
             query={query}
@@ -630,10 +1074,14 @@ export function TopicRow({
         {showTopicFold ? (
           compact ? (
             topicOpen ? (
-              <NavChevron open />
+              <span className="mt-0.5 shrink-0">
+                <NavChevron open />
+              </span>
             ) : null
           ) : (
-            <NavChevron open={topicOpen} large />
+            <span className="mt-0.5 shrink-0">
+              <NavChevron open={topicOpen} large />
+            </span>
           )
         ) : null}
       </Link>
@@ -645,9 +1093,11 @@ export function TopicRow({
         <ul className="contents">
           {showConceptNav ? (
             <TopicConceptNav
+              trackId={trackId}
               topic={navTopic}
               concepts={sidebarConcepts}
               indentClass={conceptIndent}
+              ancestorTitle={ancestorTitle}
             />
           ) : null}
           {nestedTopics.map((nested, index) => (
@@ -672,24 +1122,182 @@ export function ClusterRow({
   subjectHref: subjectPath,
   cluster,
   hubFoldExclusive = false,
+  leafInSidebar = false,
 }: {
   trackId: TrackId;
   subjectHref: string;
   cluster: NavCluster;
   /** Handbook clusters that share the subject hub with collapsible sections. */
   hubFoldExclusive?: boolean;
+  /** Conspect subject hubs: cluster rows are leaves (no topic/concept folds). */
+  leafInSidebar?: boolean;
 }) {
-  const { query, pathname, searching, first, goToPath, onNavigate } =
+  const { query, mode, pathname, searching, first, goToPath, onNavigate } =
     useSidebarChrome();
   const { highlightPathname, stackPathPins } = useSidebarHighlight();
   const { fold, patchFold } = useScopedSidebarFold();
   const sectionId = useSidebarFoldScope();
   const { clusterKey: openClusterKey } = fold(trackId);
   const { activeConceptId } = useSidebarActive();
+  const topicNavConcepts = useTopicNavConcepts();
   const onlyTopic = cluster.topics.length === 1 ? cluster.topics[0] : null;
   const navigateHref = clusterNavigateHref(cluster, sectionId, subjectPath);
+  const hubSingleTopic = onlyTopic !== null && onlyTopic.href === subjectPath;
+  const singleTopicAsTopicRow =
+    onlyTopic && cluster.id === onlyTopic.slug && !hubSingleTopic;
+  const hasNestedGroups = (cluster.nestedClusters?.length ?? 0) > 0;
+  const foldTopicUnderCluster =
+    !hasNestedGroups &&
+    onlyTopic !== null &&
+    !singleTopicAsTopicRow &&
+    (hubSingleTopic || areRedundantNavTitles(cluster.title, onlyTopic.title));
 
-  if (onlyTopic) {
+  if (leafInSidebar && !searching) {
+    if (hasNestedGroups) {
+      return (
+        <>
+          {cluster.nestedClusters?.map((nested) => (
+            <ClusterRow
+              key={nested.id}
+              trackId={trackId}
+              subjectHref={subjectPath}
+              cluster={nested}
+              leafInSidebar
+            />
+          ))}
+        </>
+      );
+    }
+    const onHub = pathname === subjectPath;
+    const active = onHub && activeConceptId === cluster.id;
+    const hubConceptActive =
+      activeConceptId.length > 0 &&
+      clusterHasActiveConcept(cluster, activeConceptId);
+    const topicMatchesPath = cluster.topics.some((topic) =>
+      navTopicTreeContainsHref(topic, highlightPathname),
+    );
+    const isHitCluster =
+      first?.pathname === subjectPath && first.hash === `#${cluster.id}`;
+    const onPath =
+      !searching && (active || hubConceptActive || topicMatchesPath);
+    const pinPath = navPathPinned(onPath, active, stackPathPins);
+    const key = clusterKey(subjectPath, cluster.id);
+    const hubSection = onlyTopic
+      ? conspectSubjectHubSectionWithConcepts(cluster, subjectPath)
+      : false;
+    const hubTopicNav = onlyTopic
+      ? navTopicWithLiveConcepts(onlyTopic, pathname, topicNavConcepts)
+      : null;
+    const sidebarConcepts =
+      hubTopicNav !== null
+        ? searching
+          ? visibleConcepts(hubTopicNav, query, mode)
+          : filterInterviewConcepts(
+              hubTopicNav,
+              visibleConcepts(hubTopicNav, query, mode),
+            )
+        : [];
+    const sidebarSchema = navSidebarSchema(sectionId);
+    const showHubSectionConcepts =
+      sidebarSchema.mode === "two-level" &&
+      sidebarSchema.hubSectionConcepts &&
+      hubSection &&
+      hubTopicNav !== null &&
+      !hubTopicNav.hideSidebarConcepts &&
+      sidebarConcepts.length > 0;
+    const sectionConceptsOpen =
+      showHubSectionConcepts &&
+      (active || hubConceptActive || openClusterKey === key);
+
+    return (
+      <li className="contents">
+        <Link
+          href={navigateHref}
+          prefetch={false}
+          scroll={false}
+          data-nav="cluster"
+          data-nav-id={cluster.id}
+          data-nav-path={pinPath ? "true" : undefined}
+          data-nav-pin={pinPath ? "cluster" : undefined}
+          onClick={(event) => {
+            pinNavForHref(event.currentTarget, pathname, navigateHref);
+            if (onHub) {
+              event.preventDefault();
+              const hashFragment = `#${cluster.id}`;
+              const sameHash = window.location.hash === hashFragment;
+              const click = subjectHubClusterFoldClick(
+                openClusterKey,
+                key,
+                cluster.id,
+                hashFragment,
+                sameHash,
+                active,
+                {
+                  hubSectionConceptsMode: showHubSectionConcepts,
+                  sectionConceptsOpen,
+                },
+              );
+              if (!searching) {
+                patchFold(trackId, {
+                  clusterKey: click.clusterKey,
+                  ...(hubFoldExclusive && !click.closing
+                    ? { sectionKey: null, topicHref: null }
+                    : {}),
+                });
+              }
+              applySidebarClusterFoldHash(pathname, click.replaceHashWith);
+              return;
+            }
+            if (!searching && offHubClusterFoldCollapse(openClusterKey, key)) {
+              event.preventDefault();
+              patchFold(trackId, { clusterKey: null });
+              return;
+            }
+            patchFold(trackId, { clusterKey: key });
+            queueHandbookHref(navigateHref);
+          }}
+          data-search-hit={isHitCluster ? "true" : undefined}
+          aria-current={active ? "location" : undefined}
+          aria-expanded={
+            showHubSectionConcepts ? sectionConceptsOpen : undefined
+          }
+          className={`${rowClass(
+            navPathHighlighted(isHitCluster || active, onPath, stackPathPins),
+            pinPath,
+            "pl-4",
+          )} ${NAV_ROW_GAP}`}
+        >
+          <RowTitle
+            text={cluster.title}
+            query={query}
+            marker={
+              showHubSectionConcepts || isConceptGroupSectionId(cluster.id)
+            }
+            open={
+              showHubSectionConcepts
+                ? sectionConceptsOpen
+                : active || hubConceptActive || openClusterKey === key
+            }
+          />
+          {showHubSectionConcepts ? (
+            <NavChevron open={sectionConceptsOpen} />
+          ) : null}
+        </Link>
+        {showHubSectionConcepts && hubTopicNav ? (
+          <NavFold open={sectionConceptsOpen} instant={searching} unbox>
+            <TopicConceptNav
+              trackId={trackId}
+              topic={hubTopicNav}
+              concepts={sidebarConcepts}
+              indentClass="pl-8"
+            />
+          </NavFold>
+        ) : null}
+      </li>
+    );
+  }
+
+  if (singleTopicAsTopicRow) {
     return (
       <TopicRow
         trackId={trackId}
@@ -701,18 +1309,56 @@ export function ClusterRow({
     );
   }
 
+  if (foldTopicUnderCluster && onlyTopic) {
+    return (
+      <TopicRow
+        trackId={trackId}
+        topic={{ ...onlyTopic, title: cluster.title }}
+        linkHref={navigateHref}
+        compact
+        navKind="cluster"
+        navId={cluster.id}
+        stackSiblingGap={!leafInSidebar}
+      />
+    );
+  }
+
   const key = clusterKey(subjectPath, cluster.id);
-  const clusterOpen = searching || openClusterKey === key;
   const onHub = pathname === subjectPath;
   const active = onHub && activeConceptId === cluster.id;
+  const hubConceptActive =
+    onHub &&
+    activeConceptId.length > 0 &&
+    clusterHasActiveConcept(cluster, activeConceptId);
+  const nestedClusterFoldOpen = nestedClusterFoldMatches(
+    cluster,
+    subjectPath,
+    openClusterKey,
+    activeConceptId,
+    onHub,
+  );
+  const clusterOpen =
+    searching ||
+    openClusterKey === key ||
+    active ||
+    nestedClusterFoldOpen ||
+    (isConceptGroupSectionId(cluster.id) && hubConceptActive) ||
+    (!searching &&
+      hubConceptActive &&
+      (!hubFoldExclusive || openClusterKey === null || openClusterKey === key));
   const isHitCluster =
     first?.pathname === subjectPath && first.hash === `#${cluster.id}`;
+  const topicMatchesPath = cluster.topics.some((topic) =>
+    navTopicTreeContainsHref(topic, highlightPathname),
+  );
+  const onHubIndex = onHub && activeConceptId.length === 0;
   const onPath =
     !searching &&
     (active ||
-      cluster.topics.some((topic) =>
-        navTopicTreeContainsHref(topic, highlightPathname),
-      ));
+      hubConceptActive ||
+      nestedClusterFoldOpen ||
+      (isConceptGroupSectionId(cluster.id) && (hubConceptActive || active)) ||
+      (topicMatchesPath && !(onHub && hubSingleTopic && onHubIndex)));
   const pinPath = navPathPinned(onPath, active, stackPathPins);
 
   return (
@@ -736,25 +1382,30 @@ export function ClusterRow({
               closeNavSoon(onNavigate);
               return;
             }
-            const next = `#${cluster.id}`;
-            const sameHash = window.location.hash === next;
+            const hashFragment = `#${cluster.id}`;
+            const sameHash = window.location.hash === hashFragment;
+            const click = subjectHubClusterFoldClick(
+              openClusterKey,
+              key,
+              cluster.id,
+              hashFragment,
+              sameHash,
+              active,
+            );
             if (!searching) {
-              const opening = openClusterKey !== key;
-              if (sameHash) {
-                patchFold(trackId, {
-                  clusterKey: opening ? key : null,
-                  ...(hubFoldExclusive && opening ? { sectionKey: null } : {}),
-                });
-              } else {
-                patchFold(trackId, {
-                  clusterKey: key,
-                  ...(hubFoldExclusive ? { sectionKey: null } : {}),
-                });
-              }
+              patchFold(trackId, {
+                clusterKey: click.clusterKey,
+                ...(hubFoldExclusive && !click.closing
+                  ? { sectionKey: null, topicHref: null }
+                  : {}),
+              });
             }
-            if (!sameHash) {
-              replacePathHash(pathname, next);
-            }
+            applySidebarClusterFoldHash(pathname, click.replaceHashWith);
+            return;
+          }
+          if (!searching && offHubClusterFoldCollapse(openClusterKey, key)) {
+            event.preventDefault();
+            patchFold(trackId, { clusterKey: null });
             return;
           }
           patchFold(trackId, { clusterKey: key });
@@ -775,20 +1426,35 @@ export function ClusterRow({
           marker
           open={clusterOpen}
         />
-        {clusterOpen ? <NavChevron open /> : null}
+        {clusterOpen ? (
+          <span className="shrink-0">
+            <NavChevron open />
+          </span>
+        ) : null}
       </Link>
       <NavFold open={clusterOpen} instant={searching} unbox>
         <ul className="contents">
-          {cluster.topics.map((topic) => (
-            <TopicRow
-              key={topic.slug}
-              trackId={trackId}
-              topic={topic}
-              compact
-              navKind="topic"
-              navId={topic.slug}
-            />
-          ))}
+          {hasNestedGroups
+            ? cluster.nestedClusters?.map((nested) => (
+                <ClusterRow
+                  key={nested.id}
+                  trackId={trackId}
+                  subjectHref={subjectPath}
+                  cluster={nested}
+                  hubFoldExclusive={hubFoldExclusive}
+                  leafInSidebar={leafInSidebar}
+                />
+              ))
+            : cluster.topics.map((topic) => (
+                <TopicRow
+                  key={cluster.topics.length === 1 ? cluster.id : topic.slug}
+                  trackId={trackId}
+                  topic={topic}
+                  compact
+                  navKind="topic"
+                  navId={topic.slug}
+                />
+              ))}
         </ul>
       </NavFold>
     </li>
@@ -799,36 +1465,19 @@ export function SectionRow({
   trackId,
   subjectHref: subjectPath,
   section,
+  clusterLeafInSidebar = false,
 }: {
   trackId: TrackId;
   subjectHref: string;
   section: NavSection;
+  clusterLeafInSidebar?: boolean;
 }) {
   const { query, pathname, searching, first } = useSidebarChrome();
   const { highlightPathname, stackPathPins } = useSidebarHighlight();
   const { fold, patchFold } = useScopedSidebarFold();
   const { activeConceptId } = useSidebarActive();
-  const collapsible = isNavSectionCollapsible(section);
-
-  if (!collapsible) {
-    return (
-      <li className="contents">
-        <div
-          className={`px-2 pt-2 pb-0.5 text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400 ${NAV_ROW_GAP}`}
-        >
-          <HighlightedText text={section.title} query={query} />
-        </div>
-        <ul className="contents">
-          <SectionClusterList
-            flatNav={section.flatNav}
-            trackId={trackId}
-            subjectHref={subjectPath}
-            clusters={section.clusters}
-          />
-        </ul>
-      </li>
-    );
-  }
+  const collapsible =
+    isNavSectionCollapsible(section) || section.clusters.length > 0;
 
   const key = sectionKey(subjectPath, section.id);
   const { sectionKey: openSectionKey } = fold(trackId);
@@ -914,6 +1563,7 @@ export function SectionRow({
         <ul className="contents">
           <SectionClusterList
             flatNav={section.flatNav}
+            clusterLeafInSidebar={clusterLeafInSidebar}
             trackId={trackId}
             subjectHref={subjectPath}
             clusters={section.clusters}
@@ -931,12 +1581,23 @@ export function SubjectRow({
   trackId: TrackId;
   subject: NavSubject;
 }) {
-  const { query, pathname, searching, first } = useSidebarChrome();
+  const sectionId = useSidebarFoldScope();
+  const clusterLeafInSidebar = conspectClusterLeavesInSidebar(sectionId);
+  const { query, pathname, searching, first, goToPath, onNavigate } =
+    useSidebarChrome();
   const { highlightPathname, stackPathPins } = useSidebarHighlight();
   const { fold, patchFold } = useScopedSidebarFold();
   const { subjectHref: openSubjectHref } = fold(trackId);
   const active = isActiveHref(highlightPathname, subject.href);
-  const subjectOpen = searching || openSubjectHref === subject.href;
+  const subjectOnPath = isOnSubjectPath(highlightPathname, subject);
+  const subjectForceClosed = isSubjectForceClosed(
+    subject.href,
+    openSubjectHref,
+  );
+  const subjectOpen =
+    searching ||
+    (!subjectForceClosed &&
+      (openSubjectHref === subject.href || subjectOnPath));
   const isHitSubject = first?.pathname === subject.href && first.hash === "";
   const onPath = !searching && isOnSubjectPath(highlightPathname, subject);
   const pinPath = navPathPinned(onPath, active, stackPathPins);
@@ -945,6 +1606,82 @@ export function SubjectRow({
   const hubFoldExclusive =
     subject.sections?.some((section) => isNavSectionCollapsible(section)) ??
     false;
+
+  function sidebarClustersForSubject(clusters: readonly NavCluster[]) {
+    if (!clusterLeafInSidebar) {
+      return clusters.map((cluster) => (
+        <ClusterRow
+          key={cluster.id}
+          trackId={trackId}
+          subjectHref={subject.href}
+          cluster={cluster}
+          hubFoldExclusive={hubFoldExclusive}
+          leafInSidebar={clusterLeafInSidebar}
+        />
+      ));
+    }
+    return clusters.flatMap((cluster) => {
+      const onlyTopic = cluster.topics.length === 1 ? cluster.topics[0] : null;
+      const titleTwinLoneTopic =
+        onlyTopic !== null &&
+        areRedundantNavTitles(cluster.title, onlyTopic.title) &&
+        (onlyTopic.concepts.length > 0 ||
+          (onlyTopic.nestedTopics?.length ?? 0) > 0) &&
+        !(cluster.nestedClusters?.length ?? 0);
+      const loneSubjectCluster =
+        clusters.length === 1 && cluster.topics.length === 1;
+      if (
+        !clusterLeafInSidebar &&
+        (areRedundantNavTitles(cluster.title, subject.title) ||
+          (titleTwinLoneTopic && loneSubjectCluster)) &&
+        cluster.topics.length > 0
+      ) {
+        return cluster.topics.map((topic) => {
+          const hideTopicTitle = isRedundantSubjectTopicNavRow(
+            subject.title,
+            topic.title,
+          );
+          return (
+            <TopicRow
+              key={topic.slug}
+              trackId={trackId}
+              topic={topic}
+              compact
+              hideTitle={hideTopicTitle}
+              ancestorTitle={hideTopicTitle ? subject.title : undefined}
+              navKind="topic"
+              navId={topic.slug}
+            />
+          );
+        });
+      }
+      if (
+        conspectClusterExpandsInSidebar(cluster) &&
+        cluster.topics.length > 0
+      ) {
+        return [
+          <ClusterRow
+            key={cluster.id}
+            trackId={trackId}
+            subjectHref={subject.href}
+            cluster={cluster}
+            hubFoldExclusive={hubFoldExclusive}
+            leafInSidebar={false}
+          />,
+        ];
+      }
+      return [
+        <ClusterRow
+          key={cluster.id}
+          trackId={trackId}
+          subjectHref={subject.href}
+          cluster={cluster}
+          hubFoldExclusive={hubFoldExclusive}
+          leafInSidebar={clusterLeafInSidebar}
+        />,
+      ];
+    });
+  }
 
   return (
     <li className="contents">
@@ -955,6 +1692,45 @@ export function SubjectRow({
         data-nav-id={subject.slug}
         data-nav-path={pinPath ? "true" : undefined}
         onClick={(event) => {
+          const closedKey = closedSubjectKey(subject.href);
+          if (subjectOpen && !searching) {
+            event.preventDefault();
+            pinNavElement(event.currentTarget, {
+              hold: false,
+              scrollIntoView: false,
+            });
+            const onHub = pathname === subject.href;
+            const hubHash = hashIdFrom(
+              typeof window !== "undefined" ? window.location.hash : "",
+            );
+            if (!onHub || hubHash.length > 0) {
+              patchFold(trackId, {
+                subjectHref: subject.href,
+                clusterKey: null,
+                sectionKey: null,
+                topicHref: null,
+              });
+              followHandbookHref(subject.href, pathname, goToPath);
+              closeNavSoon(onNavigate);
+              return;
+            }
+            patchFold(trackId, {
+              subjectHref: closedKey,
+              clusterKey: null,
+              sectionKey: null,
+              topicHref: null,
+            });
+            return;
+          }
+          if (subjectForceClosed) {
+            event.preventDefault();
+            pinNavForHref(event.currentTarget, pathname, subject.href);
+            patchFold(trackId, { subjectHref: subject.href });
+            if (pathname !== subject.href) {
+              queueHandbookHref(subject.href);
+            }
+            return;
+          }
           if (pathname === subject.href) {
             event.preventDefault();
             pinNavElement(event.currentTarget, {
@@ -962,10 +1738,7 @@ export function SubjectRow({
               scrollIntoView: false,
             });
             if (!searching) {
-              patchFold(trackId, {
-                subjectHref:
-                  openSubjectHref === subject.href ? null : subject.href,
-              });
+              patchFold(trackId, { subjectHref: subject.href });
             }
             return;
           }
@@ -995,21 +1768,14 @@ export function SubjectRow({
           {stackPathPins ? <NavGuide level="subject" /> : null}
           {subject.sections?.length ? (
             <>
-              {subject.clusters.map((cluster) => (
-                <ClusterRow
-                  key={cluster.id}
-                  trackId={trackId}
-                  subjectHref={subject.href}
-                  cluster={cluster}
-                  hubFoldExclusive={hubFoldExclusive}
-                />
-              ))}
+              {sidebarClustersForSubject(subject.clusters)}
               {subject.sections.map((section) => (
                 <SectionRow
                   key={section.id}
                   trackId={trackId}
                   subjectHref={subject.href}
                   section={section}
+                  clusterLeafInSidebar={clusterLeafInSidebar}
                 />
               ))}
               {subject.clustersAfterSections?.map((cluster) => (
@@ -1019,31 +1785,33 @@ export function SubjectRow({
                   subjectHref={subject.href}
                   cluster={cluster}
                   hubFoldExclusive={hubFoldExclusive}
+                  leafInSidebar={clusterLeafInSidebar}
                 />
               ))}
             </>
           ) : subject.flatNav ? (
             subject.clusters.flatMap((cluster) =>
-              cluster.topics.map((topic) => (
-                <TopicRow
-                  key={topic.slug}
-                  trackId={trackId}
-                  topic={topic}
-                  compact
-                  navKind="topic"
-                  navId={topic.slug}
-                />
-              )),
+              cluster.topics.map((topic) => {
+                const hideTopicTitle = isRedundantSubjectTopicNavRow(
+                  subject.title,
+                  topic.title,
+                );
+                return (
+                  <TopicRow
+                    key={topic.slug}
+                    trackId={trackId}
+                    topic={topic}
+                    compact
+                    hideTitle={hideTopicTitle}
+                    ancestorTitle={hideTopicTitle ? subject.title : undefined}
+                    navKind="topic"
+                    navId={topic.slug}
+                  />
+                );
+              }),
             )
           ) : (
-            subject.clusters.map((cluster) => (
-              <ClusterRow
-                key={cluster.id}
-                trackId={trackId}
-                subjectHref={subject.href}
-                cluster={cluster}
-              />
-            ))
+            sidebarClustersForSubject(subject.clusters)
           )}
         </ul>
       </NavFold>
