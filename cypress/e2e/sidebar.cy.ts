@@ -4,33 +4,19 @@ describe("handbook sidebar", () => {
     cy.clearLocalStorage();
   });
 
-);
 
-);
 
-);
 
-);
 
-);
 
-);
 
-);
 
-);
 
-);
 
-);
 
-);
 
-);
 
-);
 
-);
 
   it("switches from Patterns back to Core on the Algorithms hub", () => {
     cy.visit("/en/algorithms#patterns");
@@ -74,7 +60,6 @@ describe("handbook sidebar", () => {
       .and("contain", "TanStack");
   });
 
-);
 
   it("keeps an open Structure topic stuck after its concepts scroll away", () => {
     cy.viewport(1280, 560);
@@ -256,15 +241,10 @@ describe("handbook sidebar", () => {
     cy.conceptNavButton("Next").should("not.exist");
   });
 
-);
 
-);
 
-);
 
-);
 
-);
 
   it("opens an HTML topic menu without navigating away from the current topic", () => {
     cy.viewport(441, 931);
@@ -429,7 +409,6 @@ describe("handbook sidebar", () => {
     });
   });
 
-);
 
   it("closes the mobile sidebar when crossing the desktop breakpoint", () => {
     cy.viewport(390, 844);

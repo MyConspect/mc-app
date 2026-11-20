@@ -3,9 +3,7 @@ describe("handbook breadcrumbs", () => {
     cy.viewport(1280, 800);
   });
 
-);
 
-);
 
   it("shows Core once on the Node.js Core topic", () => {
     cy.visit("/en/backend/nodejs-core");
