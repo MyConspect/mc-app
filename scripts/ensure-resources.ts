@@ -78,15 +78,21 @@ function fetchFromGit(): void {
 
   const ref = process.env.RESOURCES_GIT_REF?.trim() || "main";
   const token = process.env.RESOURCES_GIT_TOKEN?.trim();
-  const cloneUrl = authenticatedCloneUrl(url, token);
+  const useSsh = Boolean(process.env.GIT_SSH_COMMAND?.trim());
+  const cloneUrl = useSsh || !token ? authenticatedCloneUrl(url, token) : url;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "myconspect-resources-"));
 
   try {
-    execFileSync(
-      "git",
-      ["clone", "--depth", "1", "--branch", ref, cloneUrl, tmp],
-      { stdio: "inherit" },
-    );
+    const cloneArgs = ["clone", "--depth", "1", "--branch", ref, cloneUrl, tmp];
+    const cloneEnv = { ...process.env };
+    if (token && !useSsh && !cloneUrl.includes("@")) {
+      cloneArgs.unshift(
+        "-c",
+        `http.extraHeader=AUTHORIZATION: bearer ${token}`,
+      );
+      cloneEnv.GIT_TERMINAL_PROMPT = "0";
+    }
+    execFileSync("git", cloneArgs, { stdio: "inherit", env: cloneEnv });
     const commit = execFileSync("git", ["-C", tmp, "rev-parse", "HEAD"], {
       encoding: "utf8",
     }).trim();
