@@ -1197,9 +1197,10 @@ export function ClusterRow({
               visibleConcepts(hubTopicNav, query, mode),
             )
         : [];
+    const sidebarSchema = navSidebarSchema(sectionId);
     const showHubSectionConcepts =
-      sectionId === "conspect" &&
-      navSidebarSchema(sectionId).hubSectionConcepts === true &&
+      sidebarSchema.mode === "two-level" &&
+      sidebarSchema.hubSectionConcepts &&
       hubSection &&
       hubTopicNav !== null &&
       !hubTopicNav.hideSidebarConcepts &&

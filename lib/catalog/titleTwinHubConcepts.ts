@@ -2,7 +2,7 @@ import type { Locale } from "@/lib/i18n/locales";
 import type { Subject } from "@/lib/catalog";
 import { topicsForCluster } from "@/lib/catalog";
 import { loadTopicOutline } from "@/lib/parse";
-import type { Concept } from "@/lib/parse";
+import type { Concept, ConceptOutline } from "@/lib/parse";
 import { conceptsForConspectTopic, sameTitle } from "@/lib/nav/navUtils";
 import { titleTwinTopicForCluster } from "./titleTwinTopic";
 
@@ -10,8 +10,8 @@ import { titleTwinTopicForCluster } from "./titleTwinTopic";
 export function titleTwinOutlineConceptsForSubject(
   subject: Subject,
   locale: Locale,
-): readonly Concept[] {
-  const concepts: Concept[] = [];
+): readonly ConceptOutline[] {
+  const concepts: ConceptOutline[] = [];
   for (const cluster of subject.clusters) {
     const topics = topicsForCluster(subject, cluster.id);
     if (topics.length !== 1) {

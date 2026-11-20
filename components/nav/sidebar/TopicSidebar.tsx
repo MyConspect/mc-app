@@ -422,11 +422,12 @@ const TrackGroup = memo(function TrackGroup({
     (group.leafTopic?.concepts ?? []).some((concept) =>
       Boolean(concept.group),
     ) ?? false;
+  const leafTopic = group.leafTopic;
   const showLeafConcepts =
     isLeafTrack &&
-    Boolean(group.leafTopic) &&
-    (!group.leafTopic.hideSidebarConcepts ||
-      (group.leafTopic.nestedTopics?.length ?? 0) > 0 ||
+    leafTopic !== undefined &&
+    (!leafTopic.hideSidebarConcepts ||
+      (leafTopic.nestedTopics?.length ?? 0) > 0 ||
       leafHasConceptGroups);
   const hasSidebarChildren =
     group.entries.length > 0 || Boolean(group.hubTopic) || showLeafConcepts;

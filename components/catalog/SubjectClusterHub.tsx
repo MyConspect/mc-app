@@ -27,6 +27,7 @@ import {
   clusterSectionIndexStats,
 } from "@/lib/catalog/clusterIndexFitsPane";
 import { conceptIndexLayoutModeForEntries } from "@/lib/catalog/conceptIndexPaneLayoutMode";
+import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 import type { Concept } from "@/lib/parse";
 import { ConceptList } from "@/components/topic/ConceptList";
 import { TopicNavConceptsProvider } from "@/components/topic/context/TopicNavConceptsContext";
@@ -71,7 +72,7 @@ export function SubjectClusterHub({
   rootSections?: readonly ClusterSection[];
   afterRootSections?: readonly ClusterSection[];
   groupedSections?: readonly SubjectHubGroupedSection[];
-  hubOutlineConcepts?: readonly Concept[];
+  hubOutlineConcepts?: readonly SubjectHubConcept[];
   /** Full parsed concepts for hash drilldown (subject hubs without an intro topic). */
   detailConcepts?: readonly Concept[];
   browseListVariant?: CardGridVariant;
@@ -267,7 +268,8 @@ export function SubjectClusterHub({
   }
 
   if (conceptOpen) {
-    const conceptsForDetail = detailConcepts ?? hubOutlineConcepts;
+    const conceptsForDetail = (detailConcepts ??
+      hubOutlineConcepts) as Concept[];
     return (
       <TopicNavConceptsProvider concepts={conceptsForDetail}>
         <ConceptList

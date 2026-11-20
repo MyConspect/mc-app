@@ -305,6 +305,17 @@ export function ConceptIndexNewspaperColumns({
     measurePaneWidthPx,
   ]);
 
+  const rootStyle = useMemo(() => {
+    if (lockPaneHeight && effectivePaneHeight > 0) {
+      return {
+        ...style,
+        height: effectivePaneHeight,
+        maxHeight: effectivePaneHeight,
+      };
+    }
+    return style;
+  }, [style, lockPaneHeight, effectivePaneHeight]);
+
   if (entries.length === 0) {
     return null;
   }
@@ -320,17 +331,6 @@ export function ConceptIndexNewspaperColumns({
       {entry.node}
     </div>
   ));
-
-  const rootStyle = useMemo(() => {
-    if (lockPaneHeight && effectivePaneHeight > 0) {
-      return {
-        ...style,
-        height: effectivePaneHeight,
-        maxHeight: effectivePaneHeight,
-      };
-    }
-    return style;
-  }, [style, lockPaneHeight, effectivePaneHeight]);
 
   if (lockScrollPaneHeight && effectivePaneHeight > 0) {
     const scrollShellClassName = `concept-index-newspaper-pane-scroll min-h-0 w-full min-w-0 flex-1${

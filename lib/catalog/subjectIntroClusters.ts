@@ -5,7 +5,7 @@ import {
 
 export { SUBJECT_INTRO_OMIT_CLUSTER_IDS };
 
-type SubjectIntroHost = { readonly slug: string };
+type SubjectIntroHost = { readonly track: string; readonly slug: string };
 
 export function filterSubjectClusterSectionsForIntro<
   T extends { readonly cluster: { readonly id: string } },

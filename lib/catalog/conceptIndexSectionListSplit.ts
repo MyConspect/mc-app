@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 /** Minimum bullet rows before a section list may use multi-column layout. */
 /** Avoid inner lanes on medium lists (e.g. HTML appendix); split long catalogs only. */
 export const CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS = 12;
@@ -28,7 +30,7 @@ export function conceptIndexSectionListLayoutClass(itemCount: number): string {
   return "";
 }
 
-export type ConceptIndexSectionListStyle = {
+export type ConceptIndexSectionListStyle = CSSProperties & {
   readonly "--concept-index-list-split-columns"?: number;
 };
 

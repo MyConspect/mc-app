@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { ConceptIndexPaneLayout } from "@/components/topic/ConceptIndexPaneLayout";
 import { buildConceptIndexBalancedEntries } from "@/components/topic/buildConceptIndexBalancedEntries";
 import type { ChromeCopy } from "@/lib/nav";
-import type { Concept } from "@/lib/parse";
+import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 
 /** Dot list under {@link SubjectPageTitle} for `#concept-group-*` hub focus. */
 export function SubjectHubFocusedGroupList({
@@ -12,7 +12,7 @@ export function SubjectHubFocusedGroupList({
   pathname,
   chrome,
 }: {
-  readonly concepts: readonly Concept[];
+  readonly concepts: readonly SubjectHubConcept[];
   readonly pathname: string;
   readonly chrome: ChromeCopy;
 }) {

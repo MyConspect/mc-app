@@ -8,7 +8,7 @@ import { flattenSubjectClusterSectionsForIndex } from "@/lib/catalog/flattenSubj
 import type { SubjectClusterSection } from "@/lib/catalog/clusterConceptIndex";
 import type { ChromeCopy } from "@/lib/nav";
 import { sameTitle } from "@/lib/nav/navUtils";
-import type { Concept } from "@/lib/parse";
+import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 import type { ConceptIndexBalancedEntry } from "./ConceptIndexBalancedLayout";
 import { ConceptGroupIndexSection } from "./ConceptGroupIndexSection";
 import {
@@ -147,7 +147,7 @@ export function buildConceptIndexBalancedEntries({
   subjectTitle,
 }: {
   readonly clusterLayout?: SubjectClusterLayout;
-  readonly concepts: readonly Concept[];
+  readonly concepts: readonly SubjectHubConcept[];
   readonly groupInterviewSections: boolean;
   readonly chrome: ChromeCopy;
   readonly pathname: string;

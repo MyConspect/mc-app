@@ -76,7 +76,7 @@ const GENERIC_INTERVIEW_TOPIC_TITLES = new Set(["interview", "tasks"]);
 
 /** Subject name for interview section labels (e.g. js-interview → JavaScript). */
 export function interviewTopicSubjectTitle(
-  topic: Pick<Topic, "track" | "title" | "grouping">,
+  topic: Pick<Topic, "slug" | "track" | "title" | "grouping">,
   locale: Locale,
 ): string | undefined {
   if (!isInterviewTopic(topic) && !isInterviewTasksTopic(topic)) {
@@ -176,12 +176,17 @@ export function isQuestionCluster(clusterId: string): boolean {
 }
 
 export function isInterviewSectionTopic(
-  topic: Pick<Topic, "slug" | "title" | "grouping" | "file">,
+  topic: Pick<Topic, "slug" | "file" | "grouping"> & {
+    readonly title?: string;
+  },
 ): boolean {
   if (isBehaviorQuestionsTopic(topic)) {
     return true;
   }
-  if (isInterviewTasksTopic(topic) || isInterviewTopic(topic)) {
+  if (
+    isInterviewTasksTopic(topic) ||
+    isInterviewTopic({ slug: topic.slug, title: topic.title ?? "" })
+  ) {
     return true;
   }
   return isQuestionCluster(topic.grouping?.cluster ?? "");

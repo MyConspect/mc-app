@@ -11,15 +11,15 @@ import { searchIndexFor, trigramBodyHits } from "./searchIndex";
 import type { NavGroup } from "./types";
 
 const fixtureGroup: NavGroup = {
-  id: "fixture",
+  id: "other",
   title: "Fixture",
-  href: "/en/fixture",
+  href: "/en/other",
   entries: [
     {
       kind: "topic",
       topic: {
         slug: "sample",
-        href: "/en/fixture/sample",
+        href: "/en/other/sample",
         title: "Sample Topic",
         blurb: "Overview of programming paradigms",
         concepts: [

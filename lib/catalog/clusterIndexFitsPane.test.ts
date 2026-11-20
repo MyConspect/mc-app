@@ -24,8 +24,13 @@ test("clusterSectionListWeight counts group headings", () => {
   const section: SubjectClusterSection = {
     cluster: { id: "x", title: "Architecture", blurb: "" },
     items: [
-      { href: "#a", title: "Styles", indexRowKind: "group-heading" },
-      { href: "#b", title: "Monolith" },
+      {
+        href: "#a",
+        title: "Styles",
+        description: "",
+        indexRowKind: "group-heading",
+      },
+      { href: "#b", title: "Monolith", description: "" },
     ],
   };
   assert.equal(clusterSectionListWeight(section), 5);

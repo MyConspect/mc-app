@@ -14,7 +14,6 @@ function entry(
     key: id,
     weight,
     listItemCount,
-    node: null,
   };
 }
 

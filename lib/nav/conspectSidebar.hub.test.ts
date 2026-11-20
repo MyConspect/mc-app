@@ -8,7 +8,8 @@ import {
 } from "./conspectSidebar";
 
 test("conspect schema follows Advanced gold — no hub concept folds in sidebar", () => {
-  assert.equal(navSidebarSchema("conspect").hubSectionConcepts, false);
+  const schema = navSidebarSchema("conspect");
+  assert.equal(schema.mode === "two-level" && schema.hubSectionConcepts, false);
 });
 
 test("intro groups on subject hubs still classify for hash navigation", () => {

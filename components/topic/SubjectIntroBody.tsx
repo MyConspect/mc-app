@@ -18,6 +18,7 @@ import { SubjectClusterHub } from "@/components/catalog";
 import { SubjectHubFocusedGroupList } from "@/components/catalog/SubjectHubFocusedGroupList";
 import { ConceptList } from "./ConceptList";
 import { TopicNavConceptsProvider } from "./context/TopicNavConceptsContext";
+import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 import type { Concept } from "@/lib/parse";
 import { ConceptIndexPaneLayout } from "./ConceptIndexPaneLayout";
 import { HANDBOOK_SUBJECT_INDEX_BODY } from "./conceptIndexStyles";
@@ -26,13 +27,13 @@ import { resetHandbookReadingScroll } from "./utils/conceptScroll";
 
 function mergeFocusConceptPools(
   primary: readonly Concept[],
-  extra?: readonly Concept[],
-): readonly Concept[] {
+  extra?: readonly SubjectHubConcept[],
+): readonly SubjectHubConcept[] {
   if (!extra?.length) {
     return primary;
   }
   const seen = new Set(primary.map((concept) => concept.id));
-  const merged = [...primary];
+  const merged: SubjectHubConcept[] = [...primary];
   for (const concept of extra) {
     if (seen.has(concept.id)) {
       continue;
@@ -55,7 +56,7 @@ export function SubjectIntroBody({
 }: {
   fallbackBanner: ReactNode;
   concepts: readonly Concept[];
-  hubOutlineConcepts?: readonly Concept[];
+  hubOutlineConcepts?: readonly SubjectHubConcept[];
   emptyMessage: string;
   groupInterviewSections: boolean;
   clusterIndex: {

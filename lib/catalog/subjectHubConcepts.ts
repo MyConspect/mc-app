@@ -25,12 +25,14 @@ function uniqueClusterTopics(subject: Subject): readonly Topic[] {
   return topics;
 }
 
+export type SubjectHubConcept = Concept | ConceptOutline;
+
 /** All cluster-topic outlines on a subject hub (hash resolution and nav). */
 export function subjectHubOutlineConcepts(
   subject: Subject,
   locale: Locale,
-): readonly (Concept | ConceptOutline)[] {
-  const concepts: (Concept | ConceptOutline)[] = [];
+): readonly SubjectHubConcept[] {
+  const concepts: SubjectHubConcept[] = [];
   for (const topic of uniqueClusterTopics(subject)) {
     concepts.push(
       ...conceptsForConspectTopic(topic, loadTopicOutline(topic, locale)),

@@ -67,7 +67,7 @@ export function conceptIndexFocusedClusterColumnCount(
     contentW === undefined ||
     contentW <= 0 ||
     (viewport !== undefined &&
-      conceptIndexRawColumnCountForWidth(contentW, undefined, viewport) >= 3);
+      conceptIndexRawColumnCountForWidth(contentW) >= 3);
   if (wideViewport && widthCapacity >= 3 && count < 3 && paneFitsThreeTracks) {
     count = Math.min(widthCapacity, 3);
   }

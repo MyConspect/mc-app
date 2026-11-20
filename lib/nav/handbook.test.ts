@@ -707,7 +707,7 @@ describe("handbookNavSections layout", () => {
 
   it("retires Test track after GFE migration into handbook interviews", () => {
     assert.equal(
-      TOPICS.some((topic) => topic.track === "test"),
+      TOPICS.some((topic) => (topic.track as string) === "test"),
       false,
       "catalog should have no test-track topics",
     );
@@ -716,7 +716,7 @@ describe("handbookNavSections layout", () => {
       "conspect",
     );
     assert.equal(
-      conspectGroups.some((group) => group.id === "test"),
+      conspectGroups.some((group) => (group.id as string) === "test"),
       false,
       "Test track should not appear in conspect nav",
     );

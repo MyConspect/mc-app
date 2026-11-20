@@ -1,13 +1,13 @@
 import type { ChromeCopy } from "@/lib/nav";
-import type { Concept } from "@/lib/parse";
+import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 
 export type ConceptGroup = {
   readonly key: string;
   readonly label: string | null;
-  readonly concepts: Concept[];
+  readonly concepts: SubjectHubConcept[];
 };
 
-function groupLabel(concept: Concept, chrome: ChromeCopy): string | null {
+function groupLabel(concept: SubjectHubConcept, chrome: ChromeCopy): string | null {
   if (concept.group) {
     return concept.group;
   }
@@ -21,7 +21,7 @@ function groupLabel(concept: Concept, chrome: ChromeCopy): string | null {
 }
 
 export function groupConcepts(
-  concepts: readonly Concept[],
+  concepts: readonly SubjectHubConcept[],
   groupInterviewSections: boolean,
   chrome: ChromeCopy,
 ): ConceptGroup[] {
@@ -54,7 +54,9 @@ export function groupConcepts(
 }
 
 /** Skip the umbrella row when it repeats the section heading (e.g. “Work Principles”). */
-export function conceptsForIndexSection(group: ConceptGroup): Concept[] {
+export function conceptsForIndexSection(
+  group: ConceptGroup,
+): SubjectHubConcept[] {
   if (!group.label) {
     return [...group.concepts];
   }

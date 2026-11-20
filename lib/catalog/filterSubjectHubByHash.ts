@@ -5,7 +5,9 @@ import {
   isConceptGroupSectionId,
 } from "@/lib/nav/conceptGroupSection";
 import { resolveConceptId } from "@/lib/nav/conceptHash";
-import type { Concept } from "@/lib/parse";
+import type { ConceptOutline } from "@/lib/parse";
+
+export type SubjectHubHashConcept = ConceptOutline;
 
 export type SubjectHubGroupedSection = {
   readonly section: {
@@ -31,7 +33,7 @@ export type SubjectHubHashFocus =
   | { readonly kind: "cluster"; readonly clusterId: string };
 
 function introGroupLabels(
-  concepts: readonly Concept[],
+  concepts: readonly SubjectHubHashConcept[],
 ): readonly { readonly label: string }[] {
   const labels: string[] = [];
   const seen = new Set<string>();
@@ -88,7 +90,7 @@ export function resolveSubjectHubHashFocus({
   clusterLayout,
 }: {
   readonly hashId: string;
-  readonly concepts: readonly Concept[];
+  readonly concepts: readonly SubjectHubHashConcept[];
   readonly clusterLayout?: SubjectHubClusterLayout;
 }): SubjectHubHashFocus {
   if (!hashId) {
@@ -171,20 +173,22 @@ export function filterSubjectHubClusterLayout(
 }
 
 export function filterIntroConceptsForHashFocus(
-  concepts: readonly Concept[],
+  concepts: readonly SubjectHubHashConcept[],
   focus: SubjectHubHashFocus,
-): readonly Concept[] {
+): readonly SubjectHubHashConcept[] {
   if (focus.kind === "none" || focus.kind === "concept") {
     return concepts;
   }
   if (focus.kind === "cluster") {
     return [];
   }
-  return concepts.filter(
-    (concept) =>
-      Boolean(concept.group?.trim()) &&
-      conceptGroupSectionDomId(concept.group) === focus.sectionId,
-  );
+  return concepts.filter((concept) => {
+    const group = concept.group?.trim();
+    if (!group) {
+      return false;
+    }
+    return conceptGroupSectionDomId(group) === focus.sectionId;
+  });
 }
 
 /**
@@ -192,10 +196,10 @@ export function filterIntroConceptsForHashFocus(
  * (e.g. Interview) are merged for hash resolution only — not as extra h2 sections.
  */
 export function introConceptsForSubjectHubIndex(
-  introConcepts: readonly Concept[],
-  focusConcepts: readonly Concept[],
+  introConcepts: readonly SubjectHubHashConcept[],
+  focusConcepts: readonly SubjectHubHashConcept[],
   focus: SubjectHubHashFocus,
-): readonly Concept[] {
+): readonly SubjectHubHashConcept[] {
   if (focus.kind === "none") {
     return introConcepts;
   }
@@ -204,7 +208,7 @@ export function introConceptsForSubjectHubIndex(
 
 export function introGroupTitleForSectionId(
   sectionId: string,
-  concepts: readonly Concept[],
+  concepts: readonly SubjectHubHashConcept[],
 ): string | undefined {
   if (!isConceptGroupSectionId(sectionId)) {
     return undefined;

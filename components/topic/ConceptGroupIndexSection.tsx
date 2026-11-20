@@ -10,7 +10,7 @@ import { ConceptGroupSectionHeader } from "./ConceptTitleHeader";
 import type { ConceptGroup } from "./conceptIndexGroups";
 import { conceptsForIndexSection } from "./conceptIndexGroups";
 import type { ChromeCopy } from "@/lib/nav";
-import type { Concept } from "@/lib/parse";
+import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 import {
   CONCEPT_INDEX_CLUSTER_SECTION,
   CONCEPT_INDEX_HEADING_TO_LIST,
@@ -29,11 +29,11 @@ export function ConceptIndexList({
   chrome,
   conceptHrefFor,
 }: {
-  concepts: readonly Concept[];
+  concepts: readonly SubjectHubConcept[];
   query: string;
   pathname: string;
   chrome: ChromeCopy;
-  conceptHrefFor?: (concept: Concept) => string;
+  conceptHrefFor?: (concept: SubjectHubConcept) => string;
 }) {
   const listClass =
     `list-none ${conceptIndexSectionListLayoutClass(concepts.length)}`.trim();

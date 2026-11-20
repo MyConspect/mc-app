@@ -14,5 +14,6 @@ test("searchQueryTokens splits on whitespace", () => {
 
 test("searchHighlightRegExp prefers longer tokens first", () => {
   const re = searchHighlightRegExp(["prog", "programming"]);
+  assert.ok(re);
   assert.match("Programming".match(re)?.[0] ?? "", /^Programming$/i);
 });

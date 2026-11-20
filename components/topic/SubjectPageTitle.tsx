@@ -1,6 +1,6 @@
 "use client";
 
-import type { Concept } from "@/lib/parse";
+import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 
 type ClusterSection = {
   readonly cluster: {
@@ -16,7 +16,7 @@ type GroupedSection = {
 /** Index titles omitted — breadcrumb and sidebar name the subject/cluster. */
 export function SubjectPageTitle(_props: {
   subjectTitle: string;
-  introConcepts?: readonly Concept[];
+  introConcepts?: readonly SubjectHubConcept[];
   sections?: readonly ClusterSection[];
   rootSections?: readonly ClusterSection[];
   afterRootSections?: readonly ClusterSection[];
