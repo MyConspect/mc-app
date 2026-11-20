@@ -6,12 +6,12 @@ url="${RESOURCES_GIT_URL:?RESOURCES_GIT_URL is required}"
 
 clone_url="$url"
 if [ -n "${RESOURCES_GIT_TOKEN:-}" ]; then
-  clone_url="$(node -e "
+  clone_url="$(TOKEN="${RESOURCES_GIT_TOKEN}" node -e "
     const u = new URL(process.argv[1]);
     u.username = 'x-access-token';
     u.password = process.env.TOKEN;
     console.log(u.toString());
-  " "$url" TOKEN="${RESOURCES_GIT_TOKEN}")"
+  " "$url")"
 fi
 
 if [[ "$ref" =~ ^[0-9a-f]{40}$ ]]; then
