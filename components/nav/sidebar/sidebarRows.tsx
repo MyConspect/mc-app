@@ -1050,7 +1050,9 @@ export function TopicRow({
           patchFold(trackId, {
             topicHref: showTopicFold ? topic.href : null,
           });
-          closeNavSoon(onNavigate);
+          if (!showTopicFold) {
+            closeNavSoon(onNavigate);
+          }
           followHandbookHref(topic.href, pathname, goToPath);
         }}
         data-search-hit={isFirstTopic ? "true" : undefined}
@@ -1606,6 +1608,10 @@ export function SubjectRow({
   const hubFoldExclusive =
     subject.sections?.some((section) => isNavSectionCollapsible(section)) ??
     false;
+  const subjectHasNavChildren =
+    (subject.sections?.length ?? 0) > 0 ||
+    (subject.clusters?.length ?? 0) > 0 ||
+    Boolean(subject.flatNav);
 
   function sidebarClustersForSubject(clusters: readonly NavCluster[]) {
     if (!clusterLeafInSidebar) {
@@ -1711,7 +1717,7 @@ export function SubjectRow({
                 topicHref: null,
               });
               followHandbookHref(subject.href, pathname, goToPath);
-              closeNavSoon(onNavigate);
+              closeNavSoon(onNavigate, subjectHasNavChildren);
               return;
             }
             patchFold(trackId, {

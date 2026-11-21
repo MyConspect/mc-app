@@ -632,10 +632,20 @@ article.concept-detail-article > .concept-detail-title {
   overflow: hidden !important;
 }
 
+/* Topic index shells keep `.handbook-subject-index-body` when a hash opens a concept. */
+#handbook-main:has(article.concept-detail-article) .handbook-subject-index-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
 #handbook-main:has(article.concept-detail-article) > main {
   display: flex;
   min-height: 0;
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   flex-direction: column;
   overflow: hidden;
 }
@@ -648,7 +658,7 @@ article.concept-detail-article > .concept-detail-title {
   > main.handbook-subject-main {
   display: flex;
   min-height: 0;
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   flex-direction: column;
 }
 
@@ -667,14 +677,16 @@ article.concept-detail-article > .concept-detail-title {
   .handbook-intro-concept-pane
   > article.concept-detail-article {
   min-height: 0;
-  flex: 1 1 auto;
+  flex: 1 1 0%;
 }
 
 article.concept-detail-article .concept-detail-body-scroll {
   min-height: 0;
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 @media (max-width: 639px) {

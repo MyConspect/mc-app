@@ -490,7 +490,7 @@ const TrackGroup = memo(function TrackGroup({
       event.preventDefault();
       applySameDocumentHref(committedPathname, "", committedPathname);
       queueHandbookHref(navigateHref);
-      closeNavSoon(onNavigate);
+      closeNavSoon(onNavigate, hasSidebarChildren);
       return true;
     }
     if (!onThisTrack) {
@@ -505,7 +505,7 @@ const TrackGroup = memo(function TrackGroup({
     if (hasSidebarChildren) {
       ensureTrackOpen(group.id);
     }
-    closeNavSoon(onNavigate);
+    closeNavSoon(onNavigate, hasSidebarChildren);
     return true;
   };
 

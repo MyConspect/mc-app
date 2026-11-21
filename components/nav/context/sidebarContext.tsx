@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { TrackId } from "@/lib/catalog";
 import type { NavRootSectionId, SearchMode } from "@/lib/nav";
+import { isHandbookMobileViewport } from "../hooks/useMobileNav";
 import type { NavLocation } from "../utils/location";
 
 export type SearchHit = {
@@ -218,7 +219,14 @@ export function useSidebarActive() {
   return value;
 }
 
-export function closeNavSoon(onNavigate?: () => void) {
+/** @param keepDrawerOpenOnMobile Skip dismiss while drilling down the sidebar tree on phones. */
+export function closeNavSoon(
+  onNavigate?: () => void,
+  keepDrawerOpenOnMobile = false,
+) {
+  if (keepDrawerOpenOnMobile && isHandbookMobileViewport()) {
+    return;
+  }
   queueMicrotask(() => onNavigate?.());
 }
 
