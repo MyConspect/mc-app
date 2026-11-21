@@ -295,14 +295,14 @@ export function HandbookShell({
               aria-busy={routePending || undefined}
               className={
                 navOpen && mobileViewport
-                  ? "relative z-0 min-w-0 flex-1 max-md:pointer-events-none"
-                  : "relative min-w-0 flex-1"
+                  ? "relative z-0 min-h-0 min-w-0 flex-1 max-md:pointer-events-none"
+                  : "relative min-h-0 min-w-0 flex-1"
               }
               style={{
                 minHeight: 0,
                 overflow: "auto",
                 overscrollBehavior: "contain",
-                touchAction: "manipulation",
+                WebkitOverflowScrolling: "touch",
               }}
             >
               <ConceptFooterActionsProvider>
