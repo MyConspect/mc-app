@@ -8,6 +8,7 @@ import {
   type NavRootSection,
   type NavRootSectionId,
 } from "@/lib/nav";
+import { useHandbookLocation } from "../hooks/useHandbookLocation";
 import { dispatchSidebarCollapseTracks } from "../hooks/useSidebarOpen";
 
 export function SectionSwitcher({
@@ -18,8 +19,9 @@ export function SectionSwitcher({
   chrome: ChromeCopy;
 }) {
   const pathname = usePathname() ?? "/en";
+  const { highlightPathname } = useHandbookLocation();
   const router = useRouter();
-  const activeSection = inferNavRootSection(pathname);
+  const activeSection = inferNavRootSection(highlightPathname || pathname);
 
   const onSelectSection = (sectionId: NavRootSectionId) => {
     if (sectionId === activeSection) {
