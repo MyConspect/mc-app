@@ -67,6 +67,10 @@ import {
   type StickyVars,
 } from "../utils/sidebarSticky";
 import {
+  conspectClusterExpandsInSidebar,
+  conspectClusterLeavesInSidebar,
+} from "@/lib/nav/conspectSidebar";
+import {
   SidebarFoldScopeProvider,
   SidebarNavProvider,
   closeNavSoon,
@@ -76,6 +80,7 @@ import {
   useSidebarHighlight,
   useScopedSidebarFold,
   useScopedTrackOpen,
+  useSidebarFoldScope,
 } from "../context/sidebarContext";
 import { SearchHitList } from "./SearchHitList";
 import { ClusterRow, SubjectRow, TopicRow } from "./sidebarRows";
@@ -666,6 +671,7 @@ function TrackEntry({
   trackId: TrackId;
   group: NavGroup;
 }) {
+  const rootSectionId = useSidebarFoldScope();
   switch (entry.kind) {
     case "topic":
       return <TopicRow trackId={trackId} topic={entry.topic} />;
@@ -679,6 +685,10 @@ function TrackEntry({
           trackId={trackId}
           subjectHref={entry.subjectHref}
           cluster={entry.cluster}
+          leafInSidebar={
+            conspectClusterLeavesInSidebar(rootSectionId) &&
+            !conspectClusterExpandsInSidebar(entry.cluster)
+          }
         />
       );
     default: {
