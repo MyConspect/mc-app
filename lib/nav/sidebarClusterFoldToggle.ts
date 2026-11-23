@@ -74,7 +74,9 @@ export function topicPageClusterFoldClick(
   sameHash: boolean,
   active: boolean,
 ): SidebarClusterFoldClick {
-  const closing = openClusterKey === foldKey;
+  const foldOpen = openClusterKey === foldKey;
+  /** Close on repeat click only when the section hash is focused — not when a child concept is open. */
+  const closing = foldOpen && (sameHash || active);
 
   let replaceHashWith: string | null = null;
   if (closing) {

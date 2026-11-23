@@ -146,6 +146,14 @@ export function handbookRedirects(): readonly HandbookRedirect[] {
     ),
     legacyRedirect("/backend/database-:topic", "/en/databases/database-:topic"),
     legacyRedirect(
+      "/:locale(en|ru)/databases/database-production",
+      "/:locale/databases/database-additional",
+    ),
+    legacyRedirect(
+      "/databases/database-production",
+      "/en/databases/database-additional",
+    ),
+    legacyRedirect(
       "/:locale(en|ru)/backend/database-nosql",
       "/:locale/databases#nosql",
     ),

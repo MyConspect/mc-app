@@ -8,7 +8,7 @@ import type {
 import { resolveConceptId } from "@/lib/nav/conceptHash";
 import { isConceptGroupSectionId } from "@/lib/nav/conceptGroupSection";
 import { navSubjectClusters } from "@/lib/nav/subjectClusters";
-import { sameTitle } from "@/lib/nav/navUtils";
+import { areRedundantNavTitles, sameTitle } from "@/lib/nav/navUtils";
 
 export function conceptById(
   concepts: readonly NavConcept[],
@@ -117,4 +117,17 @@ export function aliasTopicForCluster(
     return undefined;
   }
   return only;
+}
+
+/** Subject already names this topic (CS Core) — breadcrumbs/sidebar stop at subject. */
+export function omitTopicCrumbForSubjectAlias(
+  subject: Pick<NavSubject, "title">,
+  cluster: NavCluster,
+  topic: NavTopic,
+): boolean {
+  return (
+    areRedundantNavTitles(subject.title, topic.title) ||
+    (isTopicAliasCluster(cluster) &&
+      areRedundantNavTitles(subject.title, cluster.title))
+  );
 }

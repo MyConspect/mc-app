@@ -22,37 +22,34 @@ import {
   resolveSubjectHubHashFocus,
 } from "./filterSubjectHubByHash";
 
-test("resolveSubjectHubHashFocus maps Work Principles hash to concept-group", () => {
-  const core = SUBJECTS.find((subject) => subject.slug === "core");
+test("resolveSubjectHubHashFocus maps frontend platform cluster hash", () => {
+  const core = SUBJECTS.find(
+    (subject) => subject.track === "frontend" && subject.slug === "core",
+  );
   assert.ok(core);
-  const introSlug = subjectIntroTopicSlug(core);
-  assert.ok(introSlug);
-  const topic = getTopic(core.track, introSlug);
-  assert.ok(topic);
-  const concepts = loadTopicOutline(topic, "en");
+  assert.equal(subjectIntroTopicSlug(core), undefined);
   const sections = localizeSubjectClusterSections(
     "en",
     subjectClusterCards(core),
   );
   const layout = { sections };
-  const workId = conceptGroupSectionDomId("Work Principles");
   const focus = resolveSubjectHubHashFocus({
-    hashId: workId,
-    concepts,
+    hashId: "platform",
+    concepts: [],
     clusterLayout: layout,
   });
-  assert.equal(focus.kind, "concept-group");
-  if (focus.kind === "concept-group") {
-    assert.equal(focus.sectionId, workId);
+  assert.equal(focus.kind, "cluster");
+  if (focus.kind === "cluster") {
+    assert.equal(focus.clusterId, "platform");
   }
 });
 
-test("filterSubjectHubByHash keeps one intro group or one cluster section", () => {
-  const core = SUBJECTS.find((subject) => subject.slug === "core");
+test("filterSubjectHubByHash keeps one cluster section on frontend Core hub", () => {
+  const core = SUBJECTS.find(
+    (subject) => subject.track === "frontend" && subject.slug === "core",
+  );
   assert.ok(core);
-  const introSlug = subjectIntroTopicSlug(core);
-  assert.ok(introSlug);
-  const topic = getTopic(core.track, introSlug);
+  const topic = getTopic(core.track, "core-browser-platform");
   assert.ok(topic);
   const concepts = loadTopicOutline(topic, "en");
   const sections = localizeSubjectClusterSections(
@@ -61,21 +58,15 @@ test("filterSubjectHubByHash keeps one intro group or one cluster section", () =
   );
   const layout = { sections };
 
-  const workId = conceptGroupSectionDomId("Work Principles");
-  const workFocus = resolveSubjectHubHashFocus({
-    hashId: workId,
+  const platformFocus = resolveSubjectHubHashFocus({
+    hashId: "platform",
     concepts,
     clusterLayout: layout,
   });
-  const workConcepts = filterIntroConceptsForHashFocus(concepts, workFocus);
-  assert.ok(workConcepts.length >= 3);
-  assert.ok(
-    workConcepts.every(
-      (c) => conceptGroupSectionDomId(c.group ?? "") === workId,
-    ),
-  );
-  const workLayout = filterSubjectHubClusterLayout(layout, workFocus);
-  assert.deepEqual(workLayout.sections, []);
+  assert.equal(platformFocus.kind, "cluster");
+  const platformLayout = filterSubjectHubClusterLayout(layout, platformFocus);
+  assert.equal(platformLayout.sections?.length, 1);
+  assert.equal(platformLayout.sections?.[0]?.cluster.id, "platform");
 
   const a11yFocus = resolveSubjectHubHashFocus({
     hashId: "accessibility",
@@ -90,27 +81,27 @@ test("filterSubjectHubByHash keeps one intro group or one cluster section", () =
   assert.equal(a11yConcepts.length, 0);
 });
 
-test("introGroupTitleForSectionId resolves Work Principles label", () => {
-  const core = SUBJECTS.find((subject) => subject.slug === "core");
+test("introGroupTitleForSectionId returns undefined without intro groups", () => {
+  const core = SUBJECTS.find(
+    (subject) => subject.track === "frontend" && subject.slug === "core",
+  );
   assert.ok(core);
-  const introSlug = subjectIntroTopicSlug(core);
-  assert.ok(introSlug);
-  const topic = getTopic(core.track, introSlug);
+  const topic = getTopic(core.track, "core-browser-platform");
   assert.ok(topic);
   const concepts = loadTopicOutline(topic, "en");
   const workId = conceptGroupSectionDomId("Work Principles");
-  assert.equal(
-    introGroupTitleForSectionId(workId, concepts),
-    "Work Principles",
-  );
+  assert.equal(introGroupTitleForSectionId(workId, concepts), undefined);
 });
 
-test("full core hub index uses intro groups only, not title-twin interview groups", () => {
-  const core = SUBJECTS.find((subject) => subject.slug === "core");
+test("frontend Core hub index uses cluster sections, not intro pseudo-clusters", () => {
+  const core = SUBJECTS.find(
+    (subject) => subject.track === "frontend" && subject.slug === "core",
+  );
   assert.ok(core);
-  const introSlug = subjectIntroTopicSlug(core);
-  assert.ok(introSlug);
-  const topic = getTopic(core.track, introSlug);
+  assert.equal(subjectIntroTopicSlug(core), undefined);
+  const sections = subjectClusterSectionsForLocale("en", core);
+  assert.ok(sections.some((section) => section.cluster.id === "platform"));
+  const topic = getTopic(core.track, "core-browser-platform");
   assert.ok(topic);
   const introConcepts = loadTopicOutline(topic, "en");
   const focusConcepts = [
@@ -128,12 +119,7 @@ test("full core hub index uses intro groups only, not title-twin interview group
     focusConcepts,
     hubFocus,
   );
-  const indexGroups = new Set(
-    indexConcepts.map((c) => c.group?.trim()).filter(Boolean),
-  );
-  assert.ok(indexGroups.has("Work Principles"));
-  assert.ok(!indexGroups.has("Web Security Fundamentals"));
-  assert.ok(indexConcepts.length < focusConcepts.length);
+  assert.equal(indexConcepts.length, introConcepts.length);
 });
 
 test("cluster focus on HTML Document omits Reference appendix rows", () => {
@@ -217,11 +203,11 @@ test("catalog cluster hash wins over same-named concept on subject hub", () => {
 });
 
 test("concept hash resolves to reading mode, not index filter", () => {
-  const core = SUBJECTS.find((subject) => subject.slug === "core");
+  const core = SUBJECTS.find(
+    (subject) => subject.track === "frontend" && subject.slug === "core",
+  );
   assert.ok(core);
-  const introSlug = subjectIntroTopicSlug(core);
-  assert.ok(introSlug);
-  const topic = getTopic(core.track, introSlug);
+  const topic = getTopic(core.track, "core-browser-platform");
   assert.ok(topic);
   const concepts = loadTopicOutline(topic, "en");
   const focus = resolveSubjectHubHashFocus({

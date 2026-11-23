@@ -11,6 +11,7 @@ import {
   conceptMatchesQuery,
   type NavCluster,
   type NavConcept,
+  type NavGroup,
   type NavSection,
   type NavSubject,
   type NavTopic,
@@ -64,7 +65,11 @@ import {
   isConceptGroupSectionId,
 } from "@/lib/nav/conceptGroupSection";
 import { NavCautionBadge } from "../ui/NavCautionBadge";
-import { clusterNavigateHref } from "@/lib/nav/sections";
+import { withHandbookSection } from "@/lib/i18n/sectionPaths";
+import {
+  clusterNavigateHref,
+  navSubjectNavigateHref,
+} from "@/lib/nav/sections";
 import {
   conspectClusterExpandsInSidebar,
   conspectClusterLeavesInSidebar,
@@ -225,12 +230,13 @@ export const ConceptLink = memo(function ConceptLink({
       data-search-in={snippet ? "notes" : undefined}
       onClick={(event) => {
         event.preventDefault();
-        if (pathname === topicHref) {
+        const topicPath = topicHref.split("#")[0] ?? topicHref;
+        if (pathname === topicPath) {
           setHashOnPath(pathname, concept.id, false);
-          closeNavSoon(onNavigate);
+          closeNavSoon(onNavigate, true);
           return;
         }
-        closeNavSoon(onNavigate);
+        closeNavSoon(onNavigate, true);
         followHandbookHref(
           conceptHref(topicHref, concept.id),
           pathname,
@@ -261,6 +267,18 @@ export const ConceptLink = memo(function ConceptLink({
   );
 });
 
+const DATABASE_NOSQL_CORE_SLUG = "database-nosql-core";
+
+function isRedundantNosqlIntroGroup(
+  topic: NavTopic,
+  groupLabel: string,
+): boolean {
+  return (
+    topic.slug === DATABASE_NOSQL_CORE_SLUG &&
+    /^nosql\s+foundations$/i.test(groupLabel.trim())
+  );
+}
+
 function conceptsBySidebarGroup(
   topic: NavTopic,
   concepts: readonly NavConcept[],
@@ -278,6 +296,10 @@ function conceptsBySidebarGroup(
 
   for (const concept of concepts) {
     const rawGroup = concept.group?.trim();
+    if (rawGroup != null && isRedundantNosqlIntroGroup(topic, rawGroup)) {
+      ungrouped.push(concept);
+      continue;
+    }
     const useGroup =
       rawGroup != null &&
       rawGroup.length > 0 &&
@@ -342,6 +364,10 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
     first?.pathname === topicPath && first.hash === `#${sectionId}`;
   const onPath = !searching && (groupHashActive || childConceptActive);
   const pinPath = navPathPinned(onPath, groupHashActive, stackPathPins);
+  /** Interview Q&A groups sit under a topic row — use a separate sticky tier (like SQL cluster → topic). */
+  const sectionNavKind = topic.hideSidebarConcepts
+    ? "interview-section"
+    : "topic";
 
   return (
     <li className="contents">
@@ -349,10 +375,10 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
         href={navigateHref}
         prefetch={false}
         scroll={false}
-        data-nav="cluster"
+        data-nav={sectionNavKind}
         data-nav-id={sectionId}
         data-nav-path={pinPath ? "true" : undefined}
-        data-nav-pin={pinPath ? "cluster" : undefined}
+        data-nav-pin={pinPath ? sectionNavKind : undefined}
         onClick={(event) => {
           pinNavForHref(event.currentTarget, pathname, navigateHref);
           if (onTopic) {
@@ -409,6 +435,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
             topic={topic}
             concepts={concepts}
             indentClass={indentClass === "pl-4" ? "pl-8" : "pl-6"}
+            ancestorTitle={groupLabel}
           />
         </ul>
       </NavFold>
@@ -420,17 +447,26 @@ function ConceptFlatLinks({
   topic,
   concepts,
   indentClass = "pl-4",
+  ancestorTitle,
 }: {
   topic: NavTopic;
   concepts: readonly NavConcept[];
   indentClass?: string;
+  ancestorTitle?: string;
 }) {
   const { first, searching } = useSidebarChrome();
   const { highlightPathname, stackPathPins } = useSidebarHighlight();
   const { activeConceptId } = useSidebarActive();
+  const visible = concepts.filter(
+    (concept) =>
+      !(
+        ancestorTitle != null &&
+        areRedundantNavTitles(ancestorTitle, concept.title)
+      ),
+  );
   return (
     <>
-      {concepts.map((concept, index) => {
+      {visible.map((concept, index) => {
         const conceptActive = isConceptActiveOnPage(
           highlightPathname,
           topic.href,
@@ -465,6 +501,7 @@ function ConceptItems({
   concepts,
   indentClass = "pl-4",
   ancestorTitle,
+  tightTopGap = false,
 }: {
   trackId: TrackId;
   topic: NavTopic;
@@ -472,6 +509,7 @@ function ConceptItems({
   indentClass?: string;
   /** Subject (or track) title already shown on the parent sidebar row. */
   ancestorTitle?: string;
+  tightTopGap?: boolean;
 }) {
   const { searching } = useSidebarChrome();
   if (searching) {
@@ -480,6 +518,7 @@ function ConceptItems({
         topic={topic}
         concepts={concepts}
         indentClass={indentClass}
+        ancestorTitle={ancestorTitle}
       />
     );
   }
@@ -495,6 +534,7 @@ function ConceptItems({
         topic={topic}
         concepts={concepts}
         indentClass={indentClass}
+        ancestorTitle={ancestorTitle}
       />
     );
   }
@@ -506,6 +546,7 @@ function ConceptItems({
           topic={topic}
           concepts={ungrouped}
           indentClass={indentClass}
+          ancestorTitle={ancestorTitle}
         />
       ) : null}
       {groups
@@ -522,7 +563,11 @@ function ConceptItems({
             concepts={group.concepts}
             indentClass={indentClass}
             rowGapClass={
-              index === 0 && ungrouped.length === 0 ? NAV_ROW_GAP : "mt-0.5"
+              index === 0 && ungrouped.length === 0
+                ? tightTopGap
+                  ? "mt-0.5"
+                  : NAV_ROW_GAP
+                : "mt-0.5"
             }
           />
         ))}
@@ -554,6 +599,8 @@ const SectionTopicLink = memo(function SectionTopicLink({
   const { topicHref: openTopicHref } = fold(trackId);
   const { isBookmarked } = useSidebarBookmarks();
   const topicNavConcepts = useTopicNavConcepts();
+  const sectionId = useSidebarFoldScope();
+  const topicLinkHref = withHandbookSection(topic.href, sectionId);
   const navTopic = navTopicWithLiveConcepts(topic, pathname, topicNavConcepts);
   const nestedTopics = topic.nestedTopics ?? [];
   const hasNestedTopics = nestedTopics.length > 0;
@@ -563,8 +610,9 @@ const SectionTopicLink = memo(function SectionTopicLink({
   const nestedOpen =
     hasNestedTopics &&
     nestedTopics.some((nested) => openTopicHref === nested.href);
-  const active = isActiveHref(highlightPathname, topic.href);
-  const isHitTopic = first?.pathname === topic.href;
+  const onTopicPage = isActiveHref(highlightPathname, topic.href);
+  const active = onTopicPage;
+  const isHitTopic = first?.pathname === topicLinkHref;
   const isFirstTopic = isHitTopic && first.hash === "";
   const onPath = !searching && (active || nestedOnPath);
   const mobileLeaf = topicIsMobileNavLeaf(
@@ -596,7 +644,10 @@ const SectionTopicLink = memo(function SectionTopicLink({
       )) ||
     (hasNestedTopics && nestedTopics.length > 0);
   const topicFoldOpen =
-    openTopicHref === topic.href || nestedOpen || nestedOnPath;
+    openTopicHref === topic.href ||
+    nestedOpen ||
+    nestedOnPath ||
+    (onTopicPage && showConceptNav);
   const topicOpen = searching
     ? showConceptNav || hasNestedTopics
     : showTopicFold && topicFoldOpen;
@@ -610,7 +661,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
   return (
     <>
       <Link
-        href={topic.href}
+        href={topicLinkHref}
         prefetch={false}
         scroll={false}
         data-nav="topic"
@@ -783,12 +834,15 @@ function TopicConceptNav({
   concepts,
   indentClass = "pl-4",
   ancestorTitle,
+  tightTopGap = false,
 }: {
   trackId: TrackId;
   topic: NavTopic;
   concepts: readonly NavConcept[];
   indentClass?: string;
   ancestorTitle?: string;
+  /** First concept/section row sits flush under an expanded cluster header. */
+  tightTopGap?: boolean;
 }) {
   return (
     <ConceptItems
@@ -797,7 +851,58 @@ function TopicConceptNav({
       concepts={concepts}
       indentClass={indentClass}
       ancestorTitle={ancestorTitle}
+      tightTopGap={tightTopGap}
     />
+  );
+}
+
+/** Concepts or markdown groups directly under a cluster row (no topic title spacer). */
+function ClusterSingleTopicConcepts({
+  trackId,
+  cluster,
+  topic,
+}: {
+  trackId: TrackId;
+  cluster: NavCluster;
+  topic: NavTopic;
+}) {
+  const { query, mode, pathname, searching } = useSidebarChrome();
+  const topicNavConcepts = useTopicNavConcepts();
+  const navTopic = navTopicWithLiveConcepts(topic, pathname, topicNavConcepts);
+  const concepts = visibleConcepts(navTopic, query, mode);
+  const sidebarConcepts = searching
+    ? concepts
+    : filterInterviewConcepts(navTopic, concepts);
+  const hasNestedTopics = (navTopic.nestedTopics?.length ?? 0) > 0;
+  if (sidebarConcepts.length === 0 && !hasNestedTopics) {
+    return null;
+  }
+  return (
+    <li className="contents">
+      {sidebarConcepts.length > 0 ? (
+        <TopicConceptNav
+          trackId={trackId}
+          topic={navTopic}
+          concepts={sidebarConcepts}
+          indentClass="pl-6"
+          ancestorTitle={cluster.title}
+          tightTopGap
+        />
+      ) : null}
+      {hasNestedTopics
+        ? navTopic.nestedTopics!.map((nested, index) => (
+            <li key={nested.slug} className="contents">
+              <SectionTopicLink
+                trackId={trackId}
+                topic={nested}
+                title={nested.title}
+                navId={nested.slug}
+                rowGapClass={index === 0 ? "mt-0.5" : "mt-0.5"}
+              />
+            </li>
+          ))
+        : null}
+    </li>
   );
 }
 
@@ -835,7 +940,8 @@ export function TopicRow({
     fold(trackId);
   const { isBookmarked } = useSidebarBookmarks();
   const topicNavConcepts = useTopicNavConcepts();
-  const navHref = linkHref ?? topic.href;
+  const sectionId = useSidebarFoldScope();
+  const navHref = withHandbookSection(linkHref ?? topic.href, sectionId);
   const { pathname: navHrefPath, hash: navHrefHash } = splitHref(navHref);
   const onSubjectHub =
     navKind === "cluster" &&
@@ -948,6 +1054,15 @@ export function TopicRow({
   // drag Core/Structure above Frontend/HTML while siblings scroll.
   const indent = compact ? (navKind === "cluster" ? "pl-4" : "pl-6") : "";
   const conceptIndent = compact ? "pl-8" : "pl-4";
+  const clusterHeaderGap =
+    stackSiblingGap && !(showTopicFold && topicOpen)
+      ? `${NAV_ROW_GAP} mb-1.5`
+      : NAV_ROW_GAP;
+  const flushConceptSections =
+    navKind === "cluster" || (compact && showTopicFold);
+  const tightConceptGroupsUnderTopic =
+    flushConceptSections ||
+    (navTopic.hideSidebarConcepts && topicOpen && showConceptNav);
 
   if (hideTitle) {
     if (!showConceptNav && !hasNestedTopics) {
@@ -963,6 +1078,7 @@ export function TopicRow({
               concepts={sidebarConcepts}
               indentClass={conceptIndent}
               ancestorTitle={ancestorTitle}
+              tightTopGap={ancestorTitle != null || flushConceptSections}
             />
           ) : null}
           {nestedTopics.map((nested, index) => (
@@ -972,7 +1088,9 @@ export function TopicRow({
                 topic={nested}
                 title={nested.title}
                 navId={nested.slug}
-                rowGapClass={index === 0 ? NAV_ROW_GAP : "mt-0.5"}
+                rowGapClass={
+                  index === 0 && !showConceptNav ? NAV_ROW_GAP : "mt-0.5"
+                }
               />
             </li>
           ))}
@@ -1062,7 +1180,7 @@ export function TopicRow({
           navPathHighlighted(isHitTopic || active, onPath, stackPathPins),
           pinPath,
           indent,
-        )} ${stackSiblingGap ? `${NAV_ROW_GAP} mb-1.5` : NAV_ROW_GAP}`}
+        )} ${clusterHeaderGap}`}
       >
         <span className="flex min-w-0 flex-1 items-start gap-1.5">
           <RowTitle
@@ -1100,6 +1218,7 @@ export function TopicRow({
               concepts={sidebarConcepts}
               indentClass={conceptIndent}
               ancestorTitle={ancestorTitle}
+              tightTopGap={tightConceptGroupsUnderTopic}
             />
           ) : null}
           {nestedTopics.map((nested, index) => (
@@ -1143,7 +1262,12 @@ export function ClusterRow({
   const { activeConceptId } = useSidebarActive();
   const topicNavConcepts = useTopicNavConcepts();
   const onlyTopic = cluster.topics.length === 1 ? cluster.topics[0] : null;
-  const navigateHref = clusterNavigateHref(cluster, sectionId, subjectPath);
+  const navigateHref = clusterNavigateHref(
+    cluster,
+    sectionId,
+    subjectPath,
+    trackId,
+  );
   const hubSingleTopic = onlyTopic !== null && onlyTopic.href === subjectPath;
   const singleTopicAsTopicRow =
     onlyTopic && cluster.id === onlyTopic.slug && !hubSingleTopic;
@@ -1321,6 +1445,7 @@ export function ClusterRow({
         navKind="cluster"
         navId={cluster.id}
         stackSiblingGap={!leafInSidebar}
+        ancestorTitle={cluster.title}
       />
     );
   }
@@ -1339,20 +1464,21 @@ export function ClusterRow({
     activeConceptId,
     onHub,
   );
+  const topicMatchesPath = cluster.topics.some((topic) =>
+    navTopicTreeContainsHref(topic, highlightPathname),
+  );
   const clusterOpen =
     searching ||
     openClusterKey === key ||
     active ||
     nestedClusterFoldOpen ||
+    topicMatchesPath ||
     (isConceptGroupSectionId(cluster.id) && hubConceptActive) ||
     (!searching &&
       hubConceptActive &&
       (!hubFoldExclusive || openClusterKey === null || openClusterKey === key));
   const isHitCluster =
     first?.pathname === subjectPath && first.hash === `#${cluster.id}`;
-  const topicMatchesPath = cluster.topics.some((topic) =>
-    navTopicTreeContainsHref(topic, highlightPathname),
-  );
   const onHubIndex = onHub && activeConceptId.length === 0;
   const onPath =
     !searching &&
@@ -1436,27 +1562,39 @@ export function ClusterRow({
       </Link>
       <NavFold open={clusterOpen} instant={searching} unbox>
         <ul className="contents">
-          {hasNestedGroups
-            ? cluster.nestedClusters?.map((nested) => (
-                <ClusterRow
-                  key={nested.id}
-                  trackId={trackId}
-                  subjectHref={subjectPath}
-                  cluster={nested}
-                  hubFoldExclusive={hubFoldExclusive}
-                  leafInSidebar={leafInSidebar}
-                />
-              ))
-            : cluster.topics.map((topic) => (
-                <TopicRow
-                  key={cluster.topics.length === 1 ? cluster.id : topic.slug}
-                  trackId={trackId}
-                  topic={topic}
-                  compact
-                  navKind="topic"
-                  navId={topic.slug}
-                />
-              ))}
+          {hasNestedGroups ? (
+            cluster.nestedClusters?.map((nested) => (
+              <ClusterRow
+                key={nested.id}
+                trackId={trackId}
+                subjectHref={subjectPath}
+                cluster={nested}
+                hubFoldExclusive={hubFoldExclusive}
+                leafInSidebar={leafInSidebar}
+              />
+            ))
+          ) : cluster.topics.length === 1 &&
+            onlyTopic !== null &&
+            (onlyTopic.concepts.length > 0 ||
+              (onlyTopic.nestedTopics?.length ?? 0) > 0) ? (
+            <ClusterSingleTopicConcepts
+              key={cluster.id}
+              trackId={trackId}
+              cluster={cluster}
+              topic={onlyTopic}
+            />
+          ) : (
+            cluster.topics.map((topic) => (
+              <TopicRow
+                key={cluster.topics.length === 1 ? cluster.id : topic.slug}
+                trackId={trackId}
+                topic={topic}
+                compact
+                navKind="topic"
+                navId={topic.slug}
+              />
+            ))
+          )}
         </ul>
       </NavFold>
     </li>
@@ -1578,20 +1716,26 @@ export function SectionRow({
 
 export function SubjectRow({
   trackId,
+  group,
   subject,
 }: {
   trackId: TrackId;
+  group: NavGroup;
   subject: NavSubject;
 }) {
   const sectionId = useSidebarFoldScope();
   const clusterLeafInSidebar = conspectClusterLeavesInSidebar(sectionId);
+  const subjectNavHref = navSubjectNavigateHref(group, subject, sectionId);
   const { query, pathname, searching, first, goToPath, onNavigate } =
     useSidebarChrome();
   const { highlightPathname, stackPathPins } = useSidebarHighlight();
   const { fold, patchFold } = useScopedSidebarFold();
   const { subjectHref: openSubjectHref } = fold(trackId);
-  const active = isActiveHref(highlightPathname, subject.href);
   const subjectOnPath = isOnSubjectPath(highlightPathname, subject);
+  const active =
+    sectionId === "interviews"
+      ? isActiveHref(highlightPathname, subjectNavHref) || subjectOnPath
+      : isActiveHref(highlightPathname, subject.href);
   const subjectForceClosed = isSubjectForceClosed(
     subject.href,
     openSubjectHref,
@@ -1600,7 +1744,7 @@ export function SubjectRow({
     searching ||
     (!subjectForceClosed &&
       (openSubjectHref === subject.href || subjectOnPath));
-  const isHitSubject = first?.pathname === subject.href && first.hash === "";
+  const isHitSubject = first?.pathname === subjectNavHref && first.hash === "";
   const onPath = !searching && isOnSubjectPath(highlightPathname, subject);
   const pinPath = navPathPinned(onPath, active, stackPathPins);
   const locale = localeFromPathname(pathname);
@@ -1637,7 +1781,6 @@ export function SubjectRow({
       const loneSubjectCluster =
         clusters.length === 1 && cluster.topics.length === 1;
       if (
-        !clusterLeafInSidebar &&
         (areRedundantNavTitles(cluster.title, subject.title) ||
           (titleTwinLoneTopic && loneSubjectCluster)) &&
         cluster.topics.length > 0
@@ -1692,7 +1835,7 @@ export function SubjectRow({
   return (
     <li className="contents">
       <Link
-        href={subject.href}
+        href={subjectNavHref}
         prefetch={false}
         data-nav="subject"
         data-nav-id={subject.slug}
@@ -1705,7 +1848,7 @@ export function SubjectRow({
               hold: false,
               scrollIntoView: false,
             });
-            const onHub = pathname === subject.href;
+            const onHub = pathname === subjectNavHref;
             const hubHash = hashIdFrom(
               typeof window !== "undefined" ? window.location.hash : "",
             );
@@ -1716,8 +1859,11 @@ export function SubjectRow({
                 sectionKey: null,
                 topicHref: null,
               });
-              followHandbookHref(subject.href, pathname, goToPath);
-              closeNavSoon(onNavigate, subjectHasNavChildren);
+              followHandbookHref(subjectNavHref, pathname, goToPath);
+              closeNavSoon(
+                onNavigate,
+                sectionId === "conspect" && subjectHasNavChildren,
+              );
               return;
             }
             patchFold(trackId, {
@@ -1730,14 +1876,14 @@ export function SubjectRow({
           }
           if (subjectForceClosed) {
             event.preventDefault();
-            pinNavForHref(event.currentTarget, pathname, subject.href);
+            pinNavForHref(event.currentTarget, pathname, subjectNavHref);
             patchFold(trackId, { subjectHref: subject.href });
-            if (pathname !== subject.href) {
-              queueHandbookHref(subject.href);
+            if (pathname !== subjectNavHref) {
+              queueHandbookHref(subjectNavHref);
             }
             return;
           }
-          if (pathname === subject.href) {
+          if (pathname === subjectNavHref) {
             event.preventDefault();
             pinNavElement(event.currentTarget, {
               hold: false,
@@ -1748,8 +1894,8 @@ export function SubjectRow({
             }
             return;
           }
-          pinNavForHref(event.currentTarget, pathname, subject.href);
-          queueHandbookHref(subject.href);
+          pinNavForHref(event.currentTarget, pathname, subjectNavHref);
+          queueHandbookHref(subjectNavHref);
           patchFold(trackId, { subjectHref: subject.href });
         }}
         data-search-hit={isHitSubject ? "true" : undefined}

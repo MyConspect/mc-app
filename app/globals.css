@@ -1849,7 +1849,8 @@ article.concept-detail-article .concept-body details + details {
   z-index: 22;
 }
 
-#handbook-nav-aside [data-nav="interview-section"][data-nav-path="true"] {
+#handbook-nav-aside [data-nav="interview-section"][data-nav-path="true"],
+#handbook-nav-aside [data-nav-pin="interview-section"] {
   top: var(
     --nav-sticky-top-interview,
     calc(

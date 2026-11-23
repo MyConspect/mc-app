@@ -2,6 +2,7 @@ import type {
   NavCluster,
   NavEntry,
   NavGroup,
+  NavRootSection,
   NavSection,
   NavSubject,
   NavTopic,
@@ -748,8 +749,9 @@ export function parentHrefForPath(
   pathname: string,
   hash: string,
   labels: { home: string; instructions: string },
+  sections?: readonly NavRootSection[],
 ): string | null {
-  const crumbs = crumbsForPath(groups, pathname, hash, labels);
+  const crumbs = crumbsForPath(groups, pathname, hash, labels, sections);
   for (let index = crumbs.length - 2; index >= 0; index -= 1) {
     const href = crumbs[index]?.href;
     if (href) {

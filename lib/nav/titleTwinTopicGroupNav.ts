@@ -13,17 +13,20 @@ import type { NavCluster } from "./types";
 
 /** Sidebar group rows for a title-twin topic with markdown `group` labels (CSS Core, etc.). */
 export function titleTwinMarkdownGroupClusters(
-  subjectPath: string,
+  _subjectPath: string,
   clusterTitle: string,
   topic: Topic,
   locale: Locale,
 ): readonly NavCluster[] {
+  const topicPath = withLocale(locale, topicHref(topic));
   const outline = loadTopicOutline(topic, locale);
   if (outline.length === 0) {
     return [];
   }
   const grouped = groupNavConceptsByMarkdownGroup(
     navConceptsFromOutline(outline),
+    topic.title,
+    topic.slug,
   );
   return grouped
     .filter(
@@ -38,7 +41,7 @@ export function titleTwinMarkdownGroupClusters(
       return {
         id,
         title: label,
-        href: `${subjectPath}#${id}`,
+        href: `${topicPath}#${id}`,
         topics: [
           {
             slug: topic.slug,

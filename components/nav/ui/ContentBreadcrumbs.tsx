@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/catalog/Breadcrumbs";
 import { useConceptFooterActions } from "@/components/topic/conceptFooterActionsContext";
 import { HANDBOOK_STICKY_INSET_VAR } from "@/components/topic/utils/conceptScroll";
 import { HANDBOOK_MAIN_ID } from "@/constants";
-import type { ChromeCopy, NavGroup } from "@/lib/nav";
+import type { ChromeCopy, NavGroup, NavRootSection } from "@/lib/nav";
 import { stripLocalePrefix } from "@/lib/i18n/paths";
 import { useHandbookLocation } from "../hooks/useHandbookLocation";
 import { crumbsForPath } from "../utils/location";
@@ -29,24 +29,33 @@ function crumbsWithOpenConcept(
 
 export function ContentBreadcrumbs({
   groups,
+  sections,
   chrome,
 }: {
   groups: readonly NavGroup[];
+  sections: readonly NavRootSection[];
   chrome: ChromeCopy;
 }) {
   const { location } = useHandbookLocation();
   const conceptActions = useConceptFooterActions();
   const crumbs = useMemo(() => {
-    const trail = crumbsForPath(groups, location.pathname, location.hash, {
-      home: chrome.home,
-      instructions: chrome.instructions,
-    });
+    const trail = crumbsForPath(
+      groups,
+      location.pathname,
+      location.hash,
+      {
+        home: chrome.home,
+        instructions: chrome.instructions,
+      },
+      sections,
+    );
     if (conceptActions?.variant !== "detail") {
       return trail;
     }
     return crumbsWithOpenConcept(trail, conceptActions.title);
   }, [
     groups,
+    sections,
     location.pathname,
     location.hash,
     chrome.home,

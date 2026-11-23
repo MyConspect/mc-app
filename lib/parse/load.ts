@@ -23,10 +23,6 @@ import {
   withBrowserDocumentConceptGroups,
 } from "@/lib/catalog/browserDocumentHub";
 import {
-  isCoreBrowserTopicSlug,
-  withCoreBrowserConceptGroups,
-} from "@/lib/catalog/coreBrowserHub";
-import {
   isCssArchitectureTopicSlug,
   withCssArchitectureConceptGroups,
 } from "@/lib/catalog/cssArchitectureHub";
@@ -71,6 +67,11 @@ import {
   withBehaviorConceptGroups,
 } from "@/lib/catalog/behaviorHub";
 import {
+  isDatabaseNosqlCoreSlug,
+  normalizeNosqlCoreMarkdown,
+  withDatabaseNosqlCoreConceptGroups,
+} from "@/lib/catalog/databaseNosqlIntro";
+import {
   TYPES_HUB_REFERENCE_GROUP,
   TYPES_HUB_SECTIONS,
   TYPES_HUB_SLUG,
@@ -102,7 +103,7 @@ type ParsedEntry = {
   readonly promise: Promise<ParsedTopic>;
 };
 
-export const PARSE_LOGIC_REVISION = 36;
+export const PARSE_LOGIC_REVISION = 40;
 
 type ParseCache = {
   markdown: Map<string, StoredRead>;
@@ -167,10 +168,11 @@ function loadDetailed(file: string, locale: Locale): StoredRead {
     if (hit?.stamp === stamp) {
       return hit;
     }
+    const raw = fs.readFileSync(primary, "utf8");
     const stored: StoredRead = {
       stamp,
       result: {
-        markdown: fs.readFileSync(primary, "utf8"),
+        markdown: normalizeNosqlCoreMarkdown(file, raw),
         locale,
         usedFallback: false,
       },
@@ -188,10 +190,11 @@ function loadDetailed(file: string, locale: Locale): StoredRead {
       if (hit?.stamp === stamp) {
         return hit;
       }
+      const raw = fs.readFileSync(fallback, "utf8");
       const stored: StoredRead = {
         stamp,
         result: {
-          markdown: fs.readFileSync(fallback, "utf8"),
+          markdown: normalizeNosqlCoreMarkdown(file, raw),
           locale: DEFAULT_LOCALE,
           usedFallback: true,
         },
@@ -319,9 +322,6 @@ function outlineForTopic(
   if (isBrowserDocumentTopicSlug(topic.slug)) {
     return withBrowserDocumentConceptGroups(outline);
   }
-  if (isCoreBrowserTopicSlug(topic.slug)) {
-    return withCoreBrowserConceptGroups(outline);
-  }
   if (isCssLayoutTopicSlug(topic.slug)) {
     return withCssLayoutConceptGroups(outline);
   }
@@ -352,6 +352,9 @@ function outlineForTopic(
   if (isBehaviorQuestionsTopicSlug(topic.slug)) {
     return withBehaviorConceptGroups(outline);
   }
+  if (isDatabaseNosqlCoreSlug(topic.slug)) {
+    return withDatabaseNosqlCoreConceptGroups(outline);
+  }
   return outline;
 }
 
@@ -378,12 +381,6 @@ function parsedForTopic(topic: Topic, parsed: ParsedTopic): ParsedTopic {
     return {
       ...parsed,
       concepts: withBrowserDocumentConceptGroups(parsed.concepts),
-    };
-  }
-  if (isCoreBrowserTopicSlug(topic.slug)) {
-    return {
-      ...parsed,
-      concepts: withCoreBrowserConceptGroups(parsed.concepts),
     };
   }
   if (isCssLayoutTopicSlug(topic.slug)) {
@@ -444,6 +441,12 @@ function parsedForTopic(topic: Topic, parsed: ParsedTopic): ParsedTopic {
     return {
       ...parsed,
       concepts: withBehaviorConceptGroups(parsed.concepts),
+    };
+  }
+  if (isDatabaseNosqlCoreSlug(topic.slug)) {
+    return {
+      ...parsed,
+      concepts: withDatabaseNosqlCoreConceptGroups(parsed.concepts),
     };
   }
   return parsed;

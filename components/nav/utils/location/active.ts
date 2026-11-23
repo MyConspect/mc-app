@@ -1,10 +1,25 @@
-import type { NavGroup, NavSubject } from "@/lib/nav";
+import type { NavGroup, NavSubject, NavTopic } from "@/lib/nav";
+import {
+  conceptGroupSectionDomId,
+  isConceptGroupSectionId,
+} from "@/lib/nav/conceptGroupSection";
 import { findNavClusterInSubject } from "@/lib/nav/findNavCluster";
 import { navSubjectClusters } from "@/lib/nav/subjectClusters";
-import { navTopicTreeContainsHref } from "@/lib/nav/topicTree";
+import {
+  navTopicAtPath,
+  navTopicTreeContainsHref,
+} from "@/lib/nav/topicTree";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { stripLocalePrefix } from "@/lib/i18n/paths";
-import { aliasTopicForCluster, clusterForConceptInSubject } from "./shared";
+import {
+  handbookLogicalPathname,
+  isSectionHomePathname,
+} from "@/lib/i18n/sectionPaths";
+import {
+  aliasTopicForCluster,
+  clusterForConceptInSubject,
+  conceptById,
+} from "./shared";
 
 export type NavLocation = {
   topicHref: string | null;
@@ -14,15 +29,18 @@ export type NavLocation = {
 };
 
 export function isHomePath(pathname: string): boolean {
-  return stripLocalePrefix(pathname).path === "/";
+  const { path } = stripLocalePrefix(pathname);
+  return path === "/" || isSectionHomePathname(pathname);
 }
 
 export function isActiveHref(pathname: string, href: string): boolean {
-  return pathname === href;
+  return handbookLogicalPathname(pathname) === handbookLogicalPathname(href);
 }
 
 export function isActiveTrack(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
+  const current = handbookLogicalPathname(pathname);
+  const target = handbookLogicalPathname(href);
+  return current === target || current.startsWith(`${target}/`);
 }
 
 export function isConceptActiveOnPage(
@@ -89,6 +107,38 @@ export function isOnSubjectPath(
 
 export function clusterKey(subjectHref: string, clusterId: string) {
   return `${subjectHref}#${clusterId}`;
+}
+
+/** Topic-page `#concept-group-*` folds use the topic path, not the subject hub hash. */
+function foldClusterKeyOnTopicPage(
+  topicPath: string,
+  hashId: string,
+  topic: NavTopic,
+  catalogClusterKey: string,
+): string {
+  if (isConceptGroupSectionId(hashId)) {
+    return clusterKey(topicPath, hashId);
+  }
+  if (!hashId) {
+    return catalogClusterKey;
+  }
+  const leaf = navTopicAtPath(topic, topicPath);
+  const concepts = leaf?.concepts ?? topic.concepts;
+  const concept = conceptById(concepts, hashId);
+  const group = concept?.group?.trim();
+  if (group) {
+    return clusterKey(topicPath, conceptGroupSectionDomId(group));
+  }
+  return catalogClusterKey;
+}
+
+function activeTopicForPath(
+  cluster: { readonly topics: readonly NavTopic[] },
+  pathname: string,
+): NavTopic | undefined {
+  return cluster.topics.find((topic) =>
+    navTopicTreeContainsHref(topic, pathname),
+  );
 }
 
 export function sectionKey(subjectHref: string, sectionId: string) {
@@ -200,17 +250,25 @@ export function locationForPath(
           if (pathname === entry.subjectHref) {
             hubSubjectHref = entry.subjectHref;
           }
-          if (
-            entry.cluster.topics.some((topic) =>
-              navTopicTreeContainsHref(topic, pathname),
-            )
-          ) {
-            return {
-              topicHref: pathname,
-              subjectHref: entry.subjectHref,
-              clusterKey: clusterKey(entry.subjectHref, entry.cluster.id),
-              sectionKey: null,
-            };
+          {
+            const activeTopic = activeTopicForPath(entry.cluster, pathname);
+            if (activeTopic) {
+              const catalogClusterKey = clusterKey(
+                entry.subjectHref,
+                entry.cluster.id,
+              );
+              return {
+                topicHref: pathname,
+                subjectHref: entry.subjectHref,
+                clusterKey: foldClusterKeyOnTopicPage(
+                  pathname,
+                  clusterId,
+                  activeTopic,
+                  catalogClusterKey,
+                ),
+                sectionKey: null,
+              };
+            }
           }
           break;
         case "subject":
@@ -280,19 +338,25 @@ export function locationForPath(
             };
           }
           for (const cluster of navSubjectClusters(entry.subject)) {
-            if (
-              cluster.topics.some((topic) =>
-                navTopicTreeContainsHref(topic, pathname),
-              )
-            ) {
+            const activeTopic = activeTopicForPath(cluster, pathname);
+            if (activeTopic) {
               const parentSection = collapsibleSectionForCluster(
                 entry.subject,
+                cluster.id,
+              );
+              const catalogClusterKey = clusterKey(
+                entry.subject.href,
                 cluster.id,
               );
               return {
                 topicHref: pathname,
                 subjectHref: entry.subject.href,
-                clusterKey: clusterKey(entry.subject.href, cluster.id),
+                clusterKey: foldClusterKeyOnTopicPage(
+                  pathname,
+                  clusterId,
+                  activeTopic,
+                  catalogClusterKey,
+                ),
                 sectionKey: parentSection
                   ? sectionKey(entry.subject.href, parentSection.id)
                   : null,

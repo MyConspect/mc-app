@@ -1,12 +1,27 @@
 import { getTopic, isTrackId, type TrackId } from "@/lib/catalog";
-import { homeHref, stripLocalePrefix } from "@/lib/i18n/paths";
+import {
+  homeHref,
+  localeFromPathname,
+  stripLocalePrefix,
+} from "@/lib/i18n/paths";
+import {
+  pathNavRootSection,
+  peelSectionPrefix,
+  sectionHomeHref,
+  withHandbookSection,
+} from "@/lib/i18n/sectionPaths";
 import { isInterviewSectionTopic } from "./navUtils";
+import {
+  persistNavRootSection,
+  readPersistedNavRootSection,
+} from "./rootSectionPreference";
 import { navTopics } from "./search";
 import type {
   NavCluster,
   NavGroup,
   NavRootSection,
   NavRootSectionId,
+  NavSubject,
   NavTopic,
 } from "./types";
 
@@ -21,22 +36,43 @@ export function navTrackScope(
 
 export function inferNavRootSection(pathname: string): NavRootSectionId {
   const { path } = stripLocalePrefix(pathname);
-  if (path === "/" || path === "/instructions") {
+  const peeled = peelSectionPrefix(path);
+  if (peeled.section) {
+    persistNavRootSection(peeled.section);
+    if (peeled.rest === "/" || peeled.rest === "") {
+      return peeled.section;
+    }
+    return peeled.section;
+  }
+  const fromPath = pathNavRootSection(path);
+  if (fromPath) {
+    persistNavRootSection(fromPath);
+    return fromPath;
+  }
+  if (path === "/") {
+    return readPersistedNavRootSection() ?? "conspect";
+  }
+  if (path === "/instructions") {
     return "conspect";
   }
-  const segments = path.slice(1).split("/").filter(Boolean);
+  const segments = peeled.rest.slice(1).split("/").filter(Boolean);
   const trackSlug = segments[0];
   const topicSlug = segments[1];
   if (!trackSlug || !isTrackId(trackSlug)) {
-    return "conspect";
+    const persisted = readPersistedNavRootSection();
+    return persisted ?? "conspect";
   }
   if (topicSlug) {
     const topic = getTopic(trackSlug, topicSlug);
     if (topic && isInterviewSectionTopic(topic)) {
+      persistNavRootSection("interviews");
       return "interviews";
     }
+    persistNavRootSection("conspect");
+    return "conspect";
   }
-  return "conspect";
+  const persisted = readPersistedNavRootSection();
+  return persisted ?? "conspect";
 }
 
 export function navGroupsForRootSection(
@@ -86,15 +122,22 @@ export function clusterNavigateHref(
   cluster: NavCluster,
   sectionId: NavRootSectionId,
   subjectHref: string,
+  trackId?: TrackId,
 ): string {
-  if (
-    sectionId === "interviews" &&
-    cluster.topics[0] &&
-    cluster.href === subjectHref
-  ) {
-    return cluster.topics[0].href;
+  if (sectionId === "interviews") {
+    if (trackId) {
+      for (const topic of cluster.topics) {
+        const catalog = getTopic(trackId, topic.slug);
+        if (catalog && isInterviewSectionTopic(catalog)) {
+          return withHandbookSection(topic.href, sectionId);
+        }
+      }
+    }
+    if (cluster.topics[0]) {
+      return withHandbookSection(cluster.topics[0].href, sectionId);
+    }
   }
-  return cluster.href;
+  return withHandbookSection(cluster.href, sectionId);
 }
 
 function firstTopicInGroup(group: NavGroup): NavTopic | null {
@@ -186,7 +229,8 @@ function pairedTopicInGroup(
   targetSectionId: NavRootSectionId,
 ): NavTopic | null {
   const { path } = stripLocalePrefix(pathname);
-  const segments = path.slice(1).split("/").filter(Boolean);
+  const { rest } = peelSectionPrefix(path);
+  const segments = rest.slice(1).split("/").filter(Boolean);
   const trackSlug = segments[0];
   const topicSlug = segments[1];
   if (!trackSlug || !isTrackId(trackSlug) || !topicSlug) {
@@ -261,26 +305,98 @@ export function sectionGroupLandingHref(
   return groupLandingHref(group);
 }
 
+/** Track row in breadcrumbs — interviews open an interview topic, not the conspect track hub. */
+export function navGroupCrumbHref(group: NavGroup, pathname: string): string {
+  const sectionId = inferNavRootSection(pathname);
+  if (sectionId === "interviews") {
+    persistNavRootSection("interviews");
+  }
+  const href = groupNavigateHref(group, sectionId);
+  return withHandbookSection(href, sectionId);
+}
+
+export function navBreadcrumbHomeHref(
+  _sections: readonly NavRootSection[],
+  pathname: string,
+): string {
+  const locale = localeFromPathname(pathname);
+  const sectionId = inferNavRootSection(pathname);
+  persistNavRootSection(sectionId);
+  return sectionHomeHref(locale, sectionId);
+}
+
+export function navSubjectNavigateHref(
+  group: NavGroup,
+  subject: Pick<NavSubject, "slug" | "href">,
+  sectionId: NavRootSectionId,
+): string {
+  let target = subject.href;
+  if (sectionId === "interviews") {
+    const trackSlug = group.id;
+    if (!isTrackId(trackSlug)) {
+      return withHandbookSection(subject.href, sectionId);
+    }
+    const interviews = subjectTopicsInGroup(group, subject.slug).filter(
+      (topic) => {
+        const catalog = getTopic(trackSlug, topic.slug);
+        return catalog !== undefined && isInterviewSectionTopic(catalog);
+      },
+    );
+    const preferred = interviews.find(
+      (topic) => topic.slug === `${subject.slug}-interview`,
+    );
+    target =
+      preferred?.href ??
+      interviews[0]?.href ??
+      groupNavigateHref(group, "interviews");
+  }
+  return withHandbookSection(target, sectionId);
+}
+
+export function navSubjectCrumbHref(
+  group: NavGroup,
+  subject: Pick<NavSubject, "slug" | "href">,
+  pathname: string,
+): string {
+  const sectionId = inferNavRootSection(pathname);
+  if (sectionId === "conspect") {
+    return withHandbookSection(subject.href, sectionId);
+  }
+  const trackSlug = group.id;
+  if (!isTrackId(trackSlug)) {
+    return withHandbookSection(subject.href, sectionId);
+  }
+  const { path } = stripLocalePrefix(pathname);
+  const { rest } = peelSectionPrefix(path);
+  const topicSlug = rest.slice(1).split("/").filter(Boolean)[1];
+  if (topicSlug) {
+    const paired = pairedBySubject(group, trackSlug, topicSlug, "interviews");
+    if (paired) {
+      return withHandbookSection(paired.href, sectionId);
+    }
+  }
+  return navSubjectNavigateHref(group, subject, "interviews");
+}
+
+export function navClusterCrumbHref(
+  cluster: NavCluster,
+  group: NavGroup,
+  subjectHref: string,
+  pathname: string,
+): string {
+  return clusterNavigateHref(
+    cluster,
+    inferNavRootSection(pathname),
+    subjectHref,
+    group.id,
+  );
+}
+
 export function sectionSwitchHref(
-  sections: readonly NavRootSection[],
+  _sections: readonly NavRootSection[],
   pathname: string,
   targetSectionId: NavRootSectionId,
 ): string {
-  const targetGroups = navGroupsForRootSection(sections, targetSectionId);
-  if (targetGroups.length === 0) {
-    const { locale } = stripLocalePrefix(pathname);
-    return homeHref(locale);
-  }
-
-  const { path } = stripLocalePrefix(pathname);
-  const segments = path.slice(1).split("/").filter(Boolean);
-  const trackSlug = segments[0];
-  if (trackSlug && isTrackId(trackSlug)) {
-    const matching = targetGroups.find((group) => group.id === trackSlug);
-    if (matching) {
-      return sectionGroupLandingHref(matching, pathname, targetSectionId);
-    }
-  }
-
-  return sectionGroupLandingHref(targetGroups[0], pathname, targetSectionId);
+  const { locale } = stripLocalePrefix(pathname);
+  return sectionHomeHref(locale, targetSectionId);
 }

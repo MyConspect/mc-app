@@ -850,7 +850,7 @@ const SUBJECTS_BASE: readonly Subject[] = [
     clusters: [
       {
         id: "core",
-        title: "Computer Science",
+        title: "Core",
         blurb:
           "Computation, programming paradigms, imperative vs declarative, and logic programming.",
       },
@@ -1160,7 +1160,7 @@ const TOPICS_BASE: Topic[] = [
   grouped(
     "core-browser-platform",
     "0_core_browser.md",
-    "Browser platform",
+    "Platform",
     "Browser work principles, processes, V8, rendering, and security model.",
     "frontend",
     "core",
@@ -2650,7 +2650,7 @@ const TOPICS_BASE: Topic[] = [
   grouped(
     "database-nosql-core",
     "9_database_nosql_core.md",
-    "NoSQL Core",
+    "Intro",
     "NoSQL types, selection matrix, and Elasticsearch.",
     "databases",
     "database",
@@ -2693,9 +2693,9 @@ const TOPICS_BASE: Topic[] = [
     "orm",
   ),
   grouped(
-    "database-production",
-    "9_database_production.md",
-    "Production",
+    "database-additional",
+    "9_database_additional.md",
+    "Additional",
     "Replication, sharding, caching, and OLTP scaling.",
     "databases",
     "database",
@@ -2848,7 +2848,7 @@ const TOPICS_BASE: Topic[] = [
   grouped(
     "computer-science",
     "7_special_cs.md",
-    "Computer Science",
+    "Core",
     "What computation is, plus programming paradigms and logic programming.",
     "computer-science",
     "core",
@@ -3862,9 +3862,7 @@ export function getSubject(track: string, slug: string): Subject | undefined {
 }
 
 /** Topic slug whose concepts render on the subject index (e.g. Frontend → Core). */
-const SUBJECT_INTRO_TOPIC_SLUG: Partial<Record<string, string>> = {
-  "frontend/core": "core-browser-platform",
-};
+const SUBJECT_INTRO_TOPIC_SLUG: Partial<Record<string, string>> = {};
 
 export function subjectIntroTopicSlug(subject: Subject): string | undefined {
   return SUBJECT_INTRO_TOPIC_SLUG[`${subject.track}/${subject.slug}`];
@@ -3916,6 +3914,14 @@ export function hrefForFile(filename: string): string | undefined {
 export function topicHref(topic: Topic): string {
   if (isLeafTopic(topic)) {
     return `/${topic.track}`;
+  }
+  return `/${topic.track}/${topic.slug}`;
+}
+
+/** Interviews section URL when conspect uses the short leaf path `/${track}`. */
+export function leafTopicInterviewsHref(topic: Topic): string | null {
+  if (!isLeafTopic(topic)) {
+    return null;
   }
   return `/${topic.track}/${topic.slug}`;
 }
@@ -4282,7 +4288,10 @@ export function topicRouteParams(): readonly {
   topic: string;
 }[] {
   return [
-    ...TOPICS.filter((topic) => !isLeafTopic(topic)).map((topic) => ({
+    ...TOPICS.filter(
+      (topic) =>
+        !isLeafTopic(topic) || leafTopicInterviewsHref(topic) !== null,
+    ).map((topic) => ({
       track: topic.track,
       topic: topic.slug,
     })),

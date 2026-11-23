@@ -4,22 +4,21 @@ import { SUBJECTS } from "@/lib/catalog";
 import { filterSubjectClusterSectionsForIntro } from "@/lib/catalog/subjectIntroClusters";
 import { SUBJECT_INTRO_OMIT_CLUSTER_IDS } from "@/lib/catalog/subjectIntroOmitIds";
 
-test("SUBJECT_INTRO_OMIT_CLUSTER_IDS lists platform for core subject", () => {
-  assert.deepEqual(SUBJECT_INTRO_OMIT_CLUSTER_IDS["frontend/core"], [
-    "platform",
-  ]);
+test("SUBJECT_INTRO_OMIT_CLUSTER_IDS has no frontend/core overrides", () => {
+  assert.equal(SUBJECT_INTRO_OMIT_CLUSTER_IDS["frontend/core"], undefined);
 });
 
-test("filterSubjectClusterSectionsForIntro drops platform when intro topic is shown", () => {
-  const core = SUBJECTS.find((subject) => subject.slug === "core");
+test("filterSubjectClusterSectionsForIntro keeps clusters without intro topic", () => {
+  const core = SUBJECTS.find(
+    (subject) => subject.track === "frontend" && subject.slug === "core",
+  );
   assert.ok(core);
   const sections = [
     { cluster: { id: "platform", title: "Platform" } },
     { cluster: { id: "accessibility", title: "Accessibility" } },
   ];
   const filtered = filterSubjectClusterSectionsForIntro(core, sections, true);
-  assert.equal(filtered.length, 1);
-  assert.equal(filtered[0]?.cluster.id, "accessibility");
+  assert.equal(filtered.length, 2);
 });
 
 test("filterSubjectClusterSectionsForIntro keeps all clusters without intro", () => {

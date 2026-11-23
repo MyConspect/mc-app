@@ -56,7 +56,22 @@ describe("locationForPath", () => {
       "#require-and-packages",
     );
     assert.equal(location.subjectHref, "/en/backend/nodejs");
-    assert.equal(location.clusterKey, `/en/backend/nodejs#modules`);
+    assert.equal(
+      location.clusterKey,
+      `${topicHref}#concept-group-modules-package-management`,
+    );
+    assert.equal(location.topicHref, topicHref);
+  });
+
+  it("opens SQL section fold on the database-sql topic URL", () => {
+    const groups = navGroupsForRootSection(
+      handbookNavSections("en"),
+      "conspect",
+    );
+    const topicHref = "/en/databases/database-sql";
+    const location = locationForPath(groups, topicHref, "#concept-group-intro");
+    assert.equal(location.subjectHref, "/en/databases");
+    assert.equal(location.clusterKey, `${topicHref}#concept-group-intro`);
     assert.equal(location.topicHref, topicHref);
   });
 });

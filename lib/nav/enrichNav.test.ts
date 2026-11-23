@@ -32,11 +32,11 @@ describe("enrichNavSections", () => {
 
     assert.equal(
       sectionSwitchHref(enriched, "/en/frontend/html-interview", "conspect"),
-      "/en/frontend/html-core",
+      "/en/conspect",
     );
     assert.equal(
       sectionSwitchHref(enriched, "/en/frontend/css", "interviews"),
-      "/en/frontend/css-interview",
+      "/en/interviews",
     );
   });
 

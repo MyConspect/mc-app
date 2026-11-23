@@ -63,7 +63,7 @@ test("catalog cluster id does not count as fold-open for concept-group sections"
   );
 });
 
-test("topic page cluster fold toggles like subject hub", () => {
+test("topic page cluster fold toggles when section hash is focused", () => {
   const topicKey = "/en/databases/sql:concept-group-joins";
   const click = topicPageClusterFoldClick(
     topicKey,
@@ -75,6 +75,22 @@ test("topic page cluster fold toggles like subject hub", () => {
   assert.equal(click.closing, true);
   assert.equal(click.clusterKey, null);
   assert.equal(click.replaceHashWith, "");
+});
+
+test("topic page section click while child concept is open focuses section", () => {
+  const topicKey =
+    "/en/databases/database-sql#concept-group-intro";
+  const hash = "#concept-group-intro";
+  const click = topicPageClusterFoldClick(
+    topicKey,
+    topicKey,
+    hash,
+    false,
+    false,
+  );
+  assert.equal(click.closing, false);
+  assert.equal(click.clusterKey, topicKey);
+  assert.equal(click.replaceHashWith, hash);
 });
 
 test("off-hub cluster click collapses when already open", () => {
