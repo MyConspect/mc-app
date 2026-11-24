@@ -23,9 +23,7 @@ import {
   findSubjectClusterSection,
   mergeNestedClusterSection,
 } from "@/lib/catalog/mergeNestedClusterIndexSection";
-import {
-  clusterSectionIndexStats,
-} from "@/lib/catalog/clusterIndexFitsPane";
+import { clusterSectionIndexStats } from "@/lib/catalog/clusterIndexFitsPane";
 import { conceptIndexLayoutModeForEntries } from "@/lib/catalog/conceptIndexPaneLayoutMode";
 import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 import type { Concept } from "@/lib/parse";

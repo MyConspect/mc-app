@@ -14,8 +14,8 @@ test("auditPreferNewspaperFromOne passes on current tree", () => {
 });
 
 test("auditCatalogTopicLayoutModes passes for medium single-section topics", () => {
-  const violations = auditCatalogTopicLayoutModes().filter((v) =>
-    v.topicKey?.includes("oop") || v.topicKey?.includes("solid"),
+  const violations = auditCatalogTopicLayoutModes().filter(
+    (v) => v.topicKey?.includes("oop") || v.topicKey?.includes("solid"),
   );
   assert.deepEqual(violations, []);
 });

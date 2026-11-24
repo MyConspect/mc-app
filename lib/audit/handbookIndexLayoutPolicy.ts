@@ -17,8 +17,7 @@ import {
 } from "@/components/topic/conceptIndexGroups";
 import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 
-const PREFER_NEWSPAPER_ONE =
-  /preferNewspaperFrom\s*:\s*1\b/;
+const PREFER_NEWSPAPER_ONE = /preferNewspaperFrom\s*:\s*1\b/;
 
 export type HandbookIndexLayoutViolation = {
   readonly file?: string;
@@ -79,9 +78,7 @@ export function auditPreferNewspaperFromOne(
   return violations;
 }
 
-function theoryGroupedOutlines(
-  outlines: readonly ConceptOutline[],
-): boolean {
+function theoryGroupedOutlines(outlines: readonly ConceptOutline[]): boolean {
   return outlines.some((row) => Boolean(row.group?.trim()));
 }
 
@@ -115,7 +112,8 @@ export function auditCatalogTopicLayoutModes(): HandbookIndexLayoutViolation[] {
 
     if (
       entries.length === 1 &&
-      entries[0].listItemCount < CONCEPT_INDEX_SINGLE_SECTION_PANE_PACK_MIN_ITEMS
+      entries[0].listItemCount <
+        CONCEPT_INDEX_SINGLE_SECTION_PANE_PACK_MIN_ITEMS
     ) {
       if (mode === "newspaper") {
         violations.push({
