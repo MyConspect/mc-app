@@ -98,8 +98,32 @@ Cypress.Commands.add("mainScroller", mainScroller);
 Cypress.Commands.add("desktopSearchMode", desktopSearchMode);
 Cypress.Commands.add("conceptNavButton", conceptNavButton);
 
+function canonicalHandbookVisitUrl(url: string): string {
+  const hashIndex = url.indexOf("#");
+  const pathOnly = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
+  const hash = hashIndex >= 0 ? url.slice(hashIndex) : "";
+  if (/^\/(en|ru)\/(conspect|interviews)(\/|$)/.test(pathOnly)) {
+    return url;
+  }
+  if (/^\/(en|ru)\/?$/.test(pathOnly)) {
+    const locale = pathOnly.replace(/\//g, "") || "en";
+    return `/${locale}/conspect${hash}`;
+  }
+  const match = pathOnly.match(/^\/(en|ru)\/(.+)$/);
+  if (!match) {
+    return url;
+  }
+  const [, locale, rest] = match;
+  if (rest === "instructions" || rest.startsWith("instructions/")) {
+    return url;
+  }
+  return `/${locale}/conspect/${rest}${hash}`;
+}
+
 Cypress.Commands.overwrite("visit", (originalFn, url, options) => {
-  originalFn(url, options);
+  const resolved =
+    typeof url === "string" ? canonicalHandbookVisitUrl(url) : url;
+  originalFn(resolved, options);
   sidebarHydrated();
 });
 
