@@ -405,23 +405,23 @@ describe("handbookNavSections layout", () => {
     );
   });
 
-  it("switches sections on the same track when possible", () => {
+  it("switches either section to locale home", () => {
     const sections = handbookNavSections("en");
     assert.equal(
       sectionSwitchHref(sections, "/en/frontend/css", "interviews"),
-      "/en/frontend/css-interview",
+      "/en/interviews",
     );
     assert.equal(
       sectionSwitchHref(sections, "/en/frontend/html-interview", "conspect"),
-      "/en/frontend/html-core",
+      "/en/conspect",
     );
     assert.equal(
       sectionSwitchHref(sections, "/en/frontend", "interviews"),
-      "/en/frontend/web-security-questions",
+      "/en/interviews",
     );
     assert.equal(
       sectionSwitchHref(sections, "/en/frontend/redux-questions", "conspect"),
-      "/en/frontend/react-redux",
+      "/en/conspect",
     );
     assert.equal(
       sectionSwitchHref(
@@ -429,11 +429,11 @@ describe("handbookNavSections layout", () => {
         "/en/frontend/html-interview-tasks",
         "conspect",
       ),
-      "/en/frontend/html-core",
+      "/en/conspect",
     );
     assert.equal(
       sectionSwitchHref(sections, "/en/frontend/react-redux", "interviews"),
-      "/en/frontend/redux-questions",
+      "/en/interviews",
     );
   });
 
@@ -456,19 +456,27 @@ describe("handbookNavSections layout", () => {
     );
   });
 
-  it("falls back to the first group when the track is missing", () => {
+  it("falls back to locale home when the track is missing", () => {
     const sections = handbookNavSections("en");
     assert.equal(
       sectionSwitchHref(sections, "/en/unknown-track", "conspect"),
-      findGroup("computer-science", "conspect")?.href,
+      "/en/conspect",
     );
     assert.equal(
       sectionSwitchHref(sections, "/en/behavior", "conspect"),
-      findGroup("behavior", "conspect")?.href,
+      "/en/conspect",
     );
     assert.equal(
       sectionSwitchHref(sections, "/en/behavior", "interviews"),
+      "/en/interviews",
+    );
+    assert.equal(
+      sectionSwitchHref(sections, "/en/behavior/behavior-questions", "conspect"),
+      "/en/conspect",
+    );
+    assert.equal(
       findGroup("behavior", "interviews")?.leafTopic?.href,
+      "/en/behavior/behavior-questions",
     );
   });
 
@@ -782,7 +790,7 @@ describe("handbookNavSections layout", () => {
       (item) => item.id === "core",
     );
     assert.ok(cluster);
-    assert.equal(cluster.title, "Computer Science");
+    assert.equal(cluster.title, "Core");
     const topic = cluster.topics.find(
       (item) => item.slug === "computer-science",
     );

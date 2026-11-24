@@ -1,4 +1,9 @@
+import { handbookLogicalPathname } from "@/lib/i18n/sectionPaths";
 import type { NavTopic } from "./types";
+
+function navHrefMatches(pathname: string, href: string): boolean {
+  return handbookLogicalPathname(pathname) === handbookLogicalPathname(href);
+}
 
 export function flattenNavTopics(topic: NavTopic): readonly NavTopic[] {
   return [
@@ -12,7 +17,7 @@ export function navTopicTreeContainsHref(
   topic: NavTopic,
   pathname: string,
 ): boolean {
-  if (topic.href === pathname) {
+  if (navHrefMatches(pathname, topic.href)) {
     return true;
   }
   return (
@@ -35,7 +40,7 @@ export function navTopicTrailAtPath(
   topic: NavTopic,
   pathname: string,
 ): readonly NavTopic[] | undefined {
-  if (topic.href === pathname) {
+  if (navHrefMatches(pathname, topic.href)) {
     return [topic];
   }
   for (const nested of topic.nestedTopics ?? []) {

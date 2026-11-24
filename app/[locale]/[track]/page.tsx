@@ -150,37 +150,37 @@ export default async function TrackPage({
     );
     return (
       <main
-        className={`handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
-      >
-        {hub ? (
-          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-            <SubjectIntroBody
-              fallbackBanner={
-                hub.usedFallback ? (
-                  <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
-                    {FALLBACK_NOTE_BADGE[locale]}
-                  </p>
-                ) : null
-              }
-              concepts={hub.parsed.concepts}
-              emptyMessage="No concepts were parsed from this track hub."
-              groupInterviewSections={hub.parsed.concepts.some((concept) =>
-                Boolean(concept.group),
-              )}
-              clusterIndex={{ sections }}
-            />
-          </div>
-        ) : (
-          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-            <SubjectClusterHub
-              sections={sections}
-              titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
-              browseListVariant="concept-index"
-              subjectTitle={subject.title}
-            />
-          </div>
-        )}
-      </main>
+          className={`handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
+        >
+          {hub ? (
+            <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
+              <SubjectIntroBody
+                fallbackBanner={
+                  hub.usedFallback ? (
+                    <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
+                      {FALLBACK_NOTE_BADGE[locale]}
+                    </p>
+                  ) : null
+                }
+                concepts={hub.parsed.concepts}
+                emptyMessage="No concepts were parsed from this track hub."
+                groupInterviewSections={hub.parsed.concepts.some((concept) =>
+                  Boolean(concept.group),
+                )}
+                clusterIndex={{ sections }}
+              />
+            </div>
+          ) : (
+            <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
+              <SubjectClusterHub
+                sections={sections}
+                titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
+                browseListVariant="concept-index"
+                subjectTitle={subject.title}
+              />
+            </div>
+          )}
+        </main>
     );
   }
 
@@ -195,26 +195,26 @@ export default async function TrackPage({
       : loaded.parsed.concepts;
     return (
       <main
-        className={`handbook-topic-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
-      >
-        {loaded.usedFallback ? (
-          <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
-            {FALLBACK_NOTE_BADGE[locale]}
-          </p>
-        ) : null}
-        <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-          <ConceptList
-            concepts={concepts}
-            emptyMessage="No concepts were parsed from this topic."
-            groupInterviewSections={
-              isInterviewTopic(leaf) ||
-              concepts.some((concept) => Boolean(concept.group))
-            }
-            interviewAccordionIndex={isInterviewTopic(leaf)}
-            topicTitle={interviewTopicSubjectTitle(leaf, locale)}
-          />
-        </div>
-      </main>
+          className={`handbook-topic-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
+        >
+          {loaded.usedFallback ? (
+            <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
+              {FALLBACK_NOTE_BADGE[locale]}
+            </p>
+          ) : null}
+          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
+            <ConceptList
+              concepts={concepts}
+              emptyMessage="No concepts were parsed from this topic."
+              groupInterviewSections={
+                isInterviewTopic(leaf) ||
+                concepts.some((concept) => Boolean(concept.group))
+              }
+              interviewAccordionIndex={isInterviewTopic(leaf)}
+              topicTitle={interviewTopicSubjectTitle(leaf, locale)}
+            />
+          </div>
+        </main>
     );
   }
 
@@ -223,13 +223,13 @@ export default async function TrackPage({
 
   return (
     <main
-      className={`handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
-    >
-      {browseBlocks.length > 0 || looseCards.length > 0 ? (
-        <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-          <TrackBrowseIndex blocks={browseBlocks} looseCards={looseCards} />
-        </div>
-      ) : null}
-    </main>
+        className={`handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
+      >
+        {browseBlocks.length > 0 || looseCards.length > 0 ? (
+          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
+            <TrackBrowseIndex blocks={browseBlocks} looseCards={looseCards} />
+          </div>
+        ) : null}
+      </main>
   );
 }

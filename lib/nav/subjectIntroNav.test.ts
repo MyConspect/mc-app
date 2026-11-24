@@ -3,32 +3,17 @@ import test from "node:test";
 import { SUBJECTS } from "@/lib/catalog";
 import { navGroupsForRootSection } from "./sections";
 import { handbookNavSections, subjectIntroNavClusters } from "./handbook";
-import { conceptGroupSectionDomId } from "./conceptGroupSection";
 
-test("subjectIntroNavClusters lists Work Principles and Browser platform for Core", () => {
-  const core = SUBJECTS.find((subject) => subject.slug === "core");
+test("frontend Core has no subject intro pseudo-clusters", () => {
+  const core = SUBJECTS.find(
+    (subject) => subject.track === "frontend" && subject.slug === "core",
+  );
   assert.ok(core);
   const clusters = subjectIntroNavClusters(core, "en");
-  assert.ok(
-    clusters.some((cluster) => cluster.title === "Work Principles"),
-    "missing Work Principles",
-  );
-  assert.ok(
-    clusters.some((cluster) => cluster.title === "Browser platform"),
-    "missing Browser platform",
-  );
-  const work = clusters.find((cluster) => cluster.title === "Work Principles");
-  assert.ok(work);
-  assert.equal(work.id, conceptGroupSectionDomId("Work Principles"));
-  assert.equal(work.topics[0]?.href, "/en/frontend/core");
-  assert.ok(
-    work.topics[0]?.concepts.some(
-      (concept) => concept.id === "navigation-and-fetching",
-    ),
-  );
+  assert.equal(clusters.length, 0);
 });
 
-test("handbook nav for Core subject includes intro groups and omits platform cluster", () => {
+test("handbook nav for Core subject lists Platform cluster on hub", () => {
   const groups = navGroupsForRootSection(handbookNavSections("en"), "conspect");
   const frontend = groups.find((group) => group.id === "frontend");
   assert.ok(frontend);
@@ -40,9 +25,12 @@ test("handbook nav for Core subject includes intro groups and omits platform clu
     return;
   }
   const ids = core.subject.clusters.map((cluster) => cluster.id);
-  assert.ok(ids.includes(conceptGroupSectionDomId("Work Principles")));
-  assert.ok(ids.includes(conceptGroupSectionDomId("Browser platform")));
-  assert.equal(ids.includes("platform"), false);
+  assert.ok(ids.includes("platform"));
   assert.ok(ids.includes("accessibility"));
   assert.ok(ids.includes("security"));
+  const platform = core.subject.clusters.find(
+    (cluster) => cluster.id === "platform",
+  );
+  assert.ok(platform);
+  assert.equal(platform.topics[0]?.title, "Platform");
 });

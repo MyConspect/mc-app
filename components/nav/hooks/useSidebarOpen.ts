@@ -15,6 +15,7 @@ import {
 } from "@/constants";
 import type { TrackId } from "@/lib/catalog";
 import type { NavRootSection, NavRootSectionId } from "@/lib/nav";
+import { readPersistedNavRootSection } from "@/lib/nav/rootSectionPreference";
 import {
   navGroupsForPath,
   navTrackScope,
@@ -309,7 +310,8 @@ export function useSidebarOpen({
     }
     function onCollapseAll() {
       onCollapseTracks();
-      setOpenRootSectionIds(new Set(["conspect"]));
+      const section = readPersistedNavRootSection() ?? "conspect";
+      setOpenRootSectionIds(new Set([section]));
     }
     window.addEventListener(SIDEBAR_COLLAPSE_TRACKS_EVENT, onCollapseTracks);
     window.addEventListener(SIDEBAR_COLLAPSE_ALL_EVENT, onCollapseAll);
@@ -417,7 +419,7 @@ function syncOpenState({
       : null;
   if (!leftSearch && pathname !== snapshot.pathname && isHomePath(pathname)) {
     collapseAllSidebarTracks(setOpenTrackIds, setTrackFolds);
-    setOpenRootSectionIds(new Set(["conspect"]));
+    setOpenRootSectionIds(new Set([activeRootSectionId]));
     return;
   }
   if (!leftSearch && activeRootSectionId !== snapshot.activeRootSectionId) {

@@ -53,6 +53,7 @@ const SKIP_TITLES = new Set([
   "related notes",
   "main concepts",
   "sections",
+  "topics",
   "navigation",
   "resources & links",
   "resources",
@@ -784,7 +785,7 @@ function collectLocatedBlocks(markdown: string): LocatedBlock[] {
     if (headingMatch) {
       flushHeading();
       if (h2Match) {
-        currentGroup = undefined;
+        currentGroup = topicGroup(stripMd(h2Match[1]));
       } else if (h3Match) {
         currentGroup = topicGroup(stripMd(h3Match[1]));
       }

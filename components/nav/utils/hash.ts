@@ -1,4 +1,7 @@
 import { splitHref } from "@/lib/nav";
+import { inferNavRootSection } from "@/lib/nav/sections";
+import { readPersistedNavRootSection } from "@/lib/nav/rootSectionPreference";
+import { withHandbookSection } from "@/lib/i18n/sectionPaths";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { setBookmarkNavMode } from "./bookmarkNavMode";
 import { clearConceptNavForPath, recordConceptNav } from "./conceptNavBack";
@@ -143,8 +146,15 @@ export function applySameDocumentHref(
   return false;
 }
 
-export function queueHandbookHref(href: string): void {
-  const { pathname, hash } = splitHref(href);
+export function queueHandbookHref(
+  href: string,
+  currentPath?: string,
+): void {
+  const base =
+    currentPath ??
+    (typeof window !== "undefined" ? window.location.pathname : "");
+  const resolved = base ? handbookHref(href, base) : href;
+  const { pathname, hash } = splitHref(resolved);
   if (
     pendingPathHash?.pathname === pathname &&
     hash === "" &&
@@ -156,6 +166,16 @@ export function queueHandbookHref(href: string): void {
   notifyPendingPathListeners();
 }
 
+function sectionForHandbookNav(currentPath: string) {
+  return (
+    readPersistedNavRootSection() ?? inferNavRootSection(currentPath)
+  );
+}
+
+function handbookHref(href: string, currentPath: string): string {
+  return withHandbookSection(href, sectionForHandbookNav(currentPath));
+}
+
 export function followHandbookHref(
   href: string,
   currentPath: string,
@@ -165,7 +185,8 @@ export function followHandbookHref(
   if (!options?.bookmarkNav) {
     setBookmarkNavMode(false);
   }
-  const { pathname, hash } = splitHref(href);
+  const resolved = handbookHref(href, currentPath);
+  const { pathname, hash } = splitHref(resolved);
   if (applySameDocumentHref(pathname, hash, currentPath)) {
     return;
   }

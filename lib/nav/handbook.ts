@@ -6,11 +6,13 @@ import {
   SUBJECTS,
   subjectsForTrack,
   TRACKS,
+  clusterHref,
   clusterTargetHref,
   getSubject,
   getTopic,
   hubFileForTrack,
   leafTopicForTrack,
+  leafTopicInterviewsHref,
   subjectHref,
   subjectClusterNavPlacement,
   subjectIntroTopicSlug,
@@ -85,6 +87,8 @@ export function subjectIntroNavClusters(
   const subjectPath = withLocale(locale, subjectHref(subject));
   const grouped = groupNavConceptsByMarkdownGroup(
     navConceptsFromOutline(outline),
+    topic.title,
+    topic.slug,
   );
 
   return grouped
@@ -255,6 +259,28 @@ function subjectNavEntry(
         const catalogTopics = topicsForCluster(subject, cluster.id);
         let nestedClusters: NavCluster[] | undefined;
         const catalogTopic = catalogTopics[0];
+        const clusterDefinition = subject.clusters.find(
+          (item) => item.id === cluster.id,
+        );
+        const titleTwinDedicatedTopic =
+          catalogTopics.length === 1 &&
+          topics.length === 1 &&
+          catalogTopic &&
+          clusterDefinition &&
+          areRedundantNavTitles(cluster.title, catalogTopic.title) &&
+          clusterTargetHref(subject, clusterDefinition) !==
+            clusterHref(subject, clusterDefinition);
+        if (titleTwinDedicatedTopic) {
+          return {
+            id: cluster.id,
+            title: cluster.title,
+            href: localizeHref(
+              locale,
+              clusterTargetHref(subject, clusterDefinition),
+            ),
+            topics,
+          };
+        }
         if (
           catalogTopics.length === 1 &&
           topics.length === 1 &&
@@ -624,9 +650,18 @@ function buildTrackNavGroup(
 
   if (isLeafTrack) {
     const flatTopics = navTopicsForFlatTrack(track.id, locale);
-    const leafNav =
+    let leafNav =
       flatTopics.find((topic) => topic.slug === leaf!.slug) ??
       toNavTopic(leaf!, locale);
+    if (section === "interviews") {
+      const interviewsHref = leafTopicInterviewsHref(leaf!);
+      if (interviewsHref) {
+        leafNav = {
+          ...leafNav,
+          href: localizeHref(locale, interviewsHref),
+        };
+      }
+    }
     return {
       id: track.id,
       title: catalogBlurb(locale, track.title),

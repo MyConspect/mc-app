@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { NavGroup } from "@/lib/nav";
-import { handbookNavForTrack } from "@/lib/nav/handbook";
+import { allNavGroups } from "@/lib/nav/sections";
+import { handbookNavForTrack, handbookNavSections } from "@/lib/nav/handbook";
 import {
   adjacentConceptId,
   crumbsForPath,
@@ -418,7 +419,7 @@ test("last concept in a topic returns to the topic list before leaving the clust
                   {
                     slug: "nosql-core",
                     href: "/databases/database-nosql-core",
-                    title: "NoSQL Core",
+                    title: "Intro",
                     blurb: "",
                     concepts: [
                       { id: "overview", title: "Overview" },
@@ -635,6 +636,8 @@ test("isHomePath matches locale home routes only", async () => {
   assert.equal(isHomePath("/ru"), true);
   assert.equal(isHomePath("/en/frontend"), false);
   assert.equal(isHomePath("/en/instructions"), false);
+  assert.equal(isHomePath("/en/conspect"), true);
+  assert.equal(isHomePath("/en/interviews"), true);
 });
 
 test("siblingNavHrefForPath walks flat appendix sections as one chain", () => {
@@ -876,6 +879,82 @@ test("flatNav subject omits cluster from breadcrumbs", () => {
       (item) => item.label,
     ),
     ["Home", "AI", "SDLC", "Principles"],
+  );
+});
+
+test("interview topic track crumb stays in interviews", () => {
+  const sections = handbookNavSections("en");
+  const allGroups = allNavGroups(sections);
+  const pathname = "/en/computer-science/arrays-questions";
+  const crumbs = crumbsForPath(allGroups, pathname, "", labels, sections);
+  const track = crumbs.find((crumb) => crumb.label === "Computer Science");
+  assert.ok(track?.href);
+  assert.equal(track.href, "/en/computer-science");
+});
+
+test("interview breadcrumb home links to track hub", () => {
+  const sections = handbookNavSections("en");
+  const allGroups = allNavGroups(sections);
+  const crumbs = crumbsForPath(
+    allGroups,
+    "/en/computer-science/arrays-questions",
+    "",
+    labels,
+    sections,
+  );
+  const home = crumbs[0];
+  assert.equal(home?.href, "/en/computer-science");
+});
+
+test("frontend javascript interview subject crumb stays in interviews", () => {
+  const sections = handbookNavSections("en");
+  const allGroups = allNavGroups(sections);
+  const crumbs = crumbsForPath(
+    allGroups,
+    "/en/frontend/js-interview",
+    "",
+    labels,
+    sections,
+  );
+  const frontend = crumbs.find((crumb) => crumb.label === "Frontend");
+  assert.ok(frontend?.href);
+  assert.notEqual(frontend.href, "/en/frontend");
+  assert.match(frontend.href, /^\/en\/frontend\/.+-/);
+});
+
+test("conspect track crumb keeps study hub", () => {
+  const sections = handbookNavSections("en");
+  const allGroups = allNavGroups(sections);
+  const crumbs = crumbsForPath(
+    allGroups,
+    "/en/computer-science/core",
+    "",
+    labels,
+    sections,
+  );
+  const track = crumbs.find((crumb) => crumb.label === "Computer Science");
+  assert.equal(track?.href, "/en/computer-science");
+});
+
+test("computer-science Core topic stops breadcrumbs at subject", () => {
+  const groups = handbookNavForTrack("en", "computer-science");
+  assert.deepEqual(
+    crumbsForPath(
+      groups,
+      "/en/computer-science/core",
+      "",
+      labels,
+    ).map((crumb) => crumb.label),
+    ["Home", "Computer Science", "Core"],
+  );
+  assert.deepEqual(
+    crumbsForPath(
+      groups,
+      "/en/computer-science/computer-science",
+      "#programming",
+      labels,
+    ).map((crumb) => crumb.label),
+    ["Home", "Computer Science", "Core"],
   );
 });
 

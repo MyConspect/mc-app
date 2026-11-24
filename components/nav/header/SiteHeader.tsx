@@ -209,7 +209,7 @@ export function DrawerFooter({
 }) {
   return (
     <div
-      className={`flex shrink-0 flex-col max-md:border-t ${DRAWER_FOOTER_SURFACE}`}
+      className={`flex shrink-0 flex-col border-t ${DRAWER_FOOTER_SURFACE}`}
     >
       <MobileHandbookFooter
         chrome={chrome}

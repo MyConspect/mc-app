@@ -116,19 +116,13 @@ test("multi-subject conspect tracks share CS-shaped sidebar entries", () => {
 test("spot-check hubs expose cluster leaves like Computer Science", () => {
   const core = subjectInGroup("frontend", "core");
   assert.ok(core);
-  const workPrinciplesId = conceptGroupSectionDomId("Work Principles");
-  const work = core.clusters.find((cluster) => cluster.id === workPrinciplesId);
-  assert.ok(work, "frontend/core missing Work Principles intro leaf");
-  assert.notEqual(work?.topics[0]?.hideSidebarConcepts, true);
+  const platform = core.clusters.find((cluster) => cluster.id === "platform");
+  assert.ok(platform, "frontend/core missing Platform cluster");
   assert.ok(
-    conspectSubjectHubSectionWithConcepts(work, core.href),
-    "Work Principles should expose hub section concepts",
+    platform.topics.some((topic) => topic.slug === "core-browser-platform"),
   );
-  const browser = core.clusters.find(
-    (cluster) => cluster.id === conceptGroupSectionDomId("Browser platform"),
-  );
-  assert.ok(browser);
-  assert.ok(conspectSubjectHubSectionWithConcepts(browser, core.href));
+  assert.ok(platform.topics[0]?.concepts.length);
+  assert.equal(platform.nestedClusters?.length ?? 0, 0);
 
   const nodejs = subjectInGroup("backend", "nodejs");
   assert.ok(nodejs);

@@ -23,7 +23,7 @@ export function MobileHandbookFooter({
 }) {
   return (
     <footer
-      className={`shrink-0 touch-manipulation border-t md:hidden ${FOOTER_SURFACE}`}
+      className={`shrink-0 touch-manipulation md:hidden ${FOOTER_SURFACE}`}
     >
       <div
         className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-3 py-2 pb-[max(0.625rem,env(safe-area-inset-bottom))] pr-11 ${FOOTER_SURFACE}`}

@@ -27,7 +27,7 @@ const GUIDE_VARS: Record<string, string | undefined> = {
 const GUIDE_END_TRIM_PX = 6;
 
 const TRACK_CHILD_ROW =
-  '[data-nav="subject"], [data-nav="topic"], [data-nav="cluster"], [data-nav="section"]';
+  '[data-nav="subject"], [data-nav="topic"], [data-nav="interview-section"], [data-nav="cluster"], [data-nav="section"]';
 const TRACK_BOUNDARY = '[data-nav="track"], [data-nav="root-section"]';
 
 function scrollerContentY(scroller: HTMLElement, element: HTMLElement): number {

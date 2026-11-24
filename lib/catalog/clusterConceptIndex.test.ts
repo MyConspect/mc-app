@@ -3,12 +3,12 @@ import test from "node:test";
 import { getSubject } from "@/lib/catalog";
 import { subjectClusterSectionsForLocale } from "./localizeSubjectClusters";
 
-test("computer-science Core hub lists Computer Science concepts on the subject index", () => {
+test("computer-science Core hub lists Core concepts on the subject index", () => {
   const core = getSubject("computer-science", "core");
   assert.ok(core);
   const sections = subjectClusterSectionsForLocale("en", core);
   assert.equal(sections.length, 1);
-  assert.equal(sections[0]?.cluster.title, "Computer Science");
+  assert.equal(sections[0]?.cluster.title, "Core");
   assert.ok((sections[0]?.items.length ?? 0) > 0);
   assert.match(sections[0]?.headingHref ?? "", /computer-science$/);
   const titles = sections[0]?.items.map((item) => item.title) ?? [];

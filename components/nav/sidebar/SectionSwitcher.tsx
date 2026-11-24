@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   inferNavRootSection,
@@ -8,6 +9,8 @@ import {
   type NavRootSection,
   type NavRootSectionId,
 } from "@/lib/nav";
+import { persistNavRootSection } from "@/lib/nav/rootSectionPreference";
+import { useHandbookLocation } from "../hooks/useHandbookLocation";
 import { dispatchSidebarCollapseTracks } from "../hooks/useSidebarOpen";
 
 export function SectionSwitcher({
@@ -18,15 +21,32 @@ export function SectionSwitcher({
   chrome: ChromeCopy;
 }) {
   const pathname = usePathname() ?? "/en";
+  const { highlightPathname } = useHandbookLocation();
   const router = useRouter();
-  const activeSection = inferNavRootSection(pathname);
+  const pathForSection = highlightPathname || pathname;
+  const inferredSection = inferNavRootSection(pathForSection);
+  const [optimisticSection, setOptimisticSection] = useState<{
+    section: NavRootSectionId;
+    fromPath: string;
+  } | null>(null);
+
+  const activeSection =
+    optimisticSection !== null && optimisticSection.fromPath === pathname
+      ? optimisticSection.section
+      : inferredSection;
 
   const onSelectSection = (sectionId: NavRootSectionId) => {
     if (sectionId === activeSection) {
       return;
     }
     dispatchSidebarCollapseTracks();
-    const href = sectionSwitchHref(sections, pathname, sectionId);
+    persistNavRootSection(sectionId);
+    setOptimisticSection({ section: sectionId, fromPath: pathname });
+    const href = sectionSwitchHref(sections, pathForSection, sectionId);
+    if (href === pathname || href === pathForSection) {
+      router.refresh();
+      return;
+    }
     router.push(href, { scroll: false });
   };
 

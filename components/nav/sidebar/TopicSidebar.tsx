@@ -27,6 +27,12 @@ import {
   type SearchMode,
 } from "@/lib/nav";
 import {
+  handbookLogicalPathname,
+  isSectionHomePathname,
+  withHandbookSection,
+} from "@/lib/i18n/sectionPaths";
+import { persistNavRootSection } from "@/lib/nav/rootSectionPreference";
+import {
   groupNavigateHref,
   inferNavRootSection,
   navGroupsForPath,
@@ -61,6 +67,10 @@ import {
   type StickyVars,
 } from "../utils/sidebarSticky";
 import {
+  conspectClusterExpandsInSidebar,
+  conspectClusterLeavesInSidebar,
+} from "@/lib/nav/conspectSidebar";
+import {
   SidebarFoldScopeProvider,
   SidebarNavProvider,
   closeNavSoon,
@@ -70,6 +80,7 @@ import {
   useSidebarHighlight,
   useScopedSidebarFold,
   useScopedTrackOpen,
+  useSidebarFoldScope,
 } from "../context/sidebarContext";
 import { SearchHitList } from "./SearchHitList";
 import { ClusterRow, SubjectRow, TopicRow } from "./sidebarRows";
@@ -144,9 +155,12 @@ export const TopicSidebar = memo(function TopicSidebar({
   const router = useRouter();
   const goToPath = useCallback(
     (path: string) => {
-      router.push(path, { scroll: false });
+      persistNavRootSection(activeRootSectionId);
+      router.push(withHandbookSection(path, activeRootSectionId), {
+        scroll: false,
+      });
     },
-    [router],
+    [router, activeRootSectionId],
   );
   const navHash = location.hash || hash;
   const navRevision = `${foldRevision(trackFolds, openTrackIds)}|${highlightPathname}|${navHash}`;
@@ -470,19 +484,44 @@ const TrackGroup = memo(function TrackGroup({
     />
   );
   const chevron = hasSidebarChildren ? <NavChevron open={trackOpen} /> : null;
+  const onInterviewsHome =
+    rootSectionId === "interviews" &&
+    isSectionHomePathname(highlightPathname || committedPathname);
   const asButton =
-    hasSidebarChildren && (showLeafConcepts ? trackActive : onThisTrack);
-  const navigateHref =
+    hasSidebarChildren &&
+    (showLeafConcepts ? trackActive : onThisTrack || onInterviewsHome);
+  const navigateHref = withHandbookSection(
     rootSectionId === "interviews"
       ? groupNavigateHref(group, rootSectionId)
-      : group.href;
+      : group.href,
+    rootSectionId,
+  );
+  const keepDrawerOpenOnTrackNav =
+    rootSectionId === "conspect" && hasSidebarChildren;
 
   const navigateTrackFromHeader = (event: { preventDefault: () => void }) => {
+    if (onInterviewsHome && hasSidebarChildren) {
+      event.preventDefault();
+      if (!searching) {
+        toggleTrackId(group.id);
+      }
+      closeNavSoon(onNavigate);
+      return true;
+    }
     if (!hasSidebarChildren) {
       onNavigate?.();
     }
+    if (rootSectionId === "interviews" && onThisTrack && hasSidebarChildren) {
+      event.preventDefault();
+      if (!searching) {
+        toggleTrackId(group.id);
+      }
+      closeNavSoon(onNavigate);
+      return true;
+    }
     const onTrackHub =
-      committedPathname === navigateHref && window.location.hash === "";
+      handbookLogicalPathname(committedPathname) ===
+        handbookLogicalPathname(navigateHref) && window.location.hash === "";
     if (onTrackHub) {
       return false;
     }
@@ -490,7 +529,7 @@ const TrackGroup = memo(function TrackGroup({
       event.preventDefault();
       applySameDocumentHref(committedPathname, "", committedPathname);
       queueHandbookHref(navigateHref);
-      closeNavSoon(onNavigate, hasSidebarChildren);
+      closeNavSoon(onNavigate, keepDrawerOpenOnTrackNav);
       return true;
     }
     if (!onThisTrack) {
@@ -505,7 +544,7 @@ const TrackGroup = memo(function TrackGroup({
     if (hasSidebarChildren) {
       ensureTrackOpen(group.id);
     }
-    closeNavSoon(onNavigate, hasSidebarChildren);
+    closeNavSoon(onNavigate, keepDrawerOpenOnTrackNav);
     return true;
   };
 
@@ -529,6 +568,9 @@ const TrackGroup = memo(function TrackGroup({
             }
             if (!searching) {
               toggleTrackId(group.id);
+            }
+            if (rootSectionId === "interviews") {
+              closeNavSoon(onNavigate);
             }
           }}
           aria-current={isLeafTrack ? undefined : "true"}
@@ -581,15 +623,12 @@ const TrackGroup = memo(function TrackGroup({
                     key={entryKey(entry)}
                     entry={entry}
                     trackId={group.id}
+                    group={group}
                   />
                 ))
               )}
               {group.hubTopic ? (
-                <TopicRow
-                  trackId={group.id}
-                  topic={group.hubTopic}
-                  hideTitle
-                />
+                <TopicRow trackId={group.id} topic={group.hubTopic} hideTitle />
               ) : null}
             </>
           )}
@@ -623,18 +662,33 @@ function entryKey(entry: NavEntry) {
   }
 }
 
-function TrackEntry({ entry, trackId }: { entry: NavEntry; trackId: TrackId }) {
+function TrackEntry({
+  entry,
+  trackId,
+  group,
+}: {
+  entry: NavEntry;
+  trackId: TrackId;
+  group: NavGroup;
+}) {
+  const rootSectionId = useSidebarFoldScope();
   switch (entry.kind) {
     case "topic":
       return <TopicRow trackId={trackId} topic={entry.topic} />;
     case "subject":
-      return <SubjectRow trackId={trackId} subject={entry.subject} />;
+      return (
+        <SubjectRow trackId={trackId} group={group} subject={entry.subject} />
+      );
     case "cluster":
       return (
         <ClusterRow
           trackId={trackId}
           subjectHref={entry.subjectHref}
           cluster={entry.cluster}
+          leafInSidebar={
+            conspectClusterLeavesInSidebar(rootSectionId) &&
+            !conspectClusterExpandsInSidebar(entry.cluster)
+          }
         />
       );
     default: {

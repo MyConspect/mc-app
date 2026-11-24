@@ -2,7 +2,22 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { handbookNavForTrack, handbookNavSections } from "@/lib/nav/handbook";
 import { navGroupsForRootSection } from "@/lib/nav/sections";
-import { locationForPath } from "./active";
+import { isConceptActiveOnPage, locationForPath } from "./active";
+
+describe("isConceptActiveOnPage", () => {
+  it("matches concept when URL has conspect section prefix", () => {
+    const topicHref = "/en/ai/cursor-skills";
+    assert.equal(
+      isConceptActiveOnPage(
+        "/en/conspect/ai/cursor-skills",
+        topicHref,
+        "scoping-with-paths",
+        "scoping-with-paths",
+      ),
+      true,
+    );
+  });
+});
 
 describe("locationForPath", () => {
   it("treats #utility-types on the TypeScript hub as the section, not the catalog cluster", () => {
@@ -56,7 +71,36 @@ describe("locationForPath", () => {
       "#require-and-packages",
     );
     assert.equal(location.subjectHref, "/en/backend/nodejs");
-    assert.equal(location.clusterKey, `/en/backend/nodejs#modules`);
+    assert.equal(
+      location.clusterKey,
+      `${topicHref}#concept-group-modules-package-management`,
+    );
+    assert.equal(location.topicHref, topicHref);
+  });
+
+  it("resolves subject hub with conspect section prefix", () => {
+    const groups = navGroupsForRootSection(
+      handbookNavSections("en"),
+      "conspect",
+    );
+    const location = locationForPath(
+      groups,
+      "/en/conspect/computer-science/algorithms",
+      "",
+    );
+    assert.equal(location.subjectHref, "/en/computer-science/algorithms");
+    assert.equal(location.clusterKey, null);
+  });
+
+  it("opens SQL section fold on the database-sql topic URL", () => {
+    const groups = navGroupsForRootSection(
+      handbookNavSections("en"),
+      "conspect",
+    );
+    const topicHref = "/en/databases/database-sql";
+    const location = locationForPath(groups, topicHref, "#concept-group-intro");
+    assert.equal(location.subjectHref, "/en/databases");
+    assert.equal(location.clusterKey, `${topicHref}#concept-group-intro`);
     assert.equal(location.topicHref, topicHref);
   });
 });

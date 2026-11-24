@@ -57,35 +57,30 @@ test("title-twin clusters are not interview-only when theory concepts exist", ()
   );
 });
 
-test("intro subject hub hash focus filters every intro group and catalog cluster", () => {
-  const core = SUBJECTS.find((subject) => subject.slug === "core");
+test("frontend Core hub hash focuses catalog clusters", () => {
+  const core = SUBJECTS.find(
+    (subject) => subject.track === "frontend" && subject.slug === "core",
+  );
   assert.ok(core);
-  const introSlug = subjectIntroTopicSlug(core);
-  assert.ok(introSlug);
+  assert.equal(subjectIntroTopicSlug(core), undefined);
   const sections = subjectClusterSectionsForLocale("en", core);
   const layout = { sections };
-  const topic = getTopic(core.track, introSlug);
+  const topic = getTopic(core.track, "core-browser-platform");
   assert.ok(topic);
-  const introConcepts = loadTopicOutline(topic, "en");
+  const platformConcepts = loadTopicOutline(topic, "en");
 
-  const workId = conceptGroupSectionDomId("Work Principles");
-  const workFocus = resolveSubjectHubHashFocus({
-    hashId: workId,
-    concepts: introConcepts,
+  const platformFocus = resolveSubjectHubHashFocus({
+    hashId: "platform",
+    concepts: platformConcepts,
     clusterLayout: layout,
   });
-  assert.equal(workFocus.kind, "concept-group");
-  const workConcepts = filterIntroConceptsForHashFocus(
-    introConcepts,
-    workFocus,
-  );
-  assert.ok(workConcepts.length > 0);
-  const workClusters = filterSubjectHubClusterLayout(layout, workFocus);
-  assert.equal(workClusters.sections?.length, 0);
+  assert.equal(platformFocus.kind, "cluster");
+  const platformClusters = filterSubjectHubClusterLayout(layout, platformFocus);
+  assert.equal(platformClusters.sections?.length, 1);
 
   const a11yFocus = resolveSubjectHubHashFocus({
     hashId: "accessibility",
-    concepts: introConcepts,
+    concepts: platformConcepts,
     clusterLayout: layout,
   });
   assert.equal(a11yFocus.kind, "cluster");

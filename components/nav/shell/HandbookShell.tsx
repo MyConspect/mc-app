@@ -306,8 +306,15 @@ export function HandbookShell({
               }}
             >
               <ConceptFooterActionsProvider>
-                <ContentBreadcrumbs groups={groups} chrome={chrome} />
-                <HandbookNavGroupsProvider groups={groups}>
+                <ContentBreadcrumbs
+                  groups={groups}
+                  sections={enrichedSections}
+                  chrome={chrome}
+                />
+                <HandbookNavGroupsProvider
+                  groups={groups}
+                  sections={enrichedSections}
+                >
                   {children}
                 </HandbookNavGroupsProvider>
               </ConceptFooterActionsProvider>

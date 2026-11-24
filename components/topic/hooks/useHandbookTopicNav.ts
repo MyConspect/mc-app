@@ -25,7 +25,10 @@ import {
 import { useTopicNavConcepts } from "@/components/topic/context/TopicNavConceptsContext";
 import { resolveConceptId } from "@/lib/nav/conceptHash";
 import { hashIdFrom } from "@/lib/nav/navUtils";
-import { useHandbookNavGroups } from "@/components/nav/context/handbookNavContext";
+import {
+  useHandbookNavGroups,
+  useHandbookNavSections,
+} from "@/components/nav/context/handbookNavContext";
 import { useSearchCorpus } from "@/components/nav/utils/searchCorpus";
 import {
   activeBookmarkIndex,
@@ -78,6 +81,7 @@ export function useHandbookTopicNav(options?: {
     getServerBookmarks,
   );
   const shellNavGroups = useHandbookNavGroups();
+  const shellNavSections = useHandbookNavSections();
   const searchNavGroups = useSearchCorpus(shellNavGroups === null);
   const navGroups = shellNavGroups ?? searchNavGroups;
   const topicNavConcepts = useTopicNavConcepts();
@@ -203,11 +207,24 @@ export function useHandbookTopicNav(options?: {
     if (!navGroups) {
       return null;
     }
-    return parentHrefForPath(navGroups, location.pathname, navHash, {
-      home: chrome.home,
-      instructions: chrome.instructions,
-    });
-  }, [navGroups, location.pathname, navHash, chrome.home, chrome.instructions]);
+    return parentHrefForPath(
+      navGroups,
+      location.pathname,
+      navHash,
+      {
+        home: chrome.home,
+        instructions: chrome.instructions,
+      },
+      shellNavSections ?? undefined,
+    );
+  }, [
+    navGroups,
+    shellNavSections,
+    location.pathname,
+    navHash,
+    chrome.home,
+    chrome.instructions,
+  ]);
 
   const navigate = useCallback(
     (href: string | null, options?: { suppressConceptNavRecord?: boolean }) => {
