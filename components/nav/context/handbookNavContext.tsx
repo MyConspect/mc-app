@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { NavGroup, NavRootSection } from "@/lib/nav";
 
 type HandbookNavCatalog = {
@@ -19,8 +19,12 @@ export function HandbookNavGroupsProvider({
   sections?: readonly NavRootSection[] | null;
   children: ReactNode;
 }) {
+  const value = useMemo(
+    (): HandbookNavCatalog => ({ groups, sections }),
+    [groups, sections],
+  );
   return (
-    <HandbookNavGroupsContext.Provider value={{ groups, sections }}>
+    <HandbookNavGroupsContext.Provider value={value}>
       {children}
     </HandbookNavGroupsContext.Provider>
   );

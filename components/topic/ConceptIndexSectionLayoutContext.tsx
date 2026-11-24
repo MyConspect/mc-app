@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 
 type Layout = {
   readonly gridSpan: number;
@@ -18,10 +18,12 @@ export function ConceptIndexSectionLayoutProvider({
   readonly listColumnCount: number;
   readonly children: ReactNode;
 }) {
+  const value = useMemo(
+    (): Layout => ({ gridSpan, listColumnCount }),
+    [gridSpan, listColumnCount],
+  );
   return (
-    <ConceptIndexSectionLayoutContext.Provider
-      value={{ gridSpan, listColumnCount }}
-    >
+    <ConceptIndexSectionLayoutContext.Provider value={value}>
       {children}
     </ConceptIndexSectionLayoutContext.Provider>
   );

@@ -220,7 +220,7 @@ function conceptRowClass(
   rowGapClass: string,
 ): string {
   const shared =
-    "block min-h-11 w-full touch-manipulation cursor-pointer rounded-md px-2 py-1.5 text-sm font-medium ring-1 ring-inset transition-[color,background-color,box-shadow] duration-150 ease-out motion-reduce:transition-none sm:min-h-8";
+    "block min-h-11 w-full touch-manipulation cursor-pointer rounded-md px-2 py-1.5 text-[15px] font-medium ring-1 ring-inset transition-[color,background-color,box-shadow] duration-150 ease-out motion-reduce:transition-none sm:min-h-8";
   const highlight = active
     ? `${shared} text-zinc-900 bg-yellow-50 ring-yellow-200 dark:bg-yellow-950 dark:text-zinc-50 dark:ring-yellow-800`
     : `${shared} text-zinc-600 bg-transparent ring-transparent hover:bg-yellow-50 dark:text-zinc-400 dark:hover:bg-yellow-950/60`;
@@ -947,7 +947,7 @@ function ClusterSingleTopicConcepts({
   );
 }
 
-export function TopicRow({
+export const TopicRow = memo(function TopicRow({
   trackId,
   topic,
   compact = false,
@@ -1270,9 +1270,9 @@ export function TopicRow({
       </NavFold>
     </li>
   );
-}
+});
 
-export function ClusterRow({
+export const ClusterRow = memo(function ClusterRow({
   trackId,
   subjectHref: subjectPath,
   cluster,
@@ -1650,9 +1650,9 @@ export function ClusterRow({
       </NavFold>
     </li>
   );
-}
+});
 
-export function SectionRow({
+export const SectionRow = memo(function SectionRow({
   trackId,
   subjectHref: subjectPath,
   section,
@@ -1765,9 +1765,9 @@ export function SectionRow({
       </NavFold>
     </li>
   );
-}
+});
 
-export function SubjectRow({
+export const SubjectRow = memo(function SubjectRow({
   trackId,
   group,
   subject,
@@ -2033,4 +2033,4 @@ export function SubjectRow({
       </NavFold>
     </li>
   );
-}
+});

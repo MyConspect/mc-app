@@ -250,7 +250,7 @@ export function rowClass(active: boolean, sticky = false, indentClass = "") {
 
 /** Nested folds under subject (cluster, topic, section) — quieter than track/subject. */
 export function rowClassNested(active: boolean, sticky = false, indentClass = "") {
-  const shared = `flex min-h-9 w-full touch-manipulation cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm font-medium max-md:min-h-10 ${NAV_ROW_SURFACE}`;
+  const shared = `flex min-h-9 w-full touch-manipulation cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[15px] font-medium max-md:min-h-10 ${NAV_ROW_SURFACE}`;
   const highlight = active
     ? `${shared} text-zinc-900 bg-yellow-50 ring-yellow-200 dark:bg-yellow-950 dark:text-zinc-50 dark:ring-yellow-800`
     : `${shared} text-zinc-600 bg-transparent ring-transparent hover:bg-yellow-50/70 dark:text-zinc-400 dark:hover:bg-yellow-950/40`;
