@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   inferNavRootSection,
@@ -25,14 +25,15 @@ export function SectionSwitcher({
   const router = useRouter();
   const pathForSection = highlightPathname || pathname;
   const inferredSection = inferNavRootSection(pathForSection);
-  const [optimisticSection, setOptimisticSection] =
-    useState<NavRootSectionId | null>(null);
+  const [optimisticSection, setOptimisticSection] = useState<{
+    section: NavRootSectionId;
+    fromPath: string;
+  } | null>(null);
 
-  useEffect(() => {
-    setOptimisticSection(null);
-  }, [pathname]);
-
-  const activeSection = optimisticSection ?? inferredSection;
+  const activeSection =
+    optimisticSection !== null && optimisticSection.fromPath === pathname
+      ? optimisticSection.section
+      : inferredSection;
 
   const onSelectSection = (sectionId: NavRootSectionId) => {
     if (sectionId === activeSection) {
@@ -40,7 +41,7 @@ export function SectionSwitcher({
     }
     dispatchSidebarCollapseTracks();
     persistNavRootSection(sectionId);
-    setOptimisticSection(sectionId);
+    setOptimisticSection({ section: sectionId, fromPath: pathname });
     const href = sectionSwitchHref(sections, pathForSection, sectionId);
     if (href === pathname || href === pathForSection) {
       router.refresh();
