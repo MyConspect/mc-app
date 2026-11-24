@@ -58,7 +58,11 @@ test("conceptIndexColumnCountForWidth caps at 2 columns below 1280px viewport", 
     4 * CONCEPT_INDEX_COL_MIN_REM * ROOT + 3 * CONCEPT_INDEX_COL_GAP_REM * ROOT;
   assert.equal(conceptIndexColumnCountForWidth(four, ROOT, 1024), 2);
   assert.equal(
-    conceptIndexColumnCountForWidth(four, ROOT, CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX - 1),
+    conceptIndexColumnCountForWidth(
+      four,
+      ROOT,
+      CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX - 1,
+    ),
     2,
   );
 });
@@ -66,10 +70,7 @@ test("conceptIndexColumnCountForWidth caps at 2 columns below 1280px viewport", 
 test("conceptIndexColumnCountForWidth prefers 2 columns near 1280px when pane fits two tracks", () => {
   const twoTrack =
     2 * CONCEPT_INDEX_COL_MIN_REM * ROOT + CONCEPT_INDEX_COL_GAP_REM * ROOT;
-  assert.equal(
-    conceptIndexColumnCountForWidth(twoTrack, ROOT, 1259),
-    2,
-  );
+  assert.equal(conceptIndexColumnCountForWidth(twoTrack, ROOT, 1259), 2);
 });
 
 test("conceptIndexPanePackScrollColumnCount keeps one track when column need is 1", () => {
@@ -92,7 +93,11 @@ test("conceptIndexColumnCountForWidth may use more than 2 columns from 1280px vi
   const four =
     4 * CONCEPT_INDEX_COL_MIN_REM * ROOT + 3 * CONCEPT_INDEX_COL_GAP_REM * ROOT;
   assert.equal(
-    conceptIndexColumnCountForWidth(four, ROOT, CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX),
+    conceptIndexColumnCountForWidth(
+      four,
+      ROOT,
+      CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX,
+    ),
     4,
   );
 });

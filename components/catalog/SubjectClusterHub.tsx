@@ -240,11 +240,7 @@ export function SubjectClusterHub({
   ]);
 
   const indexLayoutMode: ConceptIndexLayoutMode =
-    browseListVariant === "concept-index"
-      ? conceptIndexLayoutModeForEntries(balancedEntries, {
-          preferNewspaperFrom: 1,
-        })
-      : conceptIndexLayoutModeForEntries(balancedEntries);
+    conceptIndexLayoutModeForEntries(balancedEntries);
 
   const focusedClusterIndexStats = useMemo(() => {
     if (!focusedClusterPaneFlow || hubFocus.kind !== "cluster") {
