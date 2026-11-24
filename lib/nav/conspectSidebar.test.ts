@@ -7,6 +7,7 @@ import { groupNavigateHref } from "./sections";
 import {
   conspectClusterExpandsInSidebar,
   conspectClusterLeavesInSidebar,
+  conspectSingleTopicClusterExpandsInSidebar,
   conspectSubjectHubSectionWithConcepts,
   navSidebarSchema,
 } from "./conspectSidebar";
@@ -128,6 +129,12 @@ test("spot-check hubs expose cluster leaves like Computer Science", () => {
   assert.ok(nodejs);
   const clusterIds = nodejs.clusters.map((cluster) => cluster.id);
   assert.deepEqual(clusterIds, ["core", "modules", "http", "additional"]);
+
+  const nodeCore = nodejs.clusters.find((cluster) => cluster.id === "core");
+  assert.ok(nodeCore);
+  assert.equal(nodeCore.topics.length, 1);
+  assert.ok(conspectSingleTopicClusterExpandsInSidebar(nodeCore));
+  assert.ok(conspectClusterExpandsInSidebar(nodeCore));
 });
 
 test("every conspect subject cluster with concepts expands in sidebar policy", () => {
