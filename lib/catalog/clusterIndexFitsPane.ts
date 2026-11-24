@@ -4,7 +4,12 @@ import {
   CONCEPT_INDEX_WEIGHT_ROW_PX,
 } from "./conceptIndexColumnMetrics";
 import type { ConceptIndexLayoutColumnNeedOptions } from "./conceptIndexLayoutColumnNeed";
-import { CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS } from "./conceptIndexSectionListSplit";
+import {
+  CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS,
+} from "./conceptIndexSectionListSplit";
+
+/** Leaf single-section pane pack only when the dot list is long enough to overflow one pane. */
+export const CONCEPT_INDEX_SINGLE_SECTION_PANE_PACK_MIN_ITEMS = 24;
 
 export type ClusterSectionIndexStats = {
   readonly packWeight: number;
@@ -142,7 +147,7 @@ export function conceptIndexPanePackOptionsForEntries(
 ): ConceptIndexLayoutColumnNeedOptions | undefined {
   const singleSection =
     entries.length === 1 &&
-    entries[0].listItemCount >= CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS;
+    entries[0].listItemCount >= CONCEPT_INDEX_SINGLE_SECTION_PANE_PACK_MIN_ITEMS;
   if (entries.length < 2 && !singleSection) {
     return undefined;
   }

@@ -72,7 +72,7 @@ export function conceptIndexSectionListColumnCount(
     !Number.isFinite(paneHeightPx) ||
     paneHeightPx <= 0
   ) {
-    return byWidth;
+    return 1;
   }
   const rowsPerPane = rowsPerPaneForSplit(paneHeightPx);
   if (rowsPerPane < 1) {

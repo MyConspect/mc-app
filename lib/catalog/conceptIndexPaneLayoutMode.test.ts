@@ -17,3 +17,10 @@ test("conceptIndexLayoutModeForEntries stacks short single section by default", 
     "stack",
   );
 });
+
+test("conceptIndexLayoutModeForEntries stacks medium single section", () => {
+  assert.equal(
+    conceptIndexLayoutModeForEntries([{ weight: 20, listItemCount: 14 }]),
+    "stack",
+  );
+});

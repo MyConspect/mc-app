@@ -171,11 +171,11 @@ export function conceptIndexPanePackScrollColumnCount(
   contentWidthPx?: number,
   rootPx = rootFontSizePx(),
 ): number {
-  let scrollColumns = Math.max(
-    1,
-    Math.min(widthCapacity, Math.max(columnCount, widthCapacity >= 2 ? 2 : 1)),
-  );
-  if (conceptIndexDualColumnViewportActive(viewportWidthPx)) {
+  let scrollColumns = Math.max(1, Math.min(widthCapacity, columnCount));
+  if (
+    columnCount > 1 &&
+    conceptIndexDualColumnViewportActive(viewportWidthPx)
+  ) {
     const paneFitsTwo =
       contentWidthPx === undefined ||
       (Number.isFinite(contentWidthPx) &&

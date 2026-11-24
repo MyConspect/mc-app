@@ -314,10 +314,12 @@ export function ConceptIndexNewspaperColumns({
     return null;
   }
 
+  const oneTrackPanePack =
+    panePack && columnCount <= 1 && scrollColumnCount <= 1;
   const columnsClassName = panePack
     ? `${NEWSPAPER_COLUMNS_CLASS} concept-index-newspaper-pane-pack${
         paneFitsLocked ? "" : " concept-index-newspaper-pane-pack--scroll"
-      }`
+      }${oneTrackPanePack ? " concept-index-newspaper-pane-pack--one-track" : ""}`
     : NEWSPAPER_COLUMNS_CLASS;
 
   const columnNodes = entries.map((entry) => (

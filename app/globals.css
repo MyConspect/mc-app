@@ -491,17 +491,23 @@ article.concept-detail-article > .concept-detail-title {
       :has(article.concept-detail-article)
     )
     .handbook-subject-index-body
-    .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack,
+    .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack:not(
+      .concept-index-newspaper-pane-pack--one-track
+    ),
   #handbook-main:has(.handbook-subject-index-body):not(
       :has(article.concept-detail-article)
     )
     .handbook-subject-index-body
-    .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll,
+    .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll:not(
+      .concept-index-newspaper-pane-pack--one-track
+    ),
   #handbook-main:has(.handbook-subject-index-body):not(
       :has(article.concept-detail-article)
     )
     .concept-index-newspaper-pane-scroll
-    > .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll {
+    > .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll:not(
+      .concept-index-newspaper-pane-pack--one-track
+    ) {
     column-count: 2 !important;
     column-width: var(--concept-index-col-min) !important;
     column-fill: balance;

@@ -410,9 +410,7 @@ export function ConceptList({
   }
 
   const paneLayoutMode = usePaneColumnFlow
-    ? conceptIndexLayoutModeForEntries(balancedEntries, {
-        preferNewspaperFrom: 1,
-      })
+    ? conceptIndexLayoutModeForEntries(balancedEntries)
     : conceptIndexLayoutModeForEntries(balancedEntries);
   if (!interviewAccordionDrilldown && paneLayoutMode === "newspaper") {
     if (!indexHeading?.trim()) {

@@ -52,7 +52,9 @@ test("conceptIndexPanePackOptionsForEntries enables pane pack for multi-section 
     { weight: 4, listItemCount: 5 },
   ]);
   assert.equal(loneShort, undefined);
-  const loneLong = conceptIndexPanePackOptionsForEntries([entries[0]]);
+  const loneLong = conceptIndexPanePackOptionsForEntries([
+    { weight: 40, listItemCount: 30 },
+  ]);
   assert.ok(loneLong);
   assert.equal(loneLong?.oneTrackPerEntry, false);
 });

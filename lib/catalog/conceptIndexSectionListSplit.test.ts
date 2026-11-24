@@ -17,9 +17,9 @@ test("conceptIndexSectionListColumnCount keeps medium lists single-column", () =
   assert.equal(conceptIndexSectionListColumnCount(11), 1);
 });
 
-test("conceptIndexSectionListColumnCount adds columns for long lists without pane height", () => {
-  assert.equal(conceptIndexSectionListColumnCount(16), 4);
-  assert.ok(conceptIndexSectionListLayoutClass(16).includes("list-split"));
+test("conceptIndexSectionListColumnCount defers inner split until pane is measured", () => {
+  assert.equal(conceptIndexSectionListColumnCount(16), 1);
+  assert.equal(conceptIndexSectionListLayoutClass(16), "");
 });
 
 test("conceptIndexSectionListColumnCount keeps one column when pane fits all rows", () => {

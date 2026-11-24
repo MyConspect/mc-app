@@ -72,10 +72,18 @@ test("conceptIndexColumnCountForWidth prefers 2 columns near 1280px when pane fi
   );
 });
 
-test("conceptIndexPanePackScrollColumnCount forces 2 in dual viewport when pane is wide", () => {
+test("conceptIndexPanePackScrollColumnCount keeps one track when column need is 1", () => {
   const pane = 900;
   assert.equal(
-    conceptIndexPanePackScrollColumnCount(1, 1, 1259, pane, ROOT),
+    conceptIndexPanePackScrollColumnCount(3, 1, 1259, pane, ROOT),
+    1,
+  );
+});
+
+test("conceptIndexPanePackScrollColumnCount forces 2 in dual viewport when need is 2", () => {
+  const pane = 900;
+  assert.equal(
+    conceptIndexPanePackScrollColumnCount(3, 2, 1259, pane, ROOT),
     2,
   );
 });
