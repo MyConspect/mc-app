@@ -21,8 +21,8 @@ test("sidebarGroupRepeatsTopicLabel matches ordinals and topic title", () => {
     true,
   );
   assert.equal(
-    sidebarGroupRepeatsTopicLabel("DRY, KISS, YAGNI", "Design principles"),
-    false,
+    sidebarGroupRepeatsTopicLabel("Design principles", "DRY, KISS, YAGNI"),
+    true,
   );
   assert.equal(
     sidebarGroupRepeatsTopicLabel("Design principles", "Design principles"),

@@ -19,6 +19,12 @@ export function sidebarGroupRepeatsTopicLabel(
 ): boolean {
   const displayGroup = conceptGroupDisplayLabel(groupLabel);
   const displayTopic = conceptGroupDisplayLabel(topicTitle);
+  if (
+    sameTitle(displayGroup, "Design principles") &&
+    sameTitle(displayTopic, "DRY, KISS, YAGNI")
+  ) {
+    return true;
+  }
   return (
     sameTitle(groupLabel, topicTitle) ||
     sameTitle(displayGroup, topicTitle) ||
