@@ -111,6 +111,26 @@ function applySidebarClusterFoldHash(
   replacePathHash(pathname, replaceHashWith);
 }
 
+function applyConceptGroupFoldHash(
+  pathname: string,
+  click: ReturnType<typeof topicPageClusterFoldClick>,
+  hasSidebarChildren: boolean,
+  hubDrillOnly: boolean,
+): void {
+  if (hubDrillOnly) {
+    applySidebarClusterFoldHash(
+      pathname,
+      click.closing ? click.replaceHashWith : null,
+    );
+    return;
+  }
+  if (hasSidebarChildren && !click.closing) {
+    applySidebarClusterFoldHash(pathname, null);
+    return;
+  }
+  applySidebarClusterFoldHash(pathname, click.replaceHashWith);
+}
+
 function clusterSidebarTopicHref(cluster: NavCluster): string | null {
   const onlyTopic = cluster.topics.length === 1 ? cluster.topics[0] : null;
   if (!onlyTopic || !conspectClusterExpandsInSidebar(cluster)) {
@@ -130,7 +150,6 @@ function openClusterNavigateInSidebar(
   pathname: string,
   goToPath: (pathname: string) => void,
   onNavigate: (() => void) | undefined,
-  sectionId: NavRootSectionId,
 ): void {
   event.preventDefault();
   const topicHref = clusterSidebarTopicHref(cluster);
@@ -141,7 +160,7 @@ function openClusterNavigateInSidebar(
     });
   }
   followHandbookHref(navigateHref, pathname, goToPath);
-  closeNavSoon(onNavigate, sectionId === "conspect");
+  closeNavSoon(onNavigate);
 }
 
 function nestedClusterFoldMatches(
@@ -152,7 +171,10 @@ function nestedClusterFoldMatches(
   onHub: boolean,
 ): boolean {
   return (cluster.nestedClusters ?? []).some((nested) => {
-    const nestedKey = clusterKey(subjectPath, nested.id);
+    const nestedTopicPath = nested.href.split("#")[0] ?? subjectPath;
+    const nestedKey = isConceptGroupSectionId(nested.id)
+      ? clusterKey(nestedTopicPath, nested.id)
+      : clusterKey(subjectPath, nested.id);
     if (openClusterKey === nestedKey) {
       return true;
     }
@@ -220,7 +242,7 @@ function conceptRowClass(
   rowGapClass: string,
 ): string {
   const shared =
-    "block min-h-11 w-full touch-manipulation cursor-pointer rounded-md px-2 py-1.5 text-[15px] font-medium ring-1 ring-inset transition-[color,background-color,box-shadow] duration-150 ease-out motion-reduce:transition-none sm:min-h-8";
+    "flex min-h-11 w-full flex-col justify-center touch-manipulation cursor-pointer rounded-md px-2 py-2 text-[15px] font-medium ring-1 ring-inset transition-[color,background-color,box-shadow] duration-150 ease-out motion-reduce:transition-none sm:min-h-9";
   const highlight = active
     ? `${shared} text-zinc-900 bg-yellow-50 ring-yellow-200 dark:bg-yellow-950 dark:text-zinc-50 dark:ring-yellow-800`
     : `${shared} text-zinc-600 bg-transparent ring-transparent hover:bg-yellow-50 dark:text-zinc-400 dark:hover:bg-yellow-950/60`;
@@ -259,10 +281,10 @@ export const ConceptLink = memo(function ConceptLink({
         event.preventDefault();
         if (isActiveHref(pathname, topicHref)) {
           setHashOnPath(pathname, concept.id, false);
-          closeNavSoon(onNavigate, true);
+          closeNavSoon(onNavigate);
           return;
         }
-        closeNavSoon(onNavigate, true);
+        closeNavSoon(onNavigate);
         followHandbookHref(
           conceptHref(topicHref, concept.id),
           pathname,
@@ -271,11 +293,11 @@ export const ConceptLink = memo(function ConceptLink({
       }}
       className={conceptRowClass(conceptActive, indentClass, rowGapClass)}
     >
-      <span className="flex items-baseline justify-between gap-2">
-        <span className="min-w-0">
+      <span className="flex items-center justify-between gap-2">
+        <span className="min-w-0 leading-snug">
           <SidebarHighlightedText text={concept.title} query={query} />
         </span>
-        <span className="flex shrink-0 items-baseline gap-1.5">
+        <span className="flex shrink-0 items-center gap-1.5">
           {snippet ? (
             <span className="text-[10px] font-medium tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
               {CHROME.inNotes}
@@ -379,21 +401,26 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
   const sectionId = conceptGroupSectionDomId(groupLabel);
   const navigateHref = `${topicPath}#${sectionId}`;
   const key = clusterKey(topicPath, sectionId);
-  const { clusterKey: openClusterKey } = fold(trackId);
+  const { clusterKey: openClusterKey, topicHref: openTopicHref } = fold(trackId);
   const onTopic =
     isActiveHref(pathname, topicPath) ||
     navTopicTreeContainsHref(topic, pathname);
+  const hubDrillingTopic =
+    !onTopic && !searching && openTopicHref === topic.href;
   const groupHashActive = onTopic && activeConceptId === sectionId;
   const childConceptActive =
     onTopic && concepts.some((concept) => activeConceptId === concept.id);
+  const groupFoldOpen = !searching && openClusterKey === key;
   const groupOpen =
     searching ||
-    openClusterKey === key ||
+    groupFoldOpen ||
     groupHashActive ||
     childConceptActive;
   const isHitCluster =
     first?.pathname === topicPath && first.hash === `#${sectionId}`;
-  const onPath = !searching && (groupHashActive || childConceptActive);
+  const onPath =
+    !searching &&
+    (groupHashActive || childConceptActive || groupFoldOpen);
   const pinPath = navPathPinned(onPath, groupHashActive, stackPathPins);
   /** Conspect `##` folds use their own sticky tier (below topic, above concepts). */
   const sectionNavKind = topic.hideSidebarConcepts
@@ -412,7 +439,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
         data-nav-pin={pinPath ? sectionNavKind : undefined}
         onClick={(event) => {
           pinNavForHref(event.currentTarget, pathname, navigateHref);
-          if (onTopic) {
+          if (onTopic || hubDrillingTopic) {
             event.preventDefault();
             const hashFragment = `#${sectionId}`;
             const sameHash = window.location.hash === hashFragment;
@@ -429,7 +456,12 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
                 topicHref: topic.href,
               });
             }
-            applySidebarClusterFoldHash(pathname, click.replaceHashWith);
+            applyConceptGroupFoldHash(
+              pathname,
+              click,
+              concepts.length > 0,
+              hubDrillingTopic,
+            );
             return;
           }
           // Off the topic URL: always open + navigate — stale `clusterKey` must not
@@ -446,7 +478,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
         aria-expanded={groupOpen}
         className={`${rowClassNested(
           navPathHighlighted(
-            isHitCluster || groupHashActive,
+            isHitCluster || groupHashActive || groupFoldOpen,
             onPath,
             stackPathPins,
           ),
@@ -739,7 +771,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
             topicHref: showTopicFold ? topic.href : null,
           });
           followHandbookHref(topic.href, pathname, goToPath);
-          closeNavSoon(onNavigate, showTopicFold && sectionId === "conspect");
+          closeNavSoon(onNavigate);
         }}
         className={linkClass}
       >
@@ -1063,9 +1095,17 @@ export const TopicRow = memo(function TopicRow({
     (onSubjectHub && showConceptNav);
   const showLoneNested =
     hasNestedTopics && nestedTopics.length === 1 && !showConceptNav;
+  const topicDrillOpen =
+    !searching &&
+    showTopicFold &&
+    openTopicHref === navTopic.href;
   const onPath =
     !searching &&
-    (active || nestedOnPath || hubConceptActive || hubClusterOpen);
+    (active ||
+      nestedOnPath ||
+      hubConceptActive ||
+      hubClusterOpen ||
+      topicDrillOpen);
   const mobileLeaf = topicIsMobileNavLeaf(
     active,
     highlightPathname,
@@ -1076,7 +1116,11 @@ export const TopicRow = memo(function TopicRow({
   const pinPath = navPathPinned(onPath, mobileLeaf, stackPathPins);
   /** Intro concept groups share `topic.href` with the subject hub URL — never key off `openTopicHref` alone. */
   const topicFoldOpen = onSubjectHub
-    ? hubClusterOpen || hubConceptActive || nestedOpen || nestedOnPath
+    ? hubClusterOpen ||
+      hubConceptActive ||
+      nestedOpen ||
+      nestedOnPath ||
+      (showTopicFold && openTopicHref === navTopic.href)
     : openTopicHref === navTopic.href ||
       nestedOpen ||
       nestedOnPath ||
@@ -1210,16 +1254,18 @@ export const TopicRow = memo(function TopicRow({
           patchFold(trackId, {
             topicHref: showTopicFold ? topic.href : null,
           });
-          if (!showTopicFold) {
-            closeNavSoon(onNavigate);
-          }
+          closeNavSoon(onNavigate);
           followHandbookHref(topic.href, pathname, goToPath);
         }}
         data-search-hit={isFirstTopic ? "true" : undefined}
         aria-current={active ? "page" : undefined}
         aria-expanded={showTopicFold ? topicOpen : undefined}
         className={`${(compact ? rowClassNested : rowClass)(
-          navPathHighlighted(isHitTopic || active, onPath, stackPathPins),
+          navPathHighlighted(
+            isHitTopic || active || topicDrillOpen,
+            onPath,
+            stackPathPins,
+          ),
           pinPath,
           indent,
         )} ${clusterHeaderGap}`}
@@ -1344,9 +1390,6 @@ export const ClusterRow = memo(function ClusterRow({
     );
     const isHitCluster =
       first?.pathname === subjectPath && first.hash === `#${cluster.id}`;
-    const onPath =
-      !searching && (active || hubConceptActive || topicMatchesPath);
-    const pinPath = navPathPinned(onPath, active, stackPathPins);
     const key = clusterKey(subjectPath, cluster.id);
     const hubSection = onlyTopic
       ? conspectSubjectHubSectionWithConcepts(cluster, subjectPath)
@@ -1374,6 +1417,15 @@ export const ClusterRow = memo(function ClusterRow({
     const sectionConceptsOpen =
       showHubSectionConcepts &&
       (active || hubConceptActive || openClusterKey === key);
+    const hubClusterFoldOpen =
+      !searching &&
+      (showHubSectionConcepts
+        ? sectionConceptsOpen
+        : openClusterKey === key);
+    const onPath =
+      !searching &&
+      (active || hubConceptActive || topicMatchesPath || hubClusterFoldOpen);
+    const pinPath = navPathPinned(onPath, active, stackPathPins);
 
     return (
       <li className="contents">
@@ -1421,6 +1473,7 @@ export const ClusterRow = memo(function ClusterRow({
             }
             patchFold(trackId, { clusterKey: key });
             queueHandbookHref(navigateHref);
+            closeNavSoon(onNavigate);
           }}
           data-search-hit={isHitCluster ? "true" : undefined}
           aria-current={active ? "location" : undefined}
@@ -1428,7 +1481,11 @@ export const ClusterRow = memo(function ClusterRow({
             showHubSectionConcepts ? sectionConceptsOpen : undefined
           }
           className={`${rowClassNested(
-            navPathHighlighted(isHitCluster || active, onPath, stackPathPins),
+            navPathHighlighted(
+              isHitCluster || active || hubClusterFoldOpen,
+              onPath,
+              stackPathPins,
+            ),
             pinPath,
             NAV_NEST_STEP_1,
           )} ${NAV_ROW_GAP}`}
@@ -1490,8 +1547,15 @@ export const ClusterRow = memo(function ClusterRow({
     );
   }
 
-  const key = clusterKey(subjectPath, cluster.id);
+  const conceptGroupTopicPath = cluster.href.split("#")[0] ?? subjectPath;
+  const key = isConceptGroupSectionId(cluster.id)
+    ? clusterKey(conceptGroupTopicPath, cluster.id)
+    : clusterKey(subjectPath, cluster.id);
   const onHub = isActiveHref(pathname, subjectPath);
+  const onTopicPage =
+    isConceptGroupSectionId(cluster.id) &&
+    (isActiveHref(pathname, conceptGroupTopicPath) ||
+      cluster.topics.some((topic) => navTopicTreeContainsHref(topic, pathname)));
   const active = onHub && activeConceptId === cluster.id;
   const hubConceptActive =
     onHub &&
@@ -1507,9 +1571,10 @@ export const ClusterRow = memo(function ClusterRow({
   const topicMatchesPath = cluster.topics.some((topic) =>
     navTopicTreeContainsHref(topic, highlightPathname),
   );
+  const clusterFoldOpen = !searching && openClusterKey === key;
   const clusterOpen =
     searching ||
-    openClusterKey === key ||
+    clusterFoldOpen ||
     active ||
     nestedClusterFoldOpen ||
     topicMatchesPath ||
@@ -1525,9 +1590,14 @@ export const ClusterRow = memo(function ClusterRow({
     (active ||
       hubConceptActive ||
       nestedClusterFoldOpen ||
+      clusterFoldOpen ||
       (isConceptGroupSectionId(cluster.id) && (hubConceptActive || active)) ||
       (topicMatchesPath && !(onHub && hubSingleTopic && onHubIndex)));
   const pinPath = navPathPinned(onPath, active, stackPathPins);
+  const nestedSidebarConceptCount = cluster.topics.reduce(
+    (count, topic) => count + topic.concepts.length,
+    0,
+  );
 
   return (
     <li className="contents">
@@ -1573,6 +1643,33 @@ export const ClusterRow = memo(function ClusterRow({
             applySidebarClusterFoldHash(pathname, click.replaceHashWith);
             return;
           }
+          if (onTopicPage) {
+            event.preventDefault();
+            const hashFragment = `#${cluster.id}`;
+            const sameHash = window.location.hash === hashFragment;
+            const groupHashActive = activeConceptId === cluster.id;
+            const click = topicPageClusterFoldClick(
+              openClusterKey,
+              key,
+              hashFragment,
+              sameHash,
+              groupHashActive,
+            );
+            const topicHref = cluster.topics[0]?.href ?? null;
+            if (!searching) {
+              patchFold(trackId, {
+                clusterKey: click.clusterKey,
+                ...(topicHref ? { topicHref } : {}),
+              });
+            }
+            applyConceptGroupFoldHash(
+              pathname,
+              click,
+              nestedSidebarConceptCount > 0,
+              false,
+            );
+            return;
+          }
           if (!searching && offHubClusterFoldCollapse(openClusterKey, key)) {
             event.preventDefault();
             patchFold(trackId, { clusterKey: null });
@@ -1589,14 +1686,17 @@ export const ClusterRow = memo(function ClusterRow({
             pathname,
             goToPath,
             onNavigate,
-            sectionId,
           );
         }}
         data-search-hit={isHitCluster ? "true" : undefined}
         aria-current={active ? "location" : undefined}
         aria-expanded={clusterOpen}
         className={`${rowClassNested(
-          navPathHighlighted(isHitCluster || active, onPath, stackPathPins),
+          navPathHighlighted(
+            isHitCluster || active || clusterFoldOpen,
+            onPath,
+            stackPathPins,
+          ),
           pinPath,
           NAV_NEST_STEP_1,
         )} ${NAV_ROW_GAP}`}
@@ -1663,7 +1763,7 @@ export const SectionRow = memo(function SectionRow({
   section: NavSection;
   clusterLeafInSidebar?: boolean;
 }) {
-  const { query, pathname, searching, first } = useSidebarChrome();
+  const { query, pathname, searching, first, onNavigate } = useSidebarChrome();
   const { highlightPathname, stackPathPins } = useSidebarHighlight();
   const { fold, patchFold } = useScopedSidebarFold();
   const { activeConceptId } = useSidebarActive();
@@ -1729,6 +1829,7 @@ export const SectionRow = memo(function SectionRow({
           }
           patchFold(trackId, { sectionKey: key, clusterKey: null });
           queueHandbookHref(`${subjectPath}#${section.id}`);
+          closeNavSoon(onNavigate);
         }}
         data-search-hit={isHitSection ? "true" : undefined}
         aria-expanded={sectionOpen}

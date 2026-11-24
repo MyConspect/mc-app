@@ -39,6 +39,16 @@ export function subjectHubClusterFoldClick(
   active: boolean,
   options: SubjectHubClusterFoldOptions = {},
 ): SidebarClusterFoldClick {
+  /** Markdown `##` groups on a subject hub: sidebar fold only — no hub hash jump. */
+  if (isConceptGroupSectionId(clusterDomId)) {
+    const foldOpen = openClusterKey === foldKey;
+    const closing = foldOpen;
+    return {
+      clusterKey: closing ? null : foldKey,
+      closing,
+      replaceHashWith: null,
+    };
+  }
   const foldOpen = clusterFoldOpenForClusterRow(
     openClusterKey,
     foldKey,

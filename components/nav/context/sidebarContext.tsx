@@ -219,7 +219,11 @@ export function useSidebarActive() {
   return value;
 }
 
-/** @param keepDrawerOpenOnMobile Skip dismiss while drilling down the sidebar tree on phones. */
+/**
+ * Dismiss the mobile drawer after navigation (via `onNavigate`).
+ * @param keepDrawerOpenOnMobile On phones, skip dismiss while drilling the tree
+ *   (track/subject hub). Leaf navigations must pass `false` so content is visible.
+ */
 export function closeNavSoon(
   onNavigate?: () => void,
   keepDrawerOpenOnMobile = false,

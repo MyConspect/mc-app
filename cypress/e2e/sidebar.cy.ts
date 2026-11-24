@@ -129,6 +129,18 @@ describe("handbook sidebar", () => {
     cy.conceptNavButton("Next").should("not.exist");
   });
 
+  it("closes the mobile drawer after a leaf concept in the sidebar", () => {
+    cy.viewport(390, 844);
+    cy.visit("/en/frontend/react-core");
+    cy.get('button[aria-label="Open topics"]').click();
+    cy.sidebar().should("be.visible");
+    cy.get('#handbook-sidebar a[data-concept-id="jsx"]').click();
+    cy.location("hash").should("eq", "#jsx");
+    cy.conceptArticle("jsx").should("be.visible");
+    cy.get('button[aria-label="Open topics"]').should("be.visible");
+    cy.get('button[aria-label="Close topics"]').should("not.exist");
+  });
+
   it("does not show Back on behavior questions topic index", () => {
     cy.viewport(390, 844);
     cy.visit("/en/behavior");
