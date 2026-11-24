@@ -4,6 +4,8 @@ import {
   measureNavChromeInset,
   resolveStickyTopPx,
   shouldReleaseStickyScope,
+  STICKY_TOP_SELF_VAR,
+  stickyTopPxForElement,
   stickyVarsEqual,
   writeStickyVars,
 } from "./sidebarSticky";
@@ -114,6 +116,33 @@ test("writeStickyVars rewrites after the style was cleared", () => {
     { "--nav-sticky-cover": "12px" },
   );
   assert.deepEqual(writes, ["set:--nav-sticky-cover=12px"]);
+});
+
+test("stickyTopPxForElement prefers per-row self top", () => {
+  const element = {
+    style: {
+      getPropertyValue(name: string) {
+        return name === STICKY_TOP_SELF_VAR ? "120px" : "";
+      },
+    },
+    getAttribute(name: string) {
+      return name === "data-nav" ? "topic" : null;
+    },
+    querySelector: () => null,
+  } as unknown as HTMLElement;
+  const scrollerStyle = { getPropertyValue: () => "" };
+  assert.equal(stickyTopPxForElement(element, scrollerStyle), 120);
+  assert.equal(
+    stickyTopPxForElement(
+      {
+        ...element,
+        style: { getPropertyValue: () => "" },
+      } as unknown as HTMLElement,
+      scrollerStyle,
+      { "--nav-sticky-top-topic": "88px" },
+    ),
+    88,
+  );
 });
 
 test("writeStickyVars updates only changed keys", () => {
