@@ -1,11 +1,13 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import {
   conceptIndexSectionListLayoutClass,
   conceptIndexSectionListSplitStyle,
 } from "@/lib/catalog/conceptIndexSectionListSplit";
 import { useSearchQuery } from "@/components/search";
+import { useConceptIndexPaneHeight } from "./useConceptIndexPaneHeight";
 import { ConceptGroupSectionHeader } from "./ConceptTitleHeader";
 import type { ConceptGroup } from "./conceptIndexGroups";
 import { conceptsForIndexSection } from "./conceptIndexGroups";
@@ -35,12 +37,24 @@ export function ConceptIndexList({
   chrome: ChromeCopy;
   conceptHrefFor?: (concept: SubjectHubConcept) => string;
 }) {
+  const [measureEl, setMeasureEl] = useState<HTMLElement | null>(null);
+  const setPaneMeasureRef = useCallback((element: HTMLElement | null) => {
+    setMeasureEl(element);
+  }, []);
+  const paneHeightPx = useConceptIndexPaneHeight(measureEl);
   const listClass =
-    `list-none ${conceptIndexSectionListLayoutClass(concepts.length)}`.trim();
-  const listStyle = conceptIndexSectionListSplitStyle(concepts.length);
+    `list-none ${conceptIndexSectionListLayoutClass(concepts.length, paneHeightPx)}`.trim();
+  const listStyle = conceptIndexSectionListSplitStyle(
+    concepts.length,
+    paneHeightPx,
+  );
 
   return (
-    <nav aria-label={chrome.topicsNav} className="concept-list">
+    <nav
+      ref={setPaneMeasureRef}
+      aria-label={chrome.topicsNav}
+      className="concept-list min-h-0 w-full min-w-0"
+    >
       <ul className={listClass} style={listStyle}>
         {concepts.map((concept) => {
           const href = conceptHrefFor?.(concept);

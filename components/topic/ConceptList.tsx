@@ -49,9 +49,11 @@ import { ConceptIndexPaneLayout } from "./ConceptIndexPaneLayout";
 import { buildConceptIndexBalancedEntries } from "./buildConceptIndexBalancedEntries";
 import {
   conceptsForIndexSection,
+  conceptIndexSectionWeight,
   groupConcepts,
   interviewGroupDisplayTitle,
 } from "./conceptIndexGroups";
+import { ConceptGroupIndexSection } from "./ConceptGroupIndexSection";
 import {
   CONCEPT_INDEX_DOT_INTERACTIVE,
   CONCEPT_INDEX_LINK,
@@ -175,6 +177,30 @@ export function ConceptList({
       }),
     [concepts, groupInterviewSections, chrome, pathname],
   );
+  const activeTheoryGroupEntries = useMemo(() => {
+    if (!activeTheoryGroup?.label) {
+      return null;
+    }
+    const sectionConcepts = conceptsForIndexSection(activeTheoryGroup);
+    return {
+      title: activeTheoryGroup.label,
+      entries: [
+        {
+          key: `concept-group:${activeTheoryGroup.key}`,
+          weight: conceptIndexSectionWeight(activeTheoryGroup),
+          listItemCount: sectionConcepts.length,
+          node: (
+            <ConceptGroupIndexSection
+              group={activeTheoryGroup}
+              chrome={chrome}
+              pathname={pathname}
+              suppressHeading
+            />
+          ),
+        },
+      ] as const,
+    };
+  }, [activeTheoryGroup, chrome, pathname]);
   const notesQuery = mode === "notes" ? query : "";
   const arrivalRef = useRef<{ path: string; hash: string } | null>(null);
 
@@ -262,23 +288,19 @@ export function ConceptList({
     );
   }
 
-  if (activeTheoryGroup?.label) {
-    const sectionConcepts = conceptsForIndexSection(activeTheoryGroup);
+  if (activeTheoryGroupEntries) {
     return (
-      <div className="concept-list-index w-full space-y-4">
+      <section className={HANDBOOK_INDEX_PANE_SECTION}>
         <ConceptGroupSectionHeader
-          title={sectionRowTitle(activeTheoryGroup.label)}
+          title={sectionRowTitle(activeTheoryGroupEntries.title)}
           chrome={chrome}
         />
-        {sectionConcepts.length > 0 ? (
-          <ConceptIndexNavList
-            concepts={sectionConcepts}
-            query={query}
-            chrome={chrome}
-            pathname={pathname}
-          />
-        ) : null}
-      </div>
+        <ConceptIndexPaneLayout
+          entries={activeTheoryGroupEntries.entries}
+          layoutMode="newspaper"
+          className={HANDBOOK_INDEX_PANE_LIST_SLOT}
+        />
+      </section>
     );
   }
 
@@ -352,7 +374,9 @@ export function ConceptList({
           />
         ) : null}
         {sectionConcepts.length > 0 ? (
-          <div className={group.label ? CONCEPT_INDEX_HEADING_TO_LIST : undefined}>
+          <div
+            className={group.label ? CONCEPT_INDEX_HEADING_TO_LIST : undefined}
+          >
             <ConceptIndexNavList
               concepts={sectionConcepts}
               query={query}
@@ -365,11 +389,7 @@ export function ConceptList({
     );
   });
 
-  const indexBody = (
-    <>
-      {indexSections}
-    </>
-  );
+  const indexBody = <>{indexSections}</>;
 
   if (embedInParentGrid) {
     if (!indexHeading?.trim()) {
@@ -388,10 +408,7 @@ export function ConceptList({
         preferNewspaperFrom: 1,
       })
     : conceptIndexLayoutModeForEntries(balancedEntries);
-  if (
-    !interviewAccordionDrilldown &&
-    paneLayoutMode === "newspaper"
-  ) {
+  if (!interviewAccordionDrilldown && paneLayoutMode === "newspaper") {
     if (!indexHeading?.trim()) {
       return (
         <ConceptIndexPaneLayout
@@ -423,9 +440,7 @@ export function ConceptList({
     );
   }
 
-  return (
-    <div className="concept-list-index w-full">{indexSections}</div>
-  );
+  return <div className="concept-list-index w-full">{indexSections}</div>;
 }
 
 const CONCEPT_DETAIL_CARD =
