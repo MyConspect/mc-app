@@ -29,14 +29,13 @@ export function useConceptIndexRenderedFitsPane(
   enabled: boolean,
 ): boolean | null {
   const [fits, setFits] = useState<boolean | null>(null);
+  const measureEnabled = enabled && paneHeightPx > 0;
 
   useLayoutEffect(() => {
-    if (!enabled || paneHeightPx <= 0) {
-      setFits(null);
+    if (!measureEnabled) {
       return;
     }
     let frame = 0;
-    let observer: ResizeObserver | undefined;
     const measure = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
@@ -45,21 +44,21 @@ export function useConceptIndexRenderedFitsPane(
           setFits(null);
           return;
         }
-        let fits = conceptIndexColumnsFitPaneElement(columns, paneHeightPx);
+        let nextFits = conceptIndexColumnsFitPaneElement(columns, paneHeightPx);
         if (
-          fits &&
+          nextFits &&
           rootEl?.classList.contains("concept-index-newspaper-pane-scroll")
         ) {
-          fits = conceptIndexColumnsFitScrollportElement(columns, rootEl);
+          nextFits = conceptIndexColumnsFitScrollportElement(columns, rootEl);
         }
-        setFits((prev) => (prev === fits ? prev : fits));
+        setFits((prev) => (prev === nextFits ? prev : nextFits));
       });
     };
     measure();
     if (!rootEl) {
       return;
     }
-    observer = new ResizeObserver(measure);
+    const observer = new ResizeObserver(measure);
     observer.observe(rootEl);
     const columns = resolveNewspaperColumnsEl(rootEl);
     if (columns && columns !== rootEl) {
@@ -69,7 +68,7 @@ export function useConceptIndexRenderedFitsPane(
       cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [rootEl, paneHeightPx, enabled]);
+  }, [rootEl, paneHeightPx, measureEnabled]);
 
-  return fits;
+  return measureEnabled ? fits : null;
 }
