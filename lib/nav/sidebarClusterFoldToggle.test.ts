@@ -63,6 +63,33 @@ test("catalog cluster id does not count as fold-open for concept-group sections"
   );
 });
 
+test("subject hub concept-group section toggles sidebar fold only", () => {
+  const topicKey = "/en/frontend/css#concept-group-selectors-cascade";
+  const clickOpen = subjectHubClusterFoldClick(
+    null,
+    topicKey,
+    groupId,
+    "#concept-group-selectors-cascade",
+    false,
+    false,
+  );
+  assert.equal(clickOpen.closing, false);
+  assert.equal(clickOpen.clusterKey, topicKey);
+  assert.equal(clickOpen.replaceHashWith, null);
+
+  const clickClose = subjectHubClusterFoldClick(
+    topicKey,
+    topicKey,
+    groupId,
+    "#concept-group-selectors-cascade",
+    false,
+    false,
+  );
+  assert.equal(clickClose.closing, true);
+  assert.equal(clickClose.clusterKey, null);
+  assert.equal(clickClose.replaceHashWith, null);
+});
+
 test("topic page cluster fold toggles when section hash is focused", () => {
   const topicKey = "/en/databases/sql:concept-group-joins";
   const click = topicPageClusterFoldClick(
