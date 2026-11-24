@@ -699,10 +699,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
       )) ||
     (hasNestedTopics && nestedTopics.length > 0);
   const topicFoldOpen =
-    openTopicHref === topic.href ||
-    nestedOpen ||
-    nestedOnPath ||
-    (onTopicPage && showConceptNav);
+    openTopicHref === topic.href || nestedOpen || nestedOnPath;
   const topicOpen = searching
     ? showConceptNav || hasNestedTopics
     : showTopicFold && topicFoldOpen;
@@ -726,7 +723,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
         aria-current={active ? "page" : undefined}
         aria-expanded={showTopicFold ? topicOpen : undefined}
         onClick={(event) => {
-          if (pathname === topic.href) {
+          if (isActiveHref(highlightPathname, topic.href)) {
             event.preventDefault();
             pinNavElement(event.currentTarget, {
               hold: false,
@@ -1197,7 +1194,7 @@ export function TopicRow({
             });
             return;
           }
-          if (pathname === topic.href) {
+          if (isActiveHref(highlightPathname, topic.href)) {
             event.preventDefault();
             pinNavElement(event.currentTarget, {
               hold: false,
@@ -1208,7 +1205,7 @@ export function TopicRow({
             }
             if (!searching && showTopicFold) {
               patchFold(trackId, {
-                topicHref: openTopicHref === topic.href ? null : topic.href,
+                topicHref: openTopicHref === navTopic.href ? null : navTopic.href,
               });
             }
             if (!showTopicFold) {
