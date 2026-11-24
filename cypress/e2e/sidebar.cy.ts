@@ -258,7 +258,7 @@ describe("handbook sidebar", () => {
 
     cy.nav("topic", "html-semantics").click();
 
-    cy.location("pathname").should("eq", "/en/frontend/html-structure");
+    cy.location("pathname").should("eq", "/en/conspect/frontend/html-structure");
     cy.nav("topic", "html-semantics").should(
       "have.attr",
       "aria-expanded",
@@ -390,7 +390,7 @@ describe("handbook sidebar", () => {
       "-1",
     );
     cy.get("#handbook-main").should("not.have.attr", "inert");
-    cy.location("pathname").should("eq", "/en/frontend/web-api-http");
+    cy.location("pathname").should("eq", "/en/conspect/frontend/web-api-http");
     cy.location("hash").should("eq", "#http-protocol");
   });
 

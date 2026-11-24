@@ -9,7 +9,7 @@ import {
 } from "@/lib/i18n/sectionPaths";
 import { isLocale } from "@/lib/i18n/locales";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const segments = pathname.split("/").filter(Boolean);
   const locale = segments[0];
