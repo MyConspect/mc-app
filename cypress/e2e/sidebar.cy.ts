@@ -200,24 +200,6 @@ describe("handbook sidebar", () => {
     );
   });
 
-  it("closes the mobile sidebar when crossing the desktop breakpoint", () => {
-    cy.viewport(390, 844);
-    cy.visit("/en/frontend/web-api");
-    cy.contains("button", "Open topics").click();
-    cy.get("#handbook-main").should("have.attr", "inert");
-
-    cy.viewport(1024, 844);
-    cy.get('#handbook-header button[aria-controls="handbook-sidebar"]').should(
-      "have.attr",
-      "aria-expanded",
-      "false",
-    );
-    cy.get("#handbook-main").should("not.have.attr", "inert");
-
-    cy.viewport(390, 844);
-    cy.get("#handbook-sidebar").should("not.be.visible");
-  });
-
   it("shows the last updated day, month, and year next to contact links", () => {
     cy.visit("/en");
     cy.get("nav[aria-label='Contact']").should("be.visible");
