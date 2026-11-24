@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import {
+  clusterIndexFitsPane,
   clusterIndexShouldLockPaneHeight,
   conceptIndexClusterIndexPackWeight,
 } from "@/lib/catalog/clusterIndexFitsPane";
@@ -251,13 +252,31 @@ export function ConceptIndexNewspaperColumns({
     measurePaneWidthPx,
   ]);
 
+  const indexFitsPane = useMemo(() => {
+    if (!panePack || packWeight <= 0 || effectivePaneHeight <= 0) {
+      return false;
+    }
+    return clusterIndexFitsPane(
+      packWeight,
+      effectivePaneHeight,
+      scrollColumnCount,
+    );
+  }, [panePack, packWeight, effectivePaneHeight, scrollColumnCount]);
+
   const lockScrollPaneHeight = useMemo(
     () =>
       panePack &&
       !lockPaneHeight &&
       scrollColumnCount > 1 &&
-      effectivePaneHeight > 0,
-    [panePack, lockPaneHeight, scrollColumnCount, effectivePaneHeight],
+      effectivePaneHeight > 0 &&
+      !indexFitsPane,
+    [
+      panePack,
+      lockPaneHeight,
+      scrollColumnCount,
+      effectivePaneHeight,
+      indexFitsPane,
+    ],
   );
 
   const style = useMemo(() => {
@@ -341,10 +360,7 @@ export function ConceptIndexNewspaperColumns({
       >
         <div
           className={columnsClassName}
-          style={{
-            ...style,
-            minHeight: effectivePaneHeight,
-          }}
+          style={style}
           suppressHydrationWarning
         >
           {columnNodes}
