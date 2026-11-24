@@ -1952,7 +1952,10 @@ article.concept-detail-article .concept-body details + details {
 
 #handbook-nav-aside [data-nav-path="true"] {
   position: sticky;
-  top: var(--nav-sticky-top-track, var(--nav-sticky-inset));
+  top: var(
+    --nav-sticky-top-self,
+    var(--nav-sticky-top-track, var(--nav-sticky-inset))
+  );
   z-index: 20;
   background-color: var(--path-bg);
 }
@@ -1986,20 +1989,30 @@ article.concept-detail-article .concept-body details + details {
 }
 
 #handbook-nav-aside [data-nav="root-section"][data-nav-path="true"] {
-  top: var(--nav-sticky-top-root-section, var(--nav-sticky-inset));
+  top: var(
+    --nav-sticky-top-self,
+    var(--nav-sticky-top-root-section, var(--nav-sticky-inset))
+  );
   z-index: 27;
 }
 
 #handbook-nav-aside [data-nav="track"][data-nav-path="true"] {
-  top: var(--nav-sticky-top-track, var(--nav-sticky-inset));
+  top: var(
+    --nav-sticky-top-self,
+    var(--nav-sticky-top-track, var(--nav-sticky-inset))
+  );
   z-index: 26;
 }
 
 #handbook-nav-aside [data-nav="subject"][data-nav-path="true"] {
   top: var(
-    --nav-sticky-top-subject,
-    calc(
-      var(--nav-sticky-inset) + var(--nav-sticky-track) + var(--nav-sticky-gap)
+    --nav-sticky-top-self,
+    var(
+      --nav-sticky-top-subject,
+      calc(
+        var(--nav-sticky-inset) + var(--nav-sticky-track) +
+          var(--nav-sticky-gap)
+      )
     )
   );
   z-index: 25;
@@ -2008,16 +2021,20 @@ article.concept-detail-article .concept-body details + details {
 #handbook-nav-aside li[data-nav-pin],
 #handbook-nav-aside [data-nav-pin] {
   position: sticky;
+  top: var(--nav-sticky-top-self, var(--nav-sticky-inset));
   background: var(--path-bg);
 }
 
 #handbook-nav-aside [data-nav="section"][data-nav-path="true"],
 #handbook-nav-aside [data-nav-pin="section"] {
   top: var(
-    --nav-sticky-top-section,
-    calc(
-      var(--nav-sticky-inset) + var(--nav-sticky-track) +
-        var(--nav-sticky-row) + (2 * var(--nav-sticky-gap))
+    --nav-sticky-top-self,
+    var(
+      --nav-sticky-top-section,
+      calc(
+        var(--nav-sticky-inset) + var(--nav-sticky-track) +
+          var(--nav-sticky-row) + (2 * var(--nav-sticky-gap))
+      )
     )
   );
   z-index: 24;
@@ -2026,10 +2043,13 @@ article.concept-detail-article .concept-body details + details {
 #handbook-nav-aside [data-nav="cluster"][data-nav-path="true"],
 #handbook-nav-aside [data-nav-pin="cluster"] {
   top: var(
-    --nav-sticky-top-cluster,
-    calc(
-      var(--nav-sticky-inset) + var(--nav-sticky-track) +
-        (2 * var(--nav-sticky-row)) + (3 * var(--nav-sticky-gap))
+    --nav-sticky-top-self,
+    var(
+      --nav-sticky-top-cluster,
+      calc(
+        var(--nav-sticky-inset) + var(--nav-sticky-track) +
+          (2 * var(--nav-sticky-row)) + (3 * var(--nav-sticky-gap))
+      )
     )
   );
   z-index: 23;
@@ -2038,22 +2058,43 @@ article.concept-detail-article .concept-body details + details {
 #handbook-nav-aside [data-nav="topic"][data-nav-path="true"],
 #handbook-nav-aside [data-nav-pin="topic"] {
   top: var(
-    --nav-sticky-top-topic,
-    calc(
-      var(--nav-sticky-inset) + var(--nav-sticky-track) +
-        (3 * var(--nav-sticky-row)) + (4 * var(--nav-sticky-gap))
+    --nav-sticky-top-self,
+    var(
+      --nav-sticky-top-topic,
+      calc(
+        var(--nav-sticky-inset) + var(--nav-sticky-track) +
+          (3 * var(--nav-sticky-row)) + (4 * var(--nav-sticky-gap))
+      )
     )
   );
   z-index: 22;
 }
 
+#handbook-nav-aside [data-nav="concept-group"][data-nav-path="true"],
+#handbook-nav-aside [data-nav-pin="concept-group"] {
+  top: var(
+    --nav-sticky-top-self,
+    var(
+      --nav-sticky-top-concept-group,
+      calc(
+        var(--nav-sticky-inset) + var(--nav-sticky-track) +
+          (3 * var(--nav-sticky-row)) + (4 * var(--nav-sticky-gap))
+      )
+    )
+  );
+  z-index: 21;
+}
+
 #handbook-nav-aside [data-nav="interview-section"][data-nav-path="true"],
 #handbook-nav-aside [data-nav-pin="interview-section"] {
   top: var(
-    --nav-sticky-top-interview,
-    calc(
-      var(--nav-sticky-inset) + var(--nav-sticky-track) +
-        (4 * var(--nav-sticky-row)) + (5 * var(--nav-sticky-gap))
+    --nav-sticky-top-self,
+    var(
+      --nav-sticky-top-interview,
+      calc(
+        var(--nav-sticky-inset) + var(--nav-sticky-track) +
+          (4 * var(--nav-sticky-row)) + (5 * var(--nav-sticky-gap))
+      )
     )
   );
   z-index: 21;
@@ -2068,10 +2109,13 @@ article.concept-detail-article .concept-body details + details {
 /* Concepts put data-nav-path on the <a>, not the display:contents <li>. */
 #handbook-nav-aside [data-concept-id][data-nav-path="true"] {
   top: var(
-    --nav-sticky-top-concept,
-    calc(
-      var(--nav-sticky-inset) + var(--nav-sticky-track) +
-        (4 * var(--nav-sticky-row)) + (5 * var(--nav-sticky-gap))
+    --nav-sticky-top-self,
+    var(
+      --nav-sticky-top-concept,
+      calc(
+        var(--nav-sticky-inset) + var(--nav-sticky-track) +
+          (4 * var(--nav-sticky-row)) + (5 * var(--nav-sticky-gap))
+      )
     )
   );
   z-index: 21;

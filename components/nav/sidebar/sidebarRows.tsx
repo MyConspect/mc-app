@@ -76,6 +76,7 @@ import {
 import {
   conspectClusterExpandsInSidebar,
   conspectClusterLeavesInSidebar,
+  conspectSingleTopicClusterExpandsInSidebar,
   conspectSubjectHubSectionWithConcepts,
   navSidebarSchema,
 } from "@/lib/nav/conspectSidebar";
@@ -85,6 +86,7 @@ import {
   navPathPinned,
   NAV_ROW_GAP,
   rowClass,
+  rowClassNested,
   useScopedSidebarFold,
   useSidebarActive,
   useSidebarBookmarks,
@@ -171,30 +173,19 @@ function nestedClusterFoldMatches(
 function RowTitle({
   text,
   query,
-  marker = false,
-  open = false,
 }: {
   text: string;
   query: string;
+  /** @deprecated Fold chevron only; no row marker. */
   marker?: boolean;
   open?: boolean;
 }) {
   return (
-    <span className="flex min-w-0 flex-1 items-center gap-1.5">
-      {marker ? (
-        <span
-          aria-hidden="true"
-          className="w-3 shrink-0 text-center leading-none text-zinc-500 dark:text-zinc-400"
-        >
-          {open ? "−" : "+"}
-        </span>
-      ) : null}
-      <SidebarHighlightedText
-        text={text}
-        query={query}
-        className="min-w-0 leading-snug"
-      />
-    </span>
+    <SidebarHighlightedText
+      text={text}
+      query={query}
+      className="min-w-0 flex-1 leading-snug"
+    />
   );
 }
 
@@ -242,7 +233,7 @@ export const ConceptLink = memo(function ConceptLink({
   isFirstConcept,
   conceptActive,
   onPath = false,
-  indentClass = "pl-4",
+  indentClass = NAV_NEST_STEP_3,
   rowGapClass = "",
 }: {
   topicHref: string;
@@ -369,7 +360,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
   topic,
   groupLabel,
   concepts,
-  indentClass = "pl-4",
+  indentClass = NAV_NEST_STEP_2,
   rowGapClass = "",
 }: {
   trackId: TrackId;
@@ -404,10 +395,10 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
     first?.pathname === topicPath && first.hash === `#${sectionId}`;
   const onPath = !searching && (groupHashActive || childConceptActive);
   const pinPath = navPathPinned(onPath, groupHashActive, stackPathPins);
-  /** Interview Q&A groups sit under a topic row — use a separate sticky tier (like SQL cluster → topic). */
+  /** Conspect `##` folds use their own sticky tier (below topic, above concepts). */
   const sectionNavKind = topic.hideSidebarConcepts
     ? "interview-section"
-    : "topic";
+    : "concept-group";
 
   return (
     <li className="contents">
@@ -441,11 +432,8 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
             applySidebarClusterFoldHash(pathname, click.replaceHashWith);
             return;
           }
-          if (!searching && offHubClusterFoldCollapse(openClusterKey, key)) {
-            event.preventDefault();
-            patchFold(trackId, { clusterKey: null, topicHref: topic.href });
-            return;
-          }
+          // Off the topic URL: always open + navigate — stale `clusterKey` must not
+          // collapse-only (e.g. Core hub with Data Types expanded → Types).
           event.preventDefault();
           if (!searching) {
             patchFold(trackId, { clusterKey: key, topicHref: topic.href });
@@ -456,7 +444,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
         data-search-hit={isHitCluster ? "true" : undefined}
         aria-current={groupHashActive ? "location" : undefined}
         aria-expanded={groupOpen}
-        className={`${rowClass(
+        className={`${rowClassNested(
           navPathHighlighted(
             isHitCluster || groupHashActive,
             onPath,
@@ -472,18 +460,16 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
           marker
           open={groupOpen}
         />
-        {groupOpen ? (
-          <span className="mt-0.5 shrink-0">
-            <NavChevron open />
-          </span>
-        ) : null}
+        <span className="mt-0.5 shrink-0">
+          <NavChevron open={groupOpen} large />
+        </span>
       </Link>
       <NavFold open={groupOpen} instant={searching} unbox>
         <ul className="contents">
           <ConceptFlatLinks
             topic={topic}
             concepts={concepts}
-            indentClass={indentClass === "pl-4" ? "pl-8" : "pl-6"}
+            indentClass={indentClass}
             ancestorTitle={groupLabel}
           />
         </ul>
@@ -495,7 +481,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
 function ConceptFlatLinks({
   topic,
   concepts,
-  indentClass = "pl-4",
+  indentClass = NAV_NEST_STEP_3,
   ancestorTitle,
 }: {
   topic: NavTopic;
@@ -550,7 +536,7 @@ function ConceptItems({
   trackId,
   topic,
   concepts,
-  indentClass = "pl-4",
+  indentClass = NAV_NEST_STEP_3,
   ancestorTitle,
   tightTopGap = false,
 }: {
@@ -630,8 +616,13 @@ function ConceptItems({
   );
 }
 
-const SECTION_TOPIC_INDENT = "pl-6";
-const SECTION_TOPIC_CONCEPT_INDENT = "pl-8";
+/** Per-level inset matching the track children list (`pl-2` on the bordered `ul`). */
+const NAV_NEST_STEP_1 = "pl-2";
+const NAV_NEST_STEP_2 = "pl-4";
+const NAV_NEST_STEP_3 = "pl-6";
+
+const SECTION_TOPIC_INDENT = NAV_NEST_STEP_2;
+const SECTION_TOPIC_CONCEPT_INDENT = NAV_NEST_STEP_3;
 
 const SectionTopicLink = memo(function SectionTopicLink({
   trackId,
@@ -704,7 +695,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
     ? showConceptNav || hasNestedTopics
     : showTopicFold && topicFoldOpen;
 
-  const linkClass = `${rowClass(
+  const linkClass = `${rowClassNested(
     navPathHighlighted(isHitTopic || active, onPath, stackPathPins),
     pinPath,
     SECTION_TOPIC_INDENT,
@@ -763,7 +754,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
         {bookmarked ? <BookmarkStar /> : null}
         {showTopicFold ? (
           <span className="mt-0.5 shrink-0">
-            <NavChevron open={topicOpen} />
+            <NavChevron open={topicOpen} large />
           </span>
         ) : null}
       </Link>
@@ -882,7 +873,7 @@ function TopicConceptNav({
   trackId,
   topic,
   concepts,
-  indentClass = "pl-4",
+  indentClass = NAV_NEST_STEP_3,
   ancestorTitle,
   tightTopGap = false,
 }: {
@@ -934,7 +925,7 @@ function ClusterSingleTopicConcepts({
           trackId={trackId}
           topic={navTopic}
           concepts={sidebarConcepts}
-          indentClass="pl-6"
+          indentClass={NAV_NEST_STEP_2}
           ancestorTitle={cluster.title}
           tightTopGap
         />
@@ -1102,8 +1093,8 @@ export function TopicRow({
   const topicBookmarked = isBookmarked(navTopic.href);
   // Flatten sticky headers into the track list so nested containing blocks cannot
   // drag Core/Structure above Frontend/HTML while siblings scroll.
-  const indent = compact ? (navKind === "cluster" ? "pl-4" : "pl-6") : "";
-  const conceptIndent = compact ? "pl-8" : "pl-4";
+  const indent = compact ? NAV_NEST_STEP_2 : "";
+  const conceptIndent = NAV_NEST_STEP_3;
   const clusterHeaderGap =
     stackSiblingGap && !(showTopicFold && topicOpen)
       ? `${NAV_ROW_GAP} mb-1.5`
@@ -1227,7 +1218,7 @@ export function TopicRow({
         data-search-hit={isFirstTopic ? "true" : undefined}
         aria-current={active ? "page" : undefined}
         aria-expanded={showTopicFold ? topicOpen : undefined}
-        className={`${rowClass(
+        className={`${(compact ? rowClassNested : rowClass)(
           navPathHighlighted(isHitTopic || active, onPath, stackPathPins),
           pinPath,
           indent,
@@ -1243,17 +1234,9 @@ export function TopicRow({
         </span>
         {topicBookmarked ? <BookmarkStar /> : null}
         {showTopicFold ? (
-          compact ? (
-            topicOpen ? (
-              <span className="mt-0.5 shrink-0">
-                <NavChevron open />
-              </span>
-            ) : null
-          ) : (
-            <span className="mt-0.5 shrink-0">
-              <NavChevron open={topicOpen} large />
-            </span>
-          )
+          <span className="mt-0.5 shrink-0">
+            <NavChevron open={topicOpen} large />
+          </span>
         ) : null}
       </Link>
       <NavFold
@@ -1329,7 +1312,13 @@ export function ClusterRow({
     !singleTopicAsTopicRow &&
     (hubSingleTopic || areRedundantNavTitles(cluster.title, onlyTopic.title));
 
-  if (leafInSidebar && !searching) {
+  const conspectSingleTopicExpand = conspectSingleTopicClusterExpandsInSidebar(
+    cluster,
+  );
+  const clusterLeafMode =
+    leafInSidebar && !searching && !conspectSingleTopicExpand;
+
+  if (clusterLeafMode) {
     if (hasNestedGroups) {
       return (
         <>
@@ -1438,10 +1427,10 @@ export function ClusterRow({
           aria-expanded={
             showHubSectionConcepts ? sectionConceptsOpen : undefined
           }
-          className={`${rowClass(
+          className={`${rowClassNested(
             navPathHighlighted(isHitCluster || active, onPath, stackPathPins),
             pinPath,
-            "pl-4",
+            NAV_NEST_STEP_1,
           )} ${NAV_ROW_GAP}`}
         >
           <RowTitle
@@ -1466,7 +1455,7 @@ export function ClusterRow({
               trackId={trackId}
               topic={hubTopicNav}
               concepts={sidebarConcepts}
-              indentClass="pl-8"
+              indentClass={NAV_NEST_STEP_3}
             />
           </NavFold>
         ) : null}
@@ -1606,10 +1595,10 @@ export function ClusterRow({
         data-search-hit={isHitCluster ? "true" : undefined}
         aria-current={active ? "location" : undefined}
         aria-expanded={clusterOpen}
-        className={`${rowClass(
+        className={`${rowClassNested(
           navPathHighlighted(isHitCluster || active, onPath, stackPathPins),
           pinPath,
-          "pl-4",
+          NAV_NEST_STEP_1,
         )} ${NAV_ROW_GAP}`}
       >
         <RowTitle
@@ -1618,11 +1607,9 @@ export function ClusterRow({
           marker
           open={clusterOpen}
         />
-        {clusterOpen ? (
-          <span className="shrink-0">
-            <NavChevron open />
-          </span>
-        ) : null}
+        <span className="mt-0.5 shrink-0">
+          <NavChevron open={clusterOpen} large />
+        </span>
       </Link>
       <NavFold open={clusterOpen} instant={searching} unbox>
         <ul className="contents">
@@ -1745,14 +1732,14 @@ export function SectionRow({
         }}
         data-search-hit={isHitSection ? "true" : undefined}
         aria-expanded={sectionOpen}
-        className={`${rowClass(
+        className={`${rowClassNested(
           navPathHighlighted(
             isHitSection || hashMatchesSection,
             onPath,
             stackPathPins,
           ),
           pinPath,
-          "pl-4",
+          NAV_NEST_STEP_1,
         )} ${NAV_ROW_GAP}`}
       >
         <RowTitle
@@ -1761,7 +1748,9 @@ export function SectionRow({
           marker
           open={sectionOpen}
         />
-        {sectionOpen ? <NavChevron open /> : null}
+        <span className="mt-0.5 shrink-0">
+          <NavChevron open={sectionOpen} large />
+        </span>
       </Link>
       <NavFold open={sectionOpen} instant={searching} unbox>
         <ul className="contents">

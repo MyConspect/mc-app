@@ -43,6 +43,22 @@ export function conspectClusterLeavesInSidebar(
   return rootSectionId === "conspect";
 }
 
+/**
+ * Conspect: single-topic cluster may show a fold (concepts / `##` groups) in the sidebar,
+ * not only a hash leaf on the subject hub.
+ */
+export function conspectSingleTopicClusterExpandsInSidebar(
+  cluster: NavCluster,
+): boolean {
+  if ((cluster.nestedClusters?.length ?? 0) > 0) {
+    return false;
+  }
+  if (cluster.topics.length !== 1) {
+    return false;
+  }
+  return conspectClusterExpandsInSidebar(cluster);
+}
+
 /** Single-topic cluster with outline concepts or nested topics — expandable in Conspect sidebar. */
 export function conspectClusterExpandsInSidebar(cluster: NavCluster): boolean {
   if ((cluster.nestedClusters?.length ?? 0) > 0) {

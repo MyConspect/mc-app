@@ -10,9 +10,13 @@ const TOP_VARS = {
   section: "--nav-sticky-top-section",
   cluster: "--nav-sticky-top-cluster",
   topic: "--nav-sticky-top-topic",
+  "concept-group": "--nav-sticky-top-concept-group",
   "interview-section": "--nav-sticky-top-interview",
   concept: "--nav-sticky-top-concept",
 } as const;
+
+/** Per-row offset; each pinned path row gets its own top so kinds are not shared. */
+export const STICKY_TOP_SELF_VAR = "--nav-sticky-top-self";
 
 /**
  * The track row draws the thick guide. The subject row draws the thin guide
@@ -27,7 +31,7 @@ const GUIDE_VARS: Record<string, string | undefined> = {
 const GUIDE_END_TRIM_PX = 6;
 
 const TRACK_CHILD_ROW =
-  '[data-nav="subject"], [data-nav="topic"], [data-nav="interview-section"], [data-nav="cluster"], [data-nav="section"]';
+  '[data-nav="subject"], [data-nav="topic"], [data-nav="concept-group"], [data-nav="interview-section"], [data-nav="cluster"], [data-nav="section"]';
 const TRACK_BOUNDARY = '[data-nav="track"], [data-nav="root-section"]';
 
 function scrollerContentY(scroller: HTMLElement, element: HTMLElement): number {
@@ -97,6 +101,7 @@ function topVarName(element: HTMLElement) {
     case "section":
     case "cluster":
     case "topic":
+    case "concept-group":
     case "interview-section":
       return TOP_VARS[kind];
     default:
@@ -234,9 +239,11 @@ export function measureStickyPathVars(
   const inset = measureNavChromeInset(nav);
   const { gap } = stickySpacing(nav);
   const vars: Record<string, string> = { "--nav-sticky-inset": `${inset}px` };
+  clearStickyTopSelf(nav);
   // Border edge of the active first row stays one gap below the chrome while stuck.
   let top = inset + gap;
   for (const element of pathElements(nav)) {
+    element.style.setProperty(STICKY_TOP_SELF_VAR, `${top}px`);
     vars[topVarName(element)] = `${top}px`;
     top += element.offsetHeight + gap;
     const kind =
@@ -274,12 +281,35 @@ export function resolveStickyTopPx(
   );
 }
 
+export function stickyTopPxForElement(
+  element: HTMLElement,
+  scrollerStyle: StickyStyleRead,
+  vars?: StickyVars,
+): number {
+  const self = element.style.getPropertyValue(STICKY_TOP_SELF_VAR).trim();
+  if (self) {
+    const parsed = Number.parseFloat(self);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return resolveStickyTopPx(topVarName(element), vars, scrollerStyle);
+}
+
 function stickyTopPx(
   element: HTMLElement,
   scrollerStyle: StickyStyleRead,
   vars?: StickyVars,
 ): number {
-  return resolveStickyTopPx(topVarName(element), vars, scrollerStyle);
+  return stickyTopPxForElement(element, scrollerStyle, vars);
+}
+
+function clearStickyTopSelf(nav: Element): void {
+  for (const element of nav.querySelectorAll<HTMLElement>(
+    `[${PATH_ATTR}="true"], [data-nav-pin]`,
+  )) {
+    element.style.removeProperty(STICKY_TOP_SELF_VAR);
+  }
 }
 
 /**
@@ -295,11 +325,8 @@ export function stickyStackBottomPx(
   if (!last) {
     return scroller.getBoundingClientRect().top;
   }
-  const top = resolveStickyTopPx(
-    topVarName(last),
-    undefined,
-    getComputedStyle(scroller),
-  );
+  const scrollerStyle = getComputedStyle(scroller);
+  const top = stickyTopPxForElement(last, scrollerStyle);
   return scroller.getBoundingClientRect().top + top + last.offsetHeight;
 }
 
