@@ -129,6 +129,7 @@ export function SubjectIntroBody({
         pathname,
         suppressIntroGroupHeadings: hubFocus.kind === "concept-group",
         suppressClusterHeadings: hubFocus.kind === "cluster",
+        splitClusterTopicGroups: true,
       }),
     [
       filteredClusterLayout,

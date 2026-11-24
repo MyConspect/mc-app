@@ -1,6 +1,6 @@
-/** Keep in sync with `--concept-index-col-min` in globals.css (300px). */
+/** Keep in sync with `--concept-index-col-*` in globals.css. */
 export const CONCEPT_INDEX_COL_MIN_PX = 300;
-export const CONCEPT_INDEX_COL_MAX_PX = 300;
+export const CONCEPT_INDEX_COL_MAX_PX = 310;
 export const CONCEPT_INDEX_COL_MIN_REM = CONCEPT_INDEX_COL_MIN_PX / 16;
 export const CONCEPT_INDEX_COL_MAX_REM = CONCEPT_INDEX_COL_MAX_PX / 16;
 export const CONCEPT_INDEX_COL_GAP_REM = 1.25;
@@ -148,6 +148,16 @@ export function conceptIndexDualColumnViewportActive(
 }
 
 /** Pane-pack scroll mode: cap layout column need by pane width capacity. */
+/** Total width for multicol with fixed tracks (caps column stretch). */
+export function conceptIndexPackedMulticolWidthPx(
+  columnCount: number,
+  rootPx = rootFontSizePx(),
+): number {
+  const cols = Math.max(1, Math.floor(columnCount));
+  const gapPx = CONCEPT_INDEX_COL_GAP_REM * rootPx;
+  return cols * CONCEPT_INDEX_COL_MAX_PX + Math.max(0, cols - 1) * gapPx;
+}
+
 export function conceptIndexPanePackScrollColumnCount(
   widthCapacity: number,
   columnCount: number,

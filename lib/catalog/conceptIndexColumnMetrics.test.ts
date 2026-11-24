@@ -8,9 +8,22 @@ import {
   conceptIndexColumnCountForContentHeight,
   conceptIndexColumnCountForWidth,
   conceptIndexPanePackScrollColumnCount,
+  conceptIndexPackedMulticolWidthPx,
+  CONCEPT_INDEX_COL_MAX_PX,
 } from "./conceptIndexColumnMetrics";
 
 const ROOT = 16;
+
+test("conceptIndexPackedMulticolWidthPx caps track width at col max", () => {
+  assert.equal(
+    conceptIndexPackedMulticolWidthPx(1, ROOT),
+    CONCEPT_INDEX_COL_MAX_PX,
+  );
+  assert.equal(
+    conceptIndexPackedMulticolWidthPx(2, ROOT),
+    2 * CONCEPT_INDEX_COL_MAX_PX + 20,
+  );
+});
 
 test("conceptIndexColumnCountForWidth returns 1 when narrow", () => {
   assert.equal(

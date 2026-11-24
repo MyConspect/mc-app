@@ -38,3 +38,15 @@ test("shouldUsePaneScroll follows engaged overflow latch", () => {
   assert.equal(conceptIndexShouldUsePaneScroll(true, null, true), true);
   assert.equal(conceptIndexShouldUsePaneScroll(true, false, true), true);
 });
+
+test("shouldUsePaneScroll defers scroll while column headroom remains", () => {
+  assert.equal(
+    conceptIndexShouldUsePaneScroll(false, false, false, false),
+    false,
+  );
+  assert.equal(conceptIndexShouldUsePaneScroll(false, null, false, false), false);
+  assert.equal(
+    conceptIndexShouldUsePaneScroll(false, false, false, true),
+    true,
+  );
+});

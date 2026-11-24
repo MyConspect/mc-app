@@ -16,11 +16,15 @@ import {
 import {
   CONCEPT_INDEX_COL_MIN_PX,
   conceptIndexColumnCountForWidth,
+  conceptIndexPackedMulticolWidthPx,
 } from "@/lib/catalog/conceptIndexColumnMetrics";
 import { CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS } from "@/lib/catalog/conceptIndexSectionListSplit";
 import { conceptIndexFocusedClusterColumnCount } from "@/lib/catalog/conceptIndexFocusedClusterColumnCount";
 import { conceptIndexEntryPackWeight } from "@/lib/catalog/conceptIndexEntryPackWeight";
-import type { ConceptIndexLayoutColumnNeedOptions } from "@/lib/catalog/conceptIndexLayoutColumnNeed";
+import {
+  CONCEPT_INDEX_CLUSTER_HUB_SECTION_CAP,
+  type ConceptIndexLayoutColumnNeedOptions,
+} from "@/lib/catalog/conceptIndexLayoutColumnNeed";
 import type { ConceptIndexBalancedEntry } from "./ConceptIndexBalancedLayout";
 import { useConceptIndexColumnCount } from "./useConceptIndexColumnCount";
 import { useConceptIndexLayoutColumnCount } from "./useConceptIndexLayoutColumnCount";
@@ -31,6 +35,7 @@ import {
   conceptIndexColumnsFitScrollportElement,
   conceptIndexColumnsRenderedHeightPx,
 } from "@/lib/catalog/conceptIndexRenderedFitsPane";
+import { conceptIndexShouldUseCompactShell } from "@/lib/catalog/conceptIndexCompactShell";
 import { conceptIndexShouldUsePaneScroll } from "@/lib/catalog/conceptIndexShouldUsePaneScroll";
 import { useConceptIndexRenderedFitsPane } from "./useConceptIndexRenderedFitsPane";
 import { useConceptIndexViewportWidth } from "./useConceptIndexViewportWidth";
@@ -233,8 +238,15 @@ export function ConceptIndexNewspaperColumns({
   );
 
   const entryRevision = useMemo(
-    () => entries.map((entry) => entry.key).join("\0"),
+    () => `${entries.length}\0${entries.map((entry) => entry.key).join("\0")}`,
     [entries],
+  );
+
+  const subjectHubLayout = useMemo(
+    () =>
+      entries.length > 1 &&
+      entries.length <= CONCEPT_INDEX_CLUSTER_HUB_SECTION_CAP,
+    [entries.length],
   );
 
   const [paneScrollEngaged, setPaneScrollEngaged] = useState(false);
@@ -243,12 +255,6 @@ export function ConceptIndexNewspaperColumns({
   );
   /** Painted layout: grow from 1 when overflow; packing model only caps the max. */
   const [domColumnCount, setDomColumnCount] = useState(1);
-
-  useEffect(() => {
-    setPaneScrollEngaged(false);
-    setCompactPaneHeight(null);
-    setDomColumnCount(1);
-  }, [entryRevision, widthCapacity]);
 
   const scrollColumnCount = useMemo(() => {
     if (!panePack || packWeight <= 0 || effectivePaneHeight <= 0) {
@@ -308,6 +314,14 @@ export function ConceptIndexNewspaperColumns({
     entries.length,
   ]);
 
+  useEffect(() => {
+    setPaneScrollEngaged(false);
+    setCompactPaneHeight(null);
+    setDomColumnCount(
+      Math.max(1, Math.min(widthCapacity, availablePaneColumnCount)),
+    );
+  }, [entryRevision, availablePaneColumnCount, widthCapacity]);
+
   const indexFitsPane = useMemo(() => {
     if (!panePack || packWeight <= 0) {
       return true;
@@ -322,14 +336,28 @@ export function ConceptIndexNewspaperColumns({
     );
   }, [panePack, packWeight, effectivePaneHeight, packFitColumnCountForScroll]);
 
+  const columnCapacityExhausted = useMemo(
+    () =>
+      !panePack ||
+      effectivePaneHeight <= 0 ||
+      domColumnCount >= Math.max(1, widthCapacity),
+    [panePack, effectivePaneHeight, domColumnCount, widthCapacity],
+  );
+
   const shouldUsePaneScroll = useMemo(
     () =>
       conceptIndexShouldUsePaneScroll(
         indexFitsPane,
         renderedFitsPane,
         paneScrollEngaged,
+        columnCapacityExhausted,
       ),
-    [paneScrollEngaged, renderedFitsPane, indexFitsPane],
+    [
+      paneScrollEngaged,
+      renderedFitsPane,
+      indexFitsPane,
+      columnCapacityExhausted,
+    ],
   );
 
   const resolvedPaneHeight = useMemo(() => {
@@ -402,27 +430,26 @@ export function ConceptIndexNewspaperColumns({
     if (!panePack) {
       return 1;
     }
-    if (shouldUsePaneScroll) {
+    if (effectivePaneHeight > 0) {
+      const spaceFloor = Math.max(
+        availablePaneColumnCount,
+        paneScrollEngaged ? scrollColumnCount : 0,
+      );
       return Math.max(
         1,
-        Math.min(
-          widthCapacity,
-          Math.max(scrollColumnCount, modelNewspaperColumnCount),
-        ),
+        Math.min(widthCapacity, Math.max(domColumnCount, spaceFloor)),
       );
-    }
-    if (effectivePaneHeight > 0) {
-      return Math.max(1, Math.min(widthCapacity, domColumnCount));
     }
     return modelNewspaperColumnCount;
   }, [
     panePack,
-    shouldUsePaneScroll,
     widthCapacity,
-    scrollColumnCount,
     modelNewspaperColumnCount,
     domColumnCount,
     effectivePaneHeight,
+    paneScrollEngaged,
+    availablePaneColumnCount,
+    scrollColumnCount,
   ]);
 
   const style = useMemo(() => {
@@ -433,26 +460,40 @@ export function ConceptIndexNewspaperColumns({
       height?: number;
       minHeight?: number;
       maxHeight?: number;
+      width?: string;
+      maxWidth?: string;
+      ["--concept-index-packed-width" as string]?: string;
     } = {};
 
     if (panePack) {
       next.columnCount = newspaperColumnCount;
-      if (newspaperColumnCount <= 1) {
-        next.columnWidth = `${CONCEPT_INDEX_COL_MIN_PX}px`;
-      }
+      next.columnWidth = `${CONCEPT_INDEX_COL_MIN_PX}px`;
       next.columnGap = "1.25rem";
+      const packedWidthPx =
+        conceptIndexPackedMulticolWidthPx(newspaperColumnCount);
+      next["--concept-index-packed-width"] = `${packedWidthPx}px`;
+      next.width = `min(100%, ${packedWidthPx}px)`;
+      next.maxWidth = `min(100%, ${packedWidthPx}px)`;
+      if (newspaperColumnCount > 1 && effectivePaneHeight > 0) {
+        const multicolHeightPx =
+          !shouldUsePaneScroll &&
+          compactPaneShell &&
+          resolvedPaneHeight > 0
+            ? resolvedPaneHeight
+            : effectivePaneHeight;
+        next.height = multicolHeightPx;
+        if (!shouldUsePaneScroll) {
+          next.maxHeight = effectivePaneHeight;
+        }
+      }
     } else if (columnCount > 1) {
       next.columnCount = columnCount;
+      next.columnWidth = `${CONCEPT_INDEX_COL_MIN_PX}px`;
       next.columnGap = "1.25rem";
-    }
-
-    if (
-      panePack &&
-      resolvedPaneHeight > 0 &&
-      usePaneHeightShell &&
-      shouldUsePaneScroll
-    ) {
-      next.height = resolvedPaneHeight;
+      const packedWidthPx = conceptIndexPackedMulticolWidthPx(columnCount);
+      next["--concept-index-packed-width"] = `${packedWidthPx}px`;
+      next.width = `min(100%, ${packedWidthPx}px)`;
+      next.maxWidth = `min(100%, ${packedWidthPx}px)`;
     }
 
     return Object.keys(next).length > 0 ? next : undefined;
@@ -465,6 +506,7 @@ export function ConceptIndexNewspaperColumns({
     newspaperColumnCount,
     effectivePaneHeight,
     resolvedPaneHeight,
+    compactPaneShell,
     viewportWidth,
     measurePaneWidthPx,
   ]);
@@ -474,7 +516,31 @@ export function ConceptIndexNewspaperColumns({
       return;
     }
     let frame = 0;
+    let layoutSettled = false;
+    let observer: ResizeObserver | undefined;
+    const releasePaneScrollEngaged = () => {
+      if (subjectHubLayout) {
+        setPaneScrollEngaged((engaged) => (engaged ? false : engaged));
+      }
+    };
+    const settleQuietLayout = (
+      shellOverflow: boolean,
+      domOverflow: boolean,
+      paintedColumnCount: number,
+    ) => {
+      if (!subjectHubLayout || layoutSettled || shellOverflow || domOverflow) {
+        return;
+      }
+      if (paintedColumnCount < Math.min(widthCapacity, availablePaneColumnCount)) {
+        return;
+      }
+      layoutSettled = true;
+      observer?.disconnect();
+    };
     const measureOverflow = () => {
+      if (layoutSettled) {
+        return;
+      }
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const shell = rootEl?.classList.contains(
@@ -519,40 +585,79 @@ export function ConceptIndexNewspaperColumns({
           1,
           Math.floor(parseFloat(getComputedStyle(columnsEl).columnCount) || 1),
         );
-        const columnCeiling = Math.min(widthCapacity, scrollColumnCount);
+        const columnCeiling = Math.max(1, widthCapacity);
+        const contentFitsPaneBudget =
+          paintedHeight > 0 && paintedHeight <= effectivePaneHeight + slack;
+        const useCompactShell = conceptIndexShouldUseCompactShell(
+          shellOverflow,
+          domOverflow,
+          paintedHeight,
+          effectivePaneHeight,
+          paintedColumnCount,
+          slack,
+        );
+
+        if (
+          (shellOverflow || domOverflow) &&
+          paintedColumnCount < columnCeiling
+        ) {
+          releasePaneScrollEngaged();
+          setCompactPaneHeight((height) => (height === null ? height : null));
+          setDomColumnCount((prev) => {
+            const raised = Math.max(prev, paintedColumnCount);
+            const next =
+              raised < availablePaneColumnCount
+                ? availablePaneColumnCount
+                : Math.min(columnCeiling, raised + 1);
+            return next === prev ? prev : next;
+          });
+          return;
+        }
 
         if (shellOverflow || domOverflow) {
-          setPaneScrollEngaged(true);
-          setCompactPaneHeight(null);
-          if (paintedColumnCount < columnCeiling) {
-            setDomColumnCount((prev) =>
-              Math.min(columnCeiling, Math.max(prev, paintedColumnCount) + 1),
-            );
+          if (contentFitsPaneBudget && domFits) {
+            releasePaneScrollEngaged();
+            if (
+              conceptIndexShouldUseCompactShell(
+                shellOverflow,
+                false,
+                paintedHeight,
+                effectivePaneHeight,
+                paintedColumnCount,
+                slack,
+              )
+            ) {
+              setCompactPaneHeight((height) =>
+                height === paintedHeight ? height : paintedHeight,
+              );
+            } else {
+              setCompactPaneHeight((height) =>
+                height === null ? height : null,
+              );
+            }
+          } else if (paintedColumnCount >= columnCeiling) {
+            setPaneScrollEngaged((engaged) => (engaged ? engaged : true));
+            setCompactPaneHeight((height) => (height === null ? height : null));
           }
-        } else if (
-          domFits &&
-          scrollportFits &&
-          paintedHeight > 0 &&
-          paintedHeight < effectivePaneHeight - slack
-        ) {
-          setPaneScrollEngaged(false);
-          setCompactPaneHeight(paintedHeight);
-          if (paintedColumnCount > 1) {
-            setDomColumnCount((prev) =>
-              Math.min(prev, Math.max(1, paintedColumnCount - 1)),
-            );
-          }
-        } else {
-          setPaneScrollEngaged(false);
-          setCompactPaneHeight(null);
+          return;
         }
+
+        releasePaneScrollEngaged();
+        if (useCompactShell) {
+          setCompactPaneHeight((height) =>
+            height === paintedHeight ? height : paintedHeight,
+          );
+        } else {
+          setCompactPaneHeight((height) => (height === null ? height : null));
+        }
+        settleQuietLayout(shellOverflow, domOverflow, paintedColumnCount);
       });
     };
     measureOverflow();
     if (!rootEl) {
       return;
     }
-    const observer = new ResizeObserver(measureOverflow);
+    observer = new ResizeObserver(measureOverflow);
     observer.observe(rootEl);
     const columnsEl =
       rootEl.classList.contains("concept-index-newspaper-pane-scroll") &&
@@ -572,11 +677,10 @@ export function ConceptIndexNewspaperColumns({
     panePack,
     effectivePaneHeight,
     widthCapacity,
-    scrollColumnCount,
+    availablePaneColumnCount,
+    subjectHubLayout,
     rootEl,
     entryRevision,
-    newspaperColumnCount,
-    renderedFitsPane,
   ]);
 
   if (entries.length === 0) {
@@ -584,9 +688,14 @@ export function ConceptIndexNewspaperColumns({
   }
 
   const oneTrackPanePack = panePack && newspaperColumnCount <= 1;
+  const subjectHubPack = panePack && subjectHubLayout;
+  const paneFillMulticol =
+    panePack && newspaperColumnCount > 1 && effectivePaneHeight > 0;
   const columnsClassName = panePack
     ? `${NEWSPAPER_COLUMNS_CLASS} concept-index-newspaper-pane-pack${
         shouldUsePaneScroll ? " concept-index-newspaper-pane-pack--scroll" : ""
+      }${paneFillMulticol ? " concept-index-newspaper-pane-pack--pane-fill" : ""}${
+        subjectHubPack ? " concept-index-newspaper-pane-pack--subject-hub" : ""
       }${oneTrackPanePack ? " concept-index-newspaper-pane-pack--one-track" : ""}`
     : NEWSPAPER_COLUMNS_CLASS;
 

@@ -36,6 +36,7 @@ export function useConceptIndexRenderedFitsPane(
       return;
     }
     let frame = 0;
+    let observer: ResizeObserver | undefined;
     const measure = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
@@ -51,14 +52,14 @@ export function useConceptIndexRenderedFitsPane(
         ) {
           fits = conceptIndexColumnsFitScrollportElement(columns, rootEl);
         }
-        setFits(fits);
+        setFits((prev) => (prev === fits ? prev : fits));
       });
     };
     measure();
     if (!rootEl) {
       return;
     }
-    const observer = new ResizeObserver(measure);
+    observer = new ResizeObserver(measure);
     observer.observe(rootEl);
     const columns = resolveNewspaperColumnsEl(rootEl);
     if (columns && columns !== rootEl) {

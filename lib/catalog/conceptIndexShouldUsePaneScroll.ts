@@ -3,9 +3,14 @@ export function conceptIndexShouldUsePaneScroll(
   indexFitsPane: boolean,
   renderedFitsPane: boolean | null,
   paneScrollEngaged = false,
+  /** When false, grow column-count toward width capacity before pane scroll. */
+  columnCapacityExhausted = true,
 ): boolean {
   if (paneScrollEngaged) {
     return true;
+  }
+  if (!columnCapacityExhausted) {
+    return false;
   }
   if (renderedFitsPane === true) {
     return false;
