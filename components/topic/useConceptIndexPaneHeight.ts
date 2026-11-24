@@ -2,6 +2,10 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import { HANDBOOK_MAIN_ID } from "@/constants";
+import {
+  CONCEPT_INDEX_PANE_HEIGHT_QUANTIZE_PX,
+  conceptIndexQuantizedPaneHeightPx,
+} from "@/lib/catalog/conceptIndexPaneHeightQuantize";
 
 function viewportPaneBudgetPx(): number {
   return Math.max(400, window.innerHeight * 0.92);
@@ -60,7 +64,19 @@ function observeTargets(
   gridElement: HTMLElement,
   onStoreChange: () => void,
 ): () => void {
-  const observer = new ResizeObserver(onStoreChange);
+  let lastQuantized = conceptIndexQuantizedPaneHeightPx(
+    measurePaneHeight(gridElement),
+  );
+  const observer = new ResizeObserver(() => {
+    const quantized = conceptIndexQuantizedPaneHeightPx(
+      measurePaneHeight(gridElement),
+    );
+    if (Math.abs(quantized - lastQuantized) < CONCEPT_INDEX_PANE_HEIGHT_QUANTIZE_PX) {
+      return;
+    }
+    lastQuantized = quantized;
+    onStoreChange();
+  });
   observer.observe(gridElement);
   const indexBody = gridElement.closest(".handbook-subject-index-body");
   if (indexBody instanceof HTMLElement) {
@@ -92,7 +108,7 @@ export function useConceptIndexPaneHeight(
   );
 
   const getSnapshot = useCallback(
-    () => measurePaneHeight(gridElement),
+    () => conceptIndexQuantizedPaneHeightPx(measurePaneHeight(gridElement)),
     [gridElement],
   );
 

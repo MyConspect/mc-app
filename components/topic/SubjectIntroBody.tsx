@@ -21,7 +21,6 @@ import { TopicNavConceptsProvider } from "./context/TopicNavConceptsContext";
 import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 import type { Concept } from "@/lib/parse";
 import { ConceptIndexPaneLayout } from "./ConceptIndexPaneLayout";
-import { HANDBOOK_SUBJECT_INDEX_BODY } from "./conceptIndexStyles";
 import { buildConceptIndexBalancedEntries } from "./buildConceptIndexBalancedEntries";
 import { resetHandbookReadingScroll } from "./utils/conceptScroll";
 
@@ -130,6 +129,7 @@ export function SubjectIntroBody({
         pathname,
         suppressIntroGroupHeadings: hubFocus.kind === "concept-group",
         suppressClusterHeadings: hubFocus.kind === "cluster",
+        splitClusterTopicGroups: true,
       }),
     [
       filteredClusterLayout,
@@ -143,14 +143,14 @@ export function SubjectIntroBody({
 
   if (hubFocus.kind === "concept-group") {
     return (
-      <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
+      <>
         {fallbackBanner}
         <SubjectHubFocusedGroupList
           concepts={filteredConcepts}
           pathname={pathname}
           chrome={chrome}
         />
-      </div>
+      </>
     );
   }
 
@@ -171,7 +171,7 @@ export function SubjectIntroBody({
 
   if (hubFocus.kind === "cluster") {
     return (
-      <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
+      <>
         {fallbackBanner}
         <SubjectClusterHub
           sections={clusterIndex.sections}
@@ -184,14 +184,14 @@ export function SubjectIntroBody({
           titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
           browseListVariant="concept-index"
         />
-      </div>
+      </>
     );
   }
 
   return (
-    <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
+    <>
       {fallbackBanner}
       <ConceptIndexPaneLayout entries={balancedEntries} />
-    </div>
+    </>
   );
 }

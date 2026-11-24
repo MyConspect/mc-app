@@ -44,8 +44,11 @@ import {
   localeFromPathname,
   stripLocalePrefix,
 } from "@/lib/i18n/paths";
-import { isSectionHomePathname } from "@/lib/i18n/sectionPaths";
-import { isActiveTrack } from "./active";
+import {
+  isSectionHomePathname,
+  peelSectionPrefix,
+} from "@/lib/i18n/sectionPaths";
+import { isActiveHref, isActiveTrack } from "./active";
 import {
   clusterForConceptInSubject,
   clusterTrailCrumbs,
@@ -72,9 +75,7 @@ export function crumbsForPath(
       : homeHref(locale),
   };
   const loopGroups =
-    sections === undefined
-      ? groups
-      : navGroupsForPath(sections, pathname);
+    sections === undefined ? groups : navGroupsForPath(sections, pathname);
 
   if (path === "/" || isSectionHomePathname(pathname)) {
     return [{ label: labels.home }];
@@ -90,7 +91,8 @@ export function crumbsForPath(
 
     if (
       group.leafTopic &&
-      (pathname === group.href || pathname === group.leafTopic.href)
+      (isActiveHref(pathname, group.href) ||
+        isActiveHref(pathname, group.leafTopic.href))
     ) {
       return withConcept(
         home,
@@ -100,7 +102,7 @@ export function crumbsForPath(
       );
     }
 
-    if (pathname === group.href) {
+    if (isActiveHref(pathname, group.href)) {
       if (group.hubTopic) {
         return withConcept(
           home,
@@ -117,7 +119,10 @@ export function crumbsForPath(
               if (clusterCrumbs.length > 0) {
                 return [
                   home,
-                  { label: group.title, href: navGroupCrumbHref(group, pathname) },
+                  {
+                    label: group.title,
+                    href: navGroupCrumbHref(group, pathname),
+                  },
                   ...clusterCrumbs,
                 ];
               }
@@ -129,7 +134,7 @@ export function crumbsForPath(
                   (item) => item.id === hashId,
                 )
               : undefined;
-            if (cluster && pathname === entry.subject.href) {
+            if (cluster && isActiveHref(pathname, entry.subject.href)) {
               const clusterCrumbs = subjectHubClusterCrumbs(
                 cluster,
                 entry.subject,
@@ -138,7 +143,10 @@ export function crumbsForPath(
               if (clusterCrumbs.length > 0) {
                 return [
                   home,
-                  { label: group.title, href: navGroupCrumbHref(group, pathname) },
+                  {
+                    label: group.title,
+                    href: navGroupCrumbHref(group, pathname),
+                  },
                   {
                     label: entry.subject.title,
                     href: navSubjectCrumbHref(group, entry.subject, pathname),
@@ -164,7 +172,7 @@ export function crumbsForPath(
     for (const entry of group.entries) {
       switch (entry.kind) {
         case "topic": {
-          if (entry.topic.href !== pathname) {
+          if (!isActiveHref(pathname, entry.topic.href)) {
             break;
           }
           return withConcept(
@@ -178,7 +186,7 @@ export function crumbsForPath(
           );
         }
         case "subject": {
-          if (pathname === entry.subject.href) {
+          if (isActiveHref(pathname, entry.subject.href)) {
             const clusterHit = hashId
               ? findNavClusterInSubject(entry.subject, hashId)
               : undefined;
@@ -198,7 +206,10 @@ export function crumbsForPath(
               if (clusterCrumbs.length > 0) {
                 return [
                   home,
-                  { label: group.title, href: navGroupCrumbHref(group, pathname) },
+                  {
+                    label: group.title,
+                    href: navGroupCrumbHref(group, pathname),
+                  },
                   {
                     label: entry.subject.title,
                     href: navSubjectCrumbHref(group, entry.subject, pathname),
@@ -222,7 +233,10 @@ export function crumbsForPath(
               if (clusterCrumbs.length > 0) {
                 return [
                   home,
-                  { label: group.title, href: navGroupCrumbHref(group, pathname) },
+                  {
+                    label: group.title,
+                    href: navGroupCrumbHref(group, pathname),
+                  },
                   {
                     label: entry.subject.title,
                     href: navSubjectCrumbHref(group, entry.subject, pathname),
@@ -239,7 +253,10 @@ export function crumbsForPath(
               return withConcept(
                 home,
                 [
-                  { label: group.title, href: navGroupCrumbHref(group, pathname) },
+                  {
+                    label: group.title,
+                    href: navGroupCrumbHref(group, pathname),
+                  },
                   {
                     label: entry.subject.title,
                     href: navSubjectCrumbHref(group, entry.subject, pathname),
@@ -295,7 +312,10 @@ export function crumbsForPath(
               return withConcept(
                 home,
                 [
-                  { label: group.title, href: navGroupCrumbHref(group, pathname) },
+                  {
+                    label: group.title,
+                    href: navGroupCrumbHref(group, pathname),
+                  },
                   {
                     label: entry.subject.title,
                     href: navSubjectCrumbHref(group, entry.subject, pathname),
@@ -320,7 +340,7 @@ export function crumbsForPath(
           break;
         }
         case "cluster": {
-          if (pathname === entry.subjectHref) {
+          if (isActiveHref(pathname, entry.subjectHref)) {
             if (hashId === entry.cluster.id) {
               const clusterCrumbs = clusterTrailCrumbs(entry.cluster);
               if (clusterCrumbs.length > 0) {
@@ -344,7 +364,10 @@ export function crumbsForPath(
             return withConcept(
               home,
               [
-                { label: group.title, href: navGroupCrumbHref(group, pathname) },
+                {
+                  label: group.title,
+                  href: navGroupCrumbHref(group, pathname),
+                },
                 ...clusterTrailCrumbs(entry.cluster),
                 ...ancestors.map((ancestor) => ({
                   label: ancestor.title,
@@ -369,7 +392,8 @@ export function crumbsForPath(
     }
   }
 
-  const segments = path.slice(1).split("/").filter(Boolean);
+  const { rest: logicalPath } = peelSectionPrefix(path);
+  const segments = logicalPath.slice(1).split("/").filter(Boolean);
   const trackSlug = segments[0];
   const topicSlug = segments[1];
   if (trackSlug && topicSlug && isTrackId(trackSlug)) {

@@ -9,7 +9,10 @@ describe("handbook breadcrumbs", () => {
       .last()
       .should("contain", "Meta tags");
     cy.get('[aria-label="Language"] a[hreflang="ru"]').click();
-    cy.location("pathname").should("eq", "/ru/conspect/frontend/html-structure");
+    cy.location("pathname").should(
+      "eq",
+      "/ru/conspect/frontend/html-structure",
+    );
     cy.location("hash").should("eq", "#meta-tags");
     cy.get("nav[aria-label='Breadcrumb'] li")
       .last()

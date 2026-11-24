@@ -62,8 +62,10 @@ import {
 } from "../utils/location";
 import { clusterHasActiveConcept } from "../utils/location/shared";
 import {
+  conceptGroupDisplayLabel,
   conceptGroupSectionDomId,
   isConceptGroupSectionId,
+  sidebarGroupRepeatsTopicLabel,
 } from "@/lib/nav/conceptGroupSection";
 import { NavCautionBadge } from "../ui/NavCautionBadge";
 import { withHandbookSection } from "@/lib/i18n/sectionPaths";
@@ -336,8 +338,11 @@ function conceptsBySidebarGroup(
     const useGroup =
       rawGroup != null &&
       rawGroup.length > 0 &&
-      !sameTitle(rawGroup, topic.title) &&
-      !(ancestorTitle != null && sameTitle(rawGroup, ancestorTitle)) &&
+      !sidebarGroupRepeatsTopicLabel(rawGroup, topic.title) &&
+      !(
+        ancestorTitle != null &&
+        sidebarGroupRepeatsTopicLabel(rawGroup, ancestorTitle)
+      ) &&
       !sameTitle(rawGroup, concept.title);
     if (!useGroup) {
       ungrouped.push(concept);
@@ -461,7 +466,12 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
           indentClass,
         )} ${rowGapClass}`}
       >
-        <RowTitle text={groupLabel} query={query} marker open={groupOpen} />
+        <RowTitle
+          text={conceptGroupDisplayLabel(groupLabel)}
+          query={query}
+          marker
+          open={groupOpen}
+        />
         {groupOpen ? (
           <span className="mt-0.5 shrink-0">
             <NavChevron open />
@@ -593,7 +603,11 @@ function ConceptItems({
       {groups
         .filter(
           (group) =>
-            !(ancestorTitle != null && sameTitle(group.label, ancestorTitle)),
+            !sidebarGroupRepeatsTopicLabel(group.label, topic.title) &&
+            !(
+              ancestorTitle != null &&
+              sidebarGroupRepeatsTopicLabel(group.label, ancestorTitle)
+            ),
         )
         .map((group, index) => (
           <ConceptGroupRow
@@ -685,10 +699,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
       )) ||
     (hasNestedTopics && nestedTopics.length > 0);
   const topicFoldOpen =
-    openTopicHref === topic.href ||
-    nestedOpen ||
-    nestedOnPath ||
-    (onTopicPage && showConceptNav);
+    openTopicHref === topic.href || nestedOpen || nestedOnPath;
   const topicOpen = searching
     ? showConceptNav || hasNestedTopics
     : showTopicFold && topicFoldOpen;
@@ -712,7 +723,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
         aria-current={active ? "page" : undefined}
         aria-expanded={showTopicFold ? topicOpen : undefined}
         onClick={(event) => {
-          if (pathname === topic.href) {
+          if (isActiveHref(highlightPathname, topic.href)) {
             event.preventDefault();
             pinNavElement(event.currentTarget, {
               hold: false,
@@ -1183,7 +1194,7 @@ export function TopicRow({
             });
             return;
           }
-          if (pathname === topic.href) {
+          if (isActiveHref(highlightPathname, topic.href)) {
             event.preventDefault();
             pinNavElement(event.currentTarget, {
               hold: false,
@@ -1194,7 +1205,8 @@ export function TopicRow({
             }
             if (!searching && showTopicFold) {
               patchFold(trackId, {
-                topicHref: openTopicHref === topic.href ? null : topic.href,
+                topicHref:
+                  openTopicHref === navTopic.href ? null : navTopic.href,
               });
             }
             if (!showTopicFold) {

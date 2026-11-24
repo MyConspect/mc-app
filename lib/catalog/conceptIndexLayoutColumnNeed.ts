@@ -3,9 +3,9 @@ export const CONCEPT_INDEX_CLUSTER_HUB_SECTION_CAP = 6;
 
 export type ConceptIndexLayoutColumnNeedOptions = {
   /**
-   * When true (default), cluster subject hubs with ≤6 sections may request one
-   * track per section h2. When false, pack by pane height only (focused
-   * multi-topic cluster topic groups flow in shared columns).
+   * When true (default), cluster hubs with ≤6 sections may use one track per
+   * h2 only when pane-height need is already >1. When false, pack by pane
+   * height only (focused multi-topic cluster topic groups flow in shared columns).
    */
   readonly oneTrackPerEntry?: boolean;
   /** Accurate packing weight for nested cluster lists (headings ≈ 2 rows). */
@@ -25,16 +25,18 @@ export function conceptIndexLayoutColumnNeed(
 ): number {
   let need = Math.max(1, heightCapacity);
   const oneTrackPerEntry = options?.oneTrackPerEntry !== false;
-  if (oneTrackPerEntry && widthCapacity >= 2 && entryCount >= 2) {
-    need = Math.max(need, 2);
-  }
+  const fitsOnePaneHeight = heightCapacity <= 1;
   if (
     oneTrackPerEntry &&
     entryCount > 1 &&
     entryCount <= CONCEPT_INDEX_CLUSTER_HUB_SECTION_CAP &&
     entryCount <= widthCapacity
   ) {
-    need = Math.max(need, entryCount);
+    if (fitsOnePaneHeight) {
+      need = Math.min(widthCapacity, entryCount);
+    } else if (need > 1) {
+      need = Math.max(need, Math.min(entryCount, widthCapacity));
+    }
   }
   return Math.min(widthCapacity, need);
 }

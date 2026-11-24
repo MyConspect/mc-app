@@ -1,6 +1,6 @@
-/** Keep in sync with `--concept-index-col-min` in globals.css (300px). */
+/** Keep in sync with `--concept-index-col-*` in globals.css. */
 export const CONCEPT_INDEX_COL_MIN_PX = 300;
-export const CONCEPT_INDEX_COL_MAX_PX = 300;
+export const CONCEPT_INDEX_COL_MAX_PX = 310;
 export const CONCEPT_INDEX_COL_MIN_REM = CONCEPT_INDEX_COL_MIN_PX / 16;
 export const CONCEPT_INDEX_COL_MAX_REM = CONCEPT_INDEX_COL_MAX_PX / 16;
 export const CONCEPT_INDEX_COL_GAP_REM = 1.25;
@@ -54,30 +54,14 @@ export function conceptIndexRawColumnCountForWidth(
   return 1;
 }
 
-/** Cap / floor column count on narrow viewports (see {@link CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX}). */
+/** Pane-width column fit (viewport does not override measured content width). */
 export function conceptIndexClampColumnCountForViewport(
   columnCount: number,
-  viewportWidthPx: number | undefined = conceptIndexViewportWidthPx(),
-  contentWidthPx?: number,
-  rootPx = rootFontSizePx(),
+  _viewportWidthPx?: number,
+  _contentWidthPx?: number,
+  _rootPx = rootFontSizePx(),
 ): number {
-  if (
-    viewportWidthPx === undefined ||
-    viewportWidthPx >= CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX
-  ) {
-    return columnCount;
-  }
-  let count = Math.min(columnCount, CONCEPT_INDEX_NARROW_VIEWPORT_MAX_COLUMNS);
-  const paneFitsTwo =
-    contentWidthPx !== undefined &&
-    contentWidthPx + 0.5 >= conceptIndexTwoTrackWidthPx(rootPx);
-  const shouldPreferTwo =
-    viewportWidthPx >= CONCEPT_INDEX_DUAL_COLUMN_MIN_VIEWPORT_PX &&
-    (columnCount >= 2 || paneFitsTwo);
-  if (shouldPreferTwo) {
-    count = Math.max(count, CONCEPT_INDEX_NARROW_VIEWPORT_MAX_COLUMNS);
-  }
-  return count;
+  return columnCount;
 }
 
 /** ~one concept-index row in packing weight units (heading ≈ 2 rows). */
@@ -163,33 +147,23 @@ export function conceptIndexDualColumnViewportActive(
   );
 }
 
-/** Pane-pack scroll mode: column-count for multicol (never column-width-only in dual viewport). */
+/** Pane-pack scroll mode: cap layout column need by pane width capacity. */
+/** Total width for multicol with fixed tracks (caps column stretch). */
+export function conceptIndexPackedMulticolWidthPx(
+  columnCount: number,
+  rootPx = rootFontSizePx(),
+): number {
+  const cols = Math.max(1, Math.floor(columnCount));
+  const gapPx = CONCEPT_INDEX_COL_GAP_REM * rootPx;
+  return cols * CONCEPT_INDEX_COL_MAX_PX + Math.max(0, cols - 1) * gapPx;
+}
+
 export function conceptIndexPanePackScrollColumnCount(
   widthCapacity: number,
   columnCount: number,
-  viewportWidthPx: number,
-  contentWidthPx?: number,
-  rootPx = rootFontSizePx(),
+  _viewportWidthPx?: number,
+  _contentWidthPx?: number,
+  _rootPx = rootFontSizePx(),
 ): number {
-  let scrollColumns = Math.max(
-    1,
-    Math.min(widthCapacity, Math.max(columnCount, widthCapacity >= 2 ? 2 : 1)),
-  );
-  if (conceptIndexDualColumnViewportActive(viewportWidthPx)) {
-    const paneFitsTwo =
-      contentWidthPx === undefined ||
-      (Number.isFinite(contentWidthPx) &&
-        contentWidthPx + 0.5 >= conceptIndexTwoTrackWidthPx(rootPx));
-    if (paneFitsTwo) {
-      scrollColumns = Math.max(
-        scrollColumns,
-        CONCEPT_INDEX_NARROW_VIEWPORT_MAX_COLUMNS,
-      );
-      scrollColumns = Math.min(
-        scrollColumns,
-        CONCEPT_INDEX_NARROW_VIEWPORT_MAX_COLUMNS,
-      );
-    }
-  }
-  return scrollColumns;
+  return Math.max(1, Math.min(widthCapacity, columnCount));
 }

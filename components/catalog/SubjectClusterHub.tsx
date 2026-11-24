@@ -23,9 +23,7 @@ import {
   findSubjectClusterSection,
   mergeNestedClusterSection,
 } from "@/lib/catalog/mergeNestedClusterIndexSection";
-import {
-  clusterSectionIndexStats,
-} from "@/lib/catalog/clusterIndexFitsPane";
+import { clusterSectionIndexStats } from "@/lib/catalog/clusterIndexFitsPane";
 import { conceptIndexLayoutModeForEntries } from "@/lib/catalog/conceptIndexPaneLayoutMode";
 import type { SubjectHubConcept } from "@/lib/catalog/subjectHubConcepts";
 import type { Concept } from "@/lib/parse";
@@ -240,11 +238,7 @@ export function SubjectClusterHub({
   ]);
 
   const indexLayoutMode: ConceptIndexLayoutMode =
-    browseListVariant === "concept-index"
-      ? conceptIndexLayoutModeForEntries(balancedEntries, {
-          preferNewspaperFrom: 1,
-        })
-      : conceptIndexLayoutModeForEntries(balancedEntries);
+    conceptIndexLayoutModeForEntries(balancedEntries);
 
   const focusedClusterIndexStats = useMemo(() => {
     if (!focusedClusterPaneFlow || hubFocus.kind !== "cluster") {

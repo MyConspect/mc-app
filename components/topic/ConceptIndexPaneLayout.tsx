@@ -10,6 +10,7 @@ import {
   type ConceptIndexBalancedEntry,
   type ConceptIndexLayoutMode,
 } from "./ConceptIndexBalancedLayout";
+import { HANDBOOK_SUBJECT_INDEX_BODY } from "./conceptIndexStyles";
 import { useConceptIndexColumnCount } from "./useConceptIndexColumnCount";
 import { useConceptIndexPaneHeight } from "./useConceptIndexPaneHeight";
 
@@ -61,6 +62,13 @@ export function ConceptIndexPaneLayout({
     packStatsOverride,
   ]);
 
+  const indexRootClassName = useMemo(() => {
+    if (className?.includes("handbook-subject-index-body")) {
+      return className;
+    }
+    return [HANDBOOK_SUBJECT_INDEX_BODY, className].filter(Boolean).join(" ");
+  }, [className]);
+
   return (
     <ConceptIndexBalancedLayout
       entries={entries}
@@ -68,7 +76,7 @@ export function ConceptIndexPaneLayout({
       paneHeightPx={paneHeightPx}
       widthColumnCapacity={widthColumnCapacity}
       columnNeedOptions={columnNeedOptions}
-      indexRootClassName={className}
+      indexRootClassName={indexRootClassName}
       paneMeasureRef={setPaneEl}
     />
   );

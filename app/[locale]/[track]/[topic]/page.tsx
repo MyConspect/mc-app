@@ -7,10 +7,7 @@ import {
   SubjectPageTitle,
   TopicNavConceptsProvider,
 } from "@/components/topic";
-import {
-  HANDBOOK_INDEX_MAIN_PAD,
-  HANDBOOK_SUBJECT_INDEX_BODY,
-} from "@/components/topic/conceptIndexStyles";
+import { HANDBOOK_INDEX_MAIN_PAD } from "@/components/topic/conceptIndexStyles";
 import {
   getSubject,
   getTrack,
@@ -233,50 +230,46 @@ export default async function TopicPage({
           afterRootSections={afterRootSections}
         />
         {introLoaded ? (
-          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-            <SubjectIntroBody
-              fallbackBanner={
-                introLoaded.usedFallback ? (
-                  <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
-                    {FALLBACK_NOTE_BADGE[locale]}
-                  </p>
-                ) : null
-              }
-              concepts={conceptsForConspectTopic(
-                introLoaded.topic,
-                introLoaded.parsed.concepts,
-              )}
-              hubOutlineConcepts={titleTwinHubConcepts}
-              emptyMessage="No concepts were parsed from this topic."
-              groupInterviewSections={conceptsForConspectTopic(
-                introLoaded.topic,
-                introLoaded.parsed.concepts,
-              ).some((concept) => Boolean(concept.group))}
-              clusterIndex={{
-                sections,
-                rootSections,
-                groupedSections,
-                afterRootSections,
-              }}
-              sectionsNested={sectionsNested}
-              titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
-            />
-          </div>
+          <SubjectIntroBody
+            fallbackBanner={
+              introLoaded.usedFallback ? (
+                <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">
+                  {FALLBACK_NOTE_BADGE[locale]}
+                </p>
+              ) : null
+            }
+            concepts={conceptsForConspectTopic(
+              introLoaded.topic,
+              introLoaded.parsed.concepts,
+            )}
+            hubOutlineConcepts={titleTwinHubConcepts}
+            emptyMessage="No concepts were parsed from this topic."
+            groupInterviewSections={conceptsForConspectTopic(
+              introLoaded.topic,
+              introLoaded.parsed.concepts,
+            ).some((concept) => Boolean(concept.group))}
+            clusterIndex={{
+              sections,
+              rootSections,
+              groupedSections,
+              afterRootSections,
+            }}
+            sectionsNested={sectionsNested}
+            titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
+          />
         ) : (
-          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-            <SubjectClusterHub
-              sections={sections}
-              sectionsNested={sectionsNested}
-              rootSections={rootSections}
-              groupedSections={groupedSections}
-              afterRootSections={afterRootSections}
-              hubOutlineConcepts={hubGroupConcepts}
-              detailConcepts={hubDetailConcepts}
-              titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
-              browseListVariant="concept-index"
-              subjectTitle={subject.title}
-            />
-          </div>
+          <SubjectClusterHub
+            sections={sections}
+            sectionsNested={sectionsNested}
+            rootSections={rootSections}
+            groupedSections={groupedSections}
+            afterRootSections={afterRootSections}
+            hubOutlineConcepts={hubGroupConcepts}
+            detailConcepts={hubDetailConcepts}
+            titleTwinConceptsByClusterId={titleTwinConceptsByClusterId}
+            browseListVariant="concept-index"
+            subjectTitle={subject.title}
+          />
         )}
       </main>
     );
@@ -298,11 +291,7 @@ export default async function TopicPage({
             {FALLBACK_NOTE_BADGE[locale]}
           </p>
         ) : null}
-        {hubCards.length > 0 ? (
-          <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-            <NavHubBrowseIndex items={hubCards} />
-          </div>
-        ) : null}
+        {hubCards.length > 0 ? <NavHubBrowseIndex items={hubCards} /> : null}
       </main>
     );
   }
@@ -341,20 +330,16 @@ export default async function TopicPage({
           {FALLBACK_NOTE_BADGE[locale]}
         </p>
       ) : null}
-      <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-        <TopicNavConceptsProvider concepts={pageConcepts}>
-          <ConceptList
-            concepts={pageConcepts}
-            emptyMessage="No concepts were parsed from this topic."
-            groupInterviewSections={groupConceptSections}
-            interviewAccordionIndex={interviewAccordionIndex}
-            topicTitle={interviewTopicSubjectTitle(loaded.topic, locale)}
-            indexHeading={
-              showTopicIndexTitle ? topicIndexHeading : undefined
-            }
-          />
-        </TopicNavConceptsProvider>
-      </div>
+      <TopicNavConceptsProvider concepts={pageConcepts}>
+        <ConceptList
+          concepts={pageConcepts}
+          emptyMessage="No concepts were parsed from this topic."
+          groupInterviewSections={groupConceptSections}
+          interviewAccordionIndex={interviewAccordionIndex}
+          topicTitle={interviewTopicSubjectTitle(loaded.topic, locale)}
+          indexHeading={showTopicIndexTitle ? topicIndexHeading : undefined}
+        />
+      </TopicNavConceptsProvider>
     </main>
   );
 }

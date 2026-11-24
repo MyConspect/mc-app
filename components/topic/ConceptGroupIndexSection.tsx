@@ -1,11 +1,14 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import {
   conceptIndexSectionListLayoutClass,
   conceptIndexSectionListSplitStyle,
 } from "@/lib/catalog/conceptIndexSectionListSplit";
 import { useSearchQuery } from "@/components/search";
+import { useConceptIndexColumnCount } from "./useConceptIndexColumnCount";
+import { useConceptIndexPaneHeight } from "./useConceptIndexPaneHeight";
 import { ConceptGroupSectionHeader } from "./ConceptTitleHeader";
 import type { ConceptGroup } from "./conceptIndexGroups";
 import { conceptsForIndexSection } from "./conceptIndexGroups";
@@ -35,12 +38,26 @@ export function ConceptIndexList({
   chrome: ChromeCopy;
   conceptHrefFor?: (concept: SubjectHubConcept) => string;
 }) {
+  const [measureEl, setMeasureEl] = useState<HTMLElement | null>(null);
+  const setPaneMeasureRef = useCallback((element: HTMLElement | null) => {
+    setMeasureEl(element);
+  }, []);
+  const paneHeightPx = useConceptIndexPaneHeight(measureEl);
+  const widthCapacity = useConceptIndexColumnCount(measureEl);
   const listClass =
-    `list-none ${conceptIndexSectionListLayoutClass(concepts.length)}`.trim();
-  const listStyle = conceptIndexSectionListSplitStyle(concepts.length);
+    `list-none ${conceptIndexSectionListLayoutClass(concepts.length, paneHeightPx, widthCapacity)}`.trim();
+  const listStyle = conceptIndexSectionListSplitStyle(
+    concepts.length,
+    paneHeightPx,
+    widthCapacity,
+  );
 
   return (
-    <nav aria-label={chrome.topicsNav} className="concept-list">
+    <nav
+      ref={setPaneMeasureRef}
+      aria-label={chrome.topicsNav}
+      className="concept-list min-h-0 w-full min-w-0"
+    >
       <ul className={listClass} style={listStyle}>
         {concepts.map((concept) => {
           const href = conceptHrefFor?.(concept);
@@ -104,7 +121,7 @@ export function ConceptGroupIndexSection({
       className={CONCEPT_INDEX_CLUSTER_SECTION}
     >
       {group.label && !suppressHeading ? (
-        <ConceptGroupSectionHeader title={group.label} chrome={chrome} />
+        <ConceptGroupSectionHeader title={group.label ?? ""} chrome={chrome} />
       ) : null}
       {sectionConcepts.length > 0 ? (
         <div

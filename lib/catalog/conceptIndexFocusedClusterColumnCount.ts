@@ -1,9 +1,7 @@
 import {
-  CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX,
-  conceptIndexColumnCountForContentHeight,
-  conceptIndexRawColumnCountForWidth,
-} from "./conceptIndexColumnMetrics";
-import { conceptIndexClusterIndexPackWeight } from "./clusterIndexFitsPane";
+  conceptIndexClusterIndexPackWeight,
+  conceptIndexColumnCountForPaneSpace,
+} from "./clusterIndexFitsPane";
 
 export type FocusedClusterIndexCounts = {
   readonly listRowCount: number;
@@ -15,10 +13,7 @@ function resolvedPackWeight(
   counts: FocusedClusterIndexCounts | undefined,
 ): number {
   let weight = Number.isFinite(packWeight) && packWeight > 0 ? packWeight : 0;
-  if (
-    counts &&
-    (counts.listRowCount > 0 || counts.groupHeadingCount > 0)
-  ) {
+  if (counts && (counts.listRowCount > 0 || counts.groupHeadingCount > 0)) {
     weight = Math.max(
       weight,
       conceptIndexClusterIndexPackWeight(
@@ -31,12 +26,14 @@ function resolvedPackWeight(
   return weight;
 }
 
-/** Columns for a focused multi-topic cluster (width + list weight, min 2 when wide). */
+/** Columns for pane-pack index flow (width cap × content height; no extra tracks when one column fits). */
 export type FocusedClusterColumnCountOptions = {
   readonly viewportWidthPx?: number;
   readonly contentWidthPx?: number;
   /** One balanced entry with a long dot list (leaf topic index). */
   readonly singleLongSection?: boolean;
+  /** Pane newspaper entry count (use width when several sections fit one pane height). */
+  readonly sectionEntryCount?: number;
 };
 
 export function conceptIndexFocusedClusterColumnCount(
@@ -52,24 +49,8 @@ export function conceptIndexFocusedClusterColumnCount(
   const paneH =
     Number.isFinite(paneHeightPx) && paneHeightPx > 0 ? paneHeightPx : 640;
   const weight = resolvedPackWeight(packWeight, counts);
-  const heightNeed =
-    weight > 0 ? conceptIndexColumnCountForContentHeight(weight, paneH) : 1;
-  let count = Math.min(widthCapacity, Math.max(1, heightNeed));
-  if (widthCapacity >= 2) {
-    count = Math.max(count, 2);
-  }
-  const viewport = options?.viewportWidthPx;
-  const contentW = options?.contentWidthPx;
-  const wideViewport =
-    viewport !== undefined &&
-    viewport >= CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX;
-  const paneFitsThreeTracks =
-    contentW === undefined ||
-    contentW <= 0 ||
-    (viewport !== undefined &&
-      conceptIndexRawColumnCountForWidth(contentW) >= 3);
-  if (wideViewport && widthCapacity >= 3 && count < 3 && paneFitsThreeTracks) {
-    count = Math.min(widthCapacity, 3);
-  }
-  return count;
+  return conceptIndexColumnCountForPaneSpace(weight, paneH, widthCapacity, {
+    sectionEntryCount: options?.sectionEntryCount,
+    scrollPane: false,
+  });
 }
