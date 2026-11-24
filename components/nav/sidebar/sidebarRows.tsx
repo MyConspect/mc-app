@@ -1205,7 +1205,8 @@ export function TopicRow({
             }
             if (!searching && showTopicFold) {
               patchFold(trackId, {
-                topicHref: openTopicHref === navTopic.href ? null : navTopic.href,
+                topicHref:
+                  openTopicHref === navTopic.href ? null : navTopic.href,
               });
             }
             if (!showTopicFold) {

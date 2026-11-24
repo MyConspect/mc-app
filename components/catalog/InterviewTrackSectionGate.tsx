@@ -3,14 +3,14 @@
 import { usePathname } from "next/navigation";
 import { useMemo, type ReactNode } from "react";
 import { useHandbookNavSections } from "@/components/nav/context/handbookNavContext";
-import {
-  HANDBOOK_INDEX_MAIN_PAD,
-  HANDBOOK_SUBJECT_INDEX_BODY,
-} from "@/components/topic/conceptIndexStyles";
+import { HANDBOOK_INDEX_MAIN_PAD } from "@/components/topic/conceptIndexStyles";
 import { isTrackId, type TrackId } from "@/lib/catalog";
 import { stripLocalePrefix } from "@/lib/i18n/paths";
 import { navTopics } from "@/lib/nav";
-import { inferNavRootSection, navGroupsForRootSection } from "@/lib/nav/sections";
+import {
+  inferNavRootSection,
+  navGroupsForRootSection,
+} from "@/lib/nav/sections";
 import { NavHubBrowseIndex } from "./NavHubBrowseIndex";
 
 export function InterviewTrackSectionGate({
@@ -57,9 +57,7 @@ export function InterviewTrackSectionGate({
     <main
       className={`handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
     >
-      <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-        <NavHubBrowseIndex items={items} keyPrefix={`${trackId}-interview`} />
-      </div>
+      <NavHubBrowseIndex items={items} keyPrefix={`${trackId}-interview`} />
     </main>
   );
 }

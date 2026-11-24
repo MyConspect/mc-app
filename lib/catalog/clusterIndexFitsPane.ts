@@ -2,6 +2,7 @@ import type { SubjectClusterSection } from "./clusterConceptIndex";
 import {
   CONCEPT_INDEX_PANE_USABLE_RATIO,
   CONCEPT_INDEX_WEIGHT_ROW_PX,
+  conceptIndexColumnCountForContentHeight,
 } from "./conceptIndexColumnMetrics";
 import type { ConceptIndexLayoutColumnNeedOptions } from "./conceptIndexLayoutColumnNeed";
 import { CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS } from "./conceptIndexSectionListSplit";
@@ -87,6 +88,86 @@ export function clusterIndexShouldLockPaneHeight(
   }
   const capacity = clusterIndexPaneRowCapacity(paneHeightPx, columnCount);
   return capacity > 0 && totalWeight + 8 <= capacity;
+}
+
+/**
+ * Newspaper track count from measured pane height, width capacity, and pack
+ * weight (no viewport-specific floors).
+ */
+export function conceptIndexColumnCountForPaneSpace(
+  packWeight: number,
+  paneHeightPx: number,
+  widthCapacity: number,
+  options?: {
+    readonly sectionEntryCount?: number;
+    /** Tall index: use height spread when weight exceeds one pane. */
+    readonly scrollPane?: boolean;
+  },
+): number {
+  const width = Math.max(1, Math.floor(widthCapacity));
+  if (!Number.isFinite(paneHeightPx) || paneHeightPx <= 0) {
+    return 1;
+  }
+  const columnsToFit = conceptIndexColumnCountForAvailablePane(
+    packWeight,
+    paneHeightPx,
+    width,
+  );
+  const heightSpread =
+    packWeight > 0
+      ? conceptIndexColumnCountForContentHeight(packWeight, paneHeightPx)
+      : 1;
+
+  if (options?.scrollPane) {
+    return Math.min(width, Math.max(columnsToFit, heightSpread));
+  }
+
+  if (
+    heightSpread <= 1 &&
+    options?.sectionEntryCount !== undefined &&
+    options.sectionEntryCount > 1
+  ) {
+    return Math.min(width, columnsToFit, options.sectionEntryCount);
+  }
+
+  return columnsToFit;
+}
+
+/**
+ * Fewest newspaper tracks so pack weight fits the available pane height
+ * (1 … widthCapacity from measured free vertical space).
+ */
+export function conceptIndexColumnCountForAvailablePane(
+  packWeight: number,
+  paneHeightPx: number,
+  widthCapacity: number,
+): number {
+  const width = Math.max(1, Math.floor(widthCapacity));
+  if (!Number.isFinite(packWeight) || packWeight <= 0) {
+    return 1;
+  }
+  if (!Number.isFinite(paneHeightPx) || paneHeightPx <= 0) {
+    return 1;
+  }
+  for (let columns = 1; columns <= width; columns += 1) {
+    if (clusterIndexFitsPane(packWeight, paneHeightPx, columns)) {
+      return columns;
+    }
+  }
+  return width;
+}
+
+/** @deprecated Use {@link conceptIndexColumnCountForAvailablePane}. */
+export function conceptIndexMinimalColumnCountWithoutScroll(
+  packWeight: number,
+  paneHeightPx: number,
+  widthCapacity: number,
+): number {
+  return conceptIndexColumnCountForAvailablePane(
+    packWeight,
+    paneHeightPx,
+    widthCapacity,
+  );
 }
 
 /** True when list weight fits ~one pane without vertical scroll (optional columns). */

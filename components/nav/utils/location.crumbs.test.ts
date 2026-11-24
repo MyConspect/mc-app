@@ -938,12 +938,20 @@ test("conspect track crumb keeps study hub", () => {
 
 test("computer-science Core topic stops breadcrumbs at subject", () => {
   const groups = handbookNavForTrack("en", "computer-science");
+  const sections = handbookNavSections("en");
+  assert.deepEqual(
+    crumbsForPath(groups, "/en/computer-science/core", "", labels).map(
+      (crumb) => crumb.label,
+    ),
+    ["Home", "Computer Science", "Core"],
+  );
   assert.deepEqual(
     crumbsForPath(
       groups,
-      "/en/computer-science/core",
+      "/en/conspect/computer-science/core",
       "",
       labels,
+      sections,
     ).map((crumb) => crumb.label),
     ["Home", "Computer Science", "Core"],
   );

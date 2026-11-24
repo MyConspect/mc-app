@@ -54,30 +54,14 @@ export function conceptIndexRawColumnCountForWidth(
   return 1;
 }
 
-/** Cap / floor column count on narrow viewports (see {@link CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX}). */
+/** Pane-width column fit (viewport does not override measured content width). */
 export function conceptIndexClampColumnCountForViewport(
   columnCount: number,
-  viewportWidthPx: number | undefined = conceptIndexViewportWidthPx(),
-  contentWidthPx?: number,
-  rootPx = rootFontSizePx(),
+  _viewportWidthPx?: number,
+  _contentWidthPx?: number,
+  _rootPx = rootFontSizePx(),
 ): number {
-  if (
-    viewportWidthPx === undefined ||
-    viewportWidthPx >= CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX
-  ) {
-    return columnCount;
-  }
-  let count = Math.min(columnCount, CONCEPT_INDEX_NARROW_VIEWPORT_MAX_COLUMNS);
-  const paneFitsTwo =
-    contentWidthPx !== undefined &&
-    contentWidthPx + 0.5 >= conceptIndexTwoTrackWidthPx(rootPx);
-  const shouldPreferTwo =
-    viewportWidthPx >= CONCEPT_INDEX_DUAL_COLUMN_MIN_VIEWPORT_PX &&
-    (columnCount >= 2 || paneFitsTwo);
-  if (shouldPreferTwo) {
-    count = Math.max(count, CONCEPT_INDEX_NARROW_VIEWPORT_MAX_COLUMNS);
-  }
-  return count;
+  return columnCount;
 }
 
 /** ~one concept-index row in packing weight units (heading ≈ 2 rows). */
@@ -163,33 +147,13 @@ export function conceptIndexDualColumnViewportActive(
   );
 }
 
-/** Pane-pack scroll mode: column-count for multicol (never column-width-only in dual viewport). */
+/** Pane-pack scroll mode: cap layout column need by pane width capacity. */
 export function conceptIndexPanePackScrollColumnCount(
   widthCapacity: number,
   columnCount: number,
-  viewportWidthPx: number,
-  contentWidthPx?: number,
-  rootPx = rootFontSizePx(),
+  _viewportWidthPx?: number,
+  _contentWidthPx?: number,
+  _rootPx = rootFontSizePx(),
 ): number {
-  let scrollColumns = Math.max(1, Math.min(widthCapacity, columnCount));
-  if (
-    columnCount > 1 &&
-    conceptIndexDualColumnViewportActive(viewportWidthPx)
-  ) {
-    const paneFitsTwo =
-      contentWidthPx === undefined ||
-      (Number.isFinite(contentWidthPx) &&
-        contentWidthPx + 0.5 >= conceptIndexTwoTrackWidthPx(rootPx));
-    if (paneFitsTwo) {
-      scrollColumns = Math.max(
-        scrollColumns,
-        CONCEPT_INDEX_NARROW_VIEWPORT_MAX_COLUMNS,
-      );
-      scrollColumns = Math.min(
-        scrollColumns,
-        CONCEPT_INDEX_NARROW_VIEWPORT_MAX_COLUMNS,
-      );
-    }
-  }
-  return scrollColumns;
+  return Math.max(1, Math.min(widthCapacity, columnCount));
 }

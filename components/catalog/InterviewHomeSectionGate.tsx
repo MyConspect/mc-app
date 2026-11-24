@@ -3,10 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useMemo, type ReactNode } from "react";
 import { useHandbookNavSections } from "@/components/nav/context/handbookNavContext";
-import {
-  HANDBOOK_INDEX_MAIN_PAD,
-  HANDBOOK_SUBJECT_INDEX_BODY,
-} from "@/components/topic/conceptIndexStyles";
+import { HANDBOOK_INDEX_MAIN_PAD } from "@/components/topic/conceptIndexStyles";
 import { TRACKS } from "@/lib/catalog";
 import { catalogBlurb } from "@/lib/i18n/catalog";
 import { localeFromPathname, stripLocalePrefix } from "@/lib/i18n/paths";
@@ -15,7 +12,11 @@ import { groupNavigateHref, navGroupsForRootSection } from "@/lib/nav/sections";
 import { withHandbookSection } from "@/lib/i18n/sectionPaths";
 import { NavHubBrowseIndex } from "./NavHubBrowseIndex";
 
-export function InterviewHomeSectionGate({ children }: { children: ReactNode }) {
+export function InterviewHomeSectionGate({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const pathname = usePathname() ?? "/en";
   const sections = useHandbookNavSections();
   const showInterviews = useMemo(() => {
@@ -36,9 +37,7 @@ export function InterviewHomeSectionGate({ children }: { children: ReactNode }) 
           "interviews",
         ),
         title: group.title,
-        description: track
-          ? catalogBlurb(locale, track.description)
-          : "",
+        description: track ? catalogBlurb(locale, track.description) : "",
       };
     });
   }, [showInterviews, sections, pathname]);
@@ -51,9 +50,7 @@ export function InterviewHomeSectionGate({ children }: { children: ReactNode }) 
     <main
       className={`handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
     >
-      <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-        <NavHubBrowseIndex items={items} keyPrefix="home-interview-track" />
-      </div>
+      <NavHubBrowseIndex items={items} keyPrefix="home-interview-track" />
     </main>
   );
 }

@@ -53,21 +53,21 @@ test("conceptIndexColumnCountForWidth returns up to 4 columns on wide panes", ()
   );
 });
 
-test("conceptIndexColumnCountForWidth caps at 2 columns below 1280px viewport", () => {
+test("conceptIndexColumnCountForWidth ignores viewport when pane fits more tracks", () => {
   const four =
     4 * CONCEPT_INDEX_COL_MIN_REM * ROOT + 3 * CONCEPT_INDEX_COL_GAP_REM * ROOT;
-  assert.equal(conceptIndexColumnCountForWidth(four, ROOT, 1024), 2);
+  assert.equal(conceptIndexColumnCountForWidth(four, ROOT, 1024), 4);
   assert.equal(
     conceptIndexColumnCountForWidth(
       four,
       ROOT,
       CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX - 1,
     ),
-    2,
+    4,
   );
 });
 
-test("conceptIndexColumnCountForWidth prefers 2 columns near 1280px when pane fits two tracks", () => {
+test("conceptIndexColumnCountForWidth uses pane width only near 1280px viewport", () => {
   const twoTrack =
     2 * CONCEPT_INDEX_COL_MIN_REM * ROOT + CONCEPT_INDEX_COL_GAP_REM * ROOT;
   assert.equal(conceptIndexColumnCountForWidth(twoTrack, ROOT, 1259), 2);
@@ -81,11 +81,11 @@ test("conceptIndexPanePackScrollColumnCount keeps one track when column need is 
   );
 });
 
-test("conceptIndexPanePackScrollColumnCount forces 2 in dual viewport when need is 2", () => {
-  const pane = 900;
+test("conceptIndexPanePackScrollColumnCount caps by width capacity", () => {
+  assert.equal(conceptIndexPanePackScrollColumnCount(3, 2, 1259, 900, ROOT), 2);
   assert.equal(
-    conceptIndexPanePackScrollColumnCount(3, 2, 1259, pane, ROOT),
-    2,
+    conceptIndexPanePackScrollColumnCount(4, 3, 1500, 1200, ROOT),
+    3,
   );
 });
 

@@ -3,10 +3,7 @@ import { notFound } from "next/navigation";
 import { NavHubBrowseIndex } from "@/components/catalog";
 import { TRACKS } from "@/lib/catalog";
 import { catalogBlurb } from "@/lib/i18n/catalog";
-import {
-  HANDBOOK_INDEX_MAIN_PAD,
-  HANDBOOK_SUBJECT_INDEX_BODY,
-} from "@/components/topic/conceptIndexStyles";
+import { HANDBOOK_INDEX_MAIN_PAD } from "@/components/topic/conceptIndexStyles";
 import { isLocale, type Locale } from "@/lib/i18n/locales";
 import { withLocale } from "@/lib/i18n/paths";
 import { withHandbookSection } from "@/lib/i18n/sectionPaths";
@@ -53,10 +50,7 @@ export default async function ConspectHomePage({
   }
   const locale = localeParam;
   const trackCards = TRACKS.map((track) => ({
-    href: withHandbookSection(
-      withLocale(locale, `/${track.id}`),
-      "conspect",
-    ),
+    href: withHandbookSection(withLocale(locale, `/${track.id}`), "conspect"),
     title: catalogBlurb(locale, track.title),
     description: catalogBlurb(locale, track.description),
   }));
@@ -65,9 +59,7 @@ export default async function ConspectHomePage({
     <main
       className={`handbook-subject-main flex min-h-0 w-full max-w-none flex-1 flex-col ${HANDBOOK_INDEX_MAIN_PAD}`}
     >
-      <div className={HANDBOOK_SUBJECT_INDEX_BODY}>
-        <NavHubBrowseIndex items={trackCards} keyPrefix="home-track" />
-      </div>
+      <NavHubBrowseIndex items={trackCards} keyPrefix="home-track" />
     </main>
   );
 }

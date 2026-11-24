@@ -1,9 +1,7 @@
 import {
-  CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX,
-  conceptIndexColumnCountForContentHeight,
-  conceptIndexRawColumnCountForWidth,
-} from "./conceptIndexColumnMetrics";
-import { conceptIndexClusterIndexPackWeight } from "./clusterIndexFitsPane";
+  conceptIndexClusterIndexPackWeight,
+  conceptIndexColumnCountForPaneSpace,
+} from "./clusterIndexFitsPane";
 
 export type FocusedClusterIndexCounts = {
   readonly listRowCount: number;
@@ -51,40 +49,8 @@ export function conceptIndexFocusedClusterColumnCount(
   const paneH =
     Number.isFinite(paneHeightPx) && paneHeightPx > 0 ? paneHeightPx : 640;
   const weight = resolvedPackWeight(packWeight, counts);
-  const heightNeed =
-    weight > 0 ? conceptIndexColumnCountForContentHeight(weight, paneH) : 1;
-  let count = Math.min(widthCapacity, Math.max(1, heightNeed));
-  const fitsOneColumn = heightNeed <= 1;
-  const entryCount = options?.sectionEntryCount ?? 1;
-
-  if (
-    fitsOneColumn &&
-    entryCount > 1 &&
-    widthCapacity >= 2 &&
-    entryCount <= widthCapacity
-  ) {
-    count = Math.min(widthCapacity, entryCount);
-  } else if (!fitsOneColumn && widthCapacity >= 2) {
-    count = Math.max(count, 2);
-  }
-  const viewport = options?.viewportWidthPx;
-  const contentW = options?.contentWidthPx;
-  const wideViewport =
-    viewport !== undefined &&
-    viewport >= CONCEPT_INDEX_TWO_COLUMN_MAX_VIEWPORT_PX;
-  const paneFitsThreeTracks =
-    contentW === undefined ||
-    contentW <= 0 ||
-    (viewport !== undefined &&
-      conceptIndexRawColumnCountForWidth(contentW) >= 3);
-  if (
-    !fitsOneColumn &&
-    wideViewport &&
-    widthCapacity >= 3 &&
-    count < 3 &&
-    paneFitsThreeTracks
-  ) {
-    count = Math.min(widthCapacity, 3);
-  }
-  return count;
+  return conceptIndexColumnCountForPaneSpace(weight, paneH, widthCapacity, {
+    sectionEntryCount: options?.sectionEntryCount,
+    scrollPane: false,
+  });
 }

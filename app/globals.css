@@ -308,12 +308,79 @@ article.concept-detail-article > .concept-detail-title {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Short pane-packed indexes: grow naturally; avoid a dead band in the body scroller. */
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body:has(
+    .concept-index-newspaper-pane-pack:not(
+      .concept-index-newspaper-pane-pack--scroll
+    )
+  ):not(:has(.concept-index-newspaper-pane-scroll)) {
+  overflow-y: visible;
+  overscroll-behavior: auto;
+}
+
 /* Index lists grow naturally unless the pane-height multicol box scrolls in place. */
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  main.handbook-subject-main
+  > .handbook-subject-index-body,
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  main.handbook-topic-main
+  > .handbook-subject-index-body,
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  main.handbook-subject-main
+  > .concept-index-newspaper-pane-scroll.handbook-subject-index-body {
+  flex: 1 1 0%;
+  min-height: 0;
+  max-height: 100%;
+  overflow-x: clip;
+}
+
+/* Short pane-packed indexes: shrink index body to painted height (no dead band). */
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  main.handbook-topic-main
+  > .concept-index-newspaper-pane-scroll.handbook-subject-index-body.concept-index-newspaper-pane-shell--compact,
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  main.handbook-subject-main
+  > .concept-index-newspaper-pane-scroll.handbook-subject-index-body.concept-index-newspaper-pane-shell--compact {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  max-height: none;
+  overflow-y: visible;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body:has(
+    .concept-index-newspaper-pane-shell--compact
+  ) {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  overflow-y: visible;
+  overscroll-behavior: auto;
+}
+
 #handbook-main:has(.handbook-subject-index-body):not(
     :has(article.concept-detail-article)
   )
   .handbook-subject-index-body
   > .concept-list-index,
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body.concept-list-index,
 #handbook-main:has(.handbook-subject-index-body):not(
     :has(article.concept-detail-article)
   )
@@ -324,6 +391,7 @@ article.concept-detail-article > .concept-detail-title {
   max-height: none;
   min-height: 0;
   align-content: start;
+  overflow-x: clip;
 }
 
 #handbook-main:has(.handbook-subject-index-body):not(
@@ -339,10 +407,36 @@ article.concept-detail-article > .concept-detail-title {
 #handbook-main:has(.handbook-subject-index-body):not(
     :has(article.concept-detail-article)
   )
-  .handbook-subject-index-body:has(.concept-index-newspaper-pane-scroll) {
+  .handbook-subject-index-body:has(.concept-index-newspaper-pane-scroll):not(
+    .concept-index-newspaper-pane-shell--compact
+  ):not(:has(.concept-index-newspaper-pane-shell--compact)) {
   flex: 1 1 0%;
   min-height: 0;
   overflow-y: hidden;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body.concept-index-newspaper-pane-scroll.concept-index-newspaper-pane-shell--compact,
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body:not(.concept-index-newspaper-pane-scroll):has(
+    .concept-index-newspaper-pane-shell--compact
+  ),
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  main.handbook-subject-main:has(.concept-index-newspaper-pane-shell--compact),
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  main.handbook-topic-main:has(.concept-index-newspaper-pane-shell--compact) {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  overflow-y: visible;
+  overscroll-behavior: auto;
 }
 
 #handbook-main:has(.handbook-subject-index-body):not(
@@ -400,6 +494,15 @@ article.concept-detail-article > .concept-detail-title {
 .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack {
   column-fill: auto;
   overflow-x: clip;
+}
+
+/* Short indexes: natural multicol height (no locked pane band below links). */
+.concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack:not(
+    .concept-index-newspaper-pane-pack--scroll
+  ) {
+  height: auto !important;
+  max-height: none;
+  min-height: 0;
 }
 
 .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll:not(
@@ -472,35 +575,23 @@ article.concept-detail-article > .concept-detail-title {
 .concept-index-newspaper-pane-scroll
   > .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll {
   display: block;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
+  /* Scroll shell sets height; pack may grow taller for shell scroll. */
+  height: auto;
+  min-height: 100%;
   max-height: none;
-  min-height: 0;
-  column-width: auto;
-  /* Tall indexes: grow vertically in N tracks; pane-scroll handles overflow. */
+  column-width: var(--concept-index-col-min);
+  /* Tall pack in shell scroll: balance uses width; auto needs a fixed height. */
   column-fill: balance;
   overflow-x: clip;
   overflow-y: visible;
 }
 
-/* Laptop widths (<1320): two newspaper tracks when the main pane is wide enough. */
-@media (min-width: 640px) and (max-width: 1319.98px) {
-  #handbook-main:has(.handbook-subject-index-body):not(
-      :has(article.concept-detail-article)
-    )
-    .handbook-subject-index-body
-    .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack:not(
-      .concept-index-newspaper-pane-pack--one-track
-    ),
-  #handbook-main:has(.handbook-subject-index-body):not(
-      :has(article.concept-detail-article)
-    )
-    .handbook-subject-index-body
-    .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll:not(
-      .concept-index-newspaper-pane-pack--one-track
-    ),
+/* Wide panes: honor inline column-count in pane-scroll (no single-track collapse). */
+@media (min-width: 1320px) {
   #handbook-main:has(.handbook-subject-index-body):not(
       :has(article.concept-detail-article)
     )
@@ -508,8 +599,7 @@ article.concept-detail-article > .concept-detail-title {
     > .concept-list-index.concept-index-newspaper-columns.concept-index-newspaper-pane-pack--scroll:not(
       .concept-index-newspaper-pane-pack--one-track
     ) {
-    column-count: 2 !important;
-    column-width: var(--concept-index-col-min) !important;
+    column-width: var(--concept-index-col-min);
     column-fill: balance;
   }
 }
@@ -532,9 +622,19 @@ article.concept-detail-article > .concept-detail-title {
   break-after: avoid-column;
 }
 
-.concept-index-newspaper-pane-pack .concept-index-link {
+.concept-index-newspaper-pane-pack:not(
+    .concept-index-newspaper-pane-pack--scroll
+  )
+  .concept-index-link {
   break-inside: avoid-column;
   -webkit-column-break-inside: avoid;
+}
+
+/* Tall pane-scroll: allow row-by-row column flow to avoid balance flicker. */
+.concept-index-newspaper-pane-scroll .concept-index-link,
+.concept-index-newspaper-pane-pack--scroll .concept-index-link {
+  break-inside: auto;
+  -webkit-column-break-inside: auto;
 }
 
 #handbook-main:has(.handbook-subject-index-body):not(

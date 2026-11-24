@@ -5,6 +5,9 @@ import {
   clusterIndexFitsPane,
   clusterIndexShouldLockPaneHeight,
   clusterSectionListWeight,
+  conceptIndexColumnCountForAvailablePane,
+  conceptIndexColumnCountForPaneSpace,
+  conceptIndexMinimalColumnCountWithoutScroll,
   conceptIndexPanePackOptionsForEntries,
 } from "./clusterIndexFitsPane";
 import type { SubjectClusterSection } from "./clusterConceptIndex";
@@ -13,6 +16,34 @@ test("clusterIndexFitsPane respects pane height and columns", () => {
   assert.equal(clusterIndexFitsPane(20, 700, 1), true);
   assert.equal(clusterIndexFitsPane(200, 500, 1), false);
   assert.equal(clusterIndexFitsPane(30, 500, 2), true);
+});
+
+test("conceptIndexColumnCountForAvailablePane grows with pack weight", () => {
+  assert.equal(conceptIndexColumnCountForAvailablePane(20, 700, 5), 1);
+  assert.equal(conceptIndexColumnCountForAvailablePane(200, 700, 5), 5);
+  assert.equal(conceptIndexColumnCountForAvailablePane(30, 500, 4), 2);
+  assert.equal(conceptIndexColumnCountForAvailablePane(50, 500, 6), 3);
+});
+
+test("conceptIndexColumnCountForPaneSpace stays at one column when content fits", () => {
+  assert.equal(
+    conceptIndexColumnCountForPaneSpace(20, 700, 4, { scrollPane: false }),
+    1,
+  );
+  assert.equal(
+    conceptIndexColumnCountForPaneSpace(20, 700, 4, {
+      scrollPane: false,
+      sectionEntryCount: 3,
+    }),
+    1,
+  );
+});
+
+test("conceptIndexColumnCountForPaneSpace spreads in scroll mode when tall", () => {
+  assert.equal(
+    conceptIndexColumnCountForPaneSpace(200, 700, 5, { scrollPane: true }),
+    5,
+  );
 });
 
 test("clusterIndexShouldLockPaneHeight leaves slack for tall indexes", () => {
