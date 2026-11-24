@@ -1,8 +1,13 @@
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  --font-geist-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono:
+    "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
   --background: #fafafa;
   --foreground: #18181b;
   --surface: #ffffff;
@@ -633,7 +638,8 @@ article.concept-detail-article > .concept-detail-title {
 }
 
 /* Topic index shells keep `.handbook-subject-index-body` when a hash opens a concept. */
-#handbook-main:has(article.concept-detail-article) .handbook-subject-index-body {
+#handbook-main:has(article.concept-detail-article)
+  .handbook-subject-index-body {
   display: flex;
   flex-direction: column;
   flex: 1 1 0%;
