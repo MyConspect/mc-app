@@ -60,6 +60,8 @@ import {
   CONCEPT_INDEX_HEADING_TO_LIST,
   CONCEPT_INDEX_ROW,
   CONCEPT_INDEX_CLUSTER_SECTION,
+  CONCEPT_LIST_INDEX_STACK,
+  HANDBOOK_INDEX_FOCUS_SECTION,
   HANDBOOK_INDEX_PANE_LIST_SLOT,
   HANDBOOK_INDEX_PANE_SECTION,
 } from "./conceptIndexStyles";
@@ -289,17 +291,24 @@ export function ConceptList({
   }
 
   if (activeTheoryGroupEntries) {
+    const focusGroup = activeTheoryGroup;
+    if (!focusGroup) {
+      return null;
+    }
     return (
-      <section className={HANDBOOK_INDEX_PANE_SECTION}>
+      <section className={HANDBOOK_INDEX_FOCUS_SECTION}>
         <ConceptGroupSectionHeader
-          title={sectionRowTitle(activeTheoryGroupEntries.title)}
+          title={activeTheoryGroupEntries.title}
           chrome={chrome}
         />
-        <ConceptIndexPaneLayout
-          entries={activeTheoryGroupEntries.entries}
-          layoutMode="newspaper"
-          className={HANDBOOK_INDEX_PANE_LIST_SLOT}
-        />
+        <div className={CONCEPT_INDEX_HEADING_TO_LIST}>
+          <ConceptGroupIndexSection
+            group={focusGroup}
+            chrome={chrome}
+            pathname={pathname}
+            suppressHeading
+          />
+        </div>
       </section>
     );
   }
@@ -368,10 +377,7 @@ export function ConceptList({
     return (
       <section key={group.key} className={CONCEPT_INDEX_CLUSTER_SECTION}>
         {group.label ? (
-          <ConceptGroupSectionHeader
-            title={sectionRowTitle(group.label)}
-            chrome={chrome}
-          />
+          <ConceptGroupSectionHeader title={group.label} chrome={chrome} />
         ) : null}
         {sectionConcepts.length > 0 ? (
           <div
@@ -440,7 +446,11 @@ export function ConceptList({
     );
   }
 
-  return <div className="concept-list-index w-full">{indexSections}</div>;
+  return (
+    <div className={`${CONCEPT_LIST_INDEX_STACK} space-y-8`}>
+      {indexSections}
+    </div>
+  );
 }
 
 const CONCEPT_DETAIL_CARD =

@@ -4,6 +4,7 @@ import { useMemo, type ReactNode } from "react";
 import type { ConceptIndexLayoutColumnNeedOptions } from "@/lib/catalog/conceptIndexLayoutColumnNeed";
 import { ConceptIndexNewspaperColumns } from "./ConceptIndexNewspaperColumns";
 import { ConceptIndexSectionsGrid } from "./ConceptIndexSectionsGrid";
+import { CONCEPT_LIST_INDEX_STACK } from "./conceptIndexStyles";
 
 export type ConceptIndexLayoutMode = "stack" | "newspaper" | "sections-grid";
 
@@ -73,7 +74,7 @@ export function ConceptIndexBalancedLayout({
     return (
       <div
         ref={paneMeasureRef}
-        className={`concept-list-index w-full space-y-8${indexRootClassName ? ` ${indexRootClassName}` : ""}`}
+        className={`${CONCEPT_LIST_INDEX_STACK} space-y-8${indexRootClassName ? ` ${indexRootClassName}` : ""}`}
       >
         {resolvedEntries.map((entry) => (
           <div key={entry.key}>{entry.node}</div>

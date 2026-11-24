@@ -76,9 +76,7 @@ export function ConceptIndexNewspaperColumns({
       setRootElState(element);
       paneMeasureRef?.(element);
       const indexBody = element?.closest(".handbook-subject-index-body");
-      setWidthMeasureEl(
-        indexBody instanceof HTMLElement ? indexBody : element,
-      );
+      setWidthMeasureEl(indexBody instanceof HTMLElement ? indexBody : element);
     },
     [paneMeasureRef],
   );
@@ -157,7 +155,10 @@ export function ConceptIndexNewspaperColumns({
         ),
       );
     }
-    const entryRows = entries.reduce((sum, entry) => sum + entry.listItemCount, 0);
+    const entryRows = entries.reduce(
+      (sum, entry) => sum + entry.listItemCount,
+      0,
+    );
     if (entryRows > 0) {
       weight = Math.max(
         weight,
@@ -165,12 +166,7 @@ export function ConceptIndexNewspaperColumns({
       );
     }
     return weight;
-  }, [
-    entries,
-    widthCapacity,
-    columnNeedOptions?.totalListWeight,
-    indexCounts,
-  ]);
+  }, [entries, widthCapacity, columnNeedOptions?.totalListWeight, indexCounts]);
 
   const effectivePaneHeight = useMemo(() => {
     if (packPaneHeight > 0) {
@@ -200,6 +196,7 @@ export function ConceptIndexNewspaperColumns({
           contentWidthPx:
             measurePaneWidthPx > 0 ? measurePaneWidthPx : undefined,
           singleLongSection,
+          sectionEntryCount: entries.length,
         },
       );
     }
@@ -231,10 +228,7 @@ export function ConceptIndexNewspaperColumns({
 
   const lockPaneHeight = useMemo(
     () =>
-      panePack &&
-      paneFitsLocked &&
-      effectivePaneHeight > 0 &&
-      columnCount > 1,
+      panePack && paneFitsLocked && effectivePaneHeight > 0 && columnCount > 1,
     [panePack, paneFitsLocked, effectivePaneHeight, columnCount],
   );
 

@@ -15,7 +15,10 @@ import { useIsBookmarked } from "@/components/nav/ui/BookmarkButton";
 import type { ChromeCopy } from "@/lib/nav";
 import { usePathname } from "next/navigation";
 import { CopyConceptLinkButton } from "./CopyConceptLinkButton";
-import { conceptGroupSectionDomId } from "@/lib/nav/conceptGroupSection";
+import {
+  conceptGroupDisplayLabel,
+  conceptGroupSectionDomId,
+} from "@/lib/nav/conceptGroupSection";
 import { ConceptDepthToggle } from "./ConceptDepthToggle";
 import { TopicBookmarkButton } from "./TopicBookmarkButton";
 import {
@@ -744,7 +747,7 @@ export function ConceptGroupSectionHeader({
       className={`${GROUP_SECTION_HEADER_ROW} scroll-mt-[var(--handbook-sticky-inset,0px)]`}
     >
       <ConceptTitleHeading
-        title={title}
+        title={conceptGroupDisplayLabel(title)}
         chrome={chrome}
         level="h2"
         variant="section"
@@ -758,7 +761,7 @@ export function ConceptGroupSectionHeader({
       >
         <CopyConceptLinkButton chrome={chrome} size="md" concealed />
         <TopicBookmarkButton
-          title={title}
+          title={conceptGroupDisplayLabel(title)}
           chrome={chrome}
           size="md"
           revealOnHover

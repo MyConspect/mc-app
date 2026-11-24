@@ -32,17 +32,41 @@ function rowsPerPaneForSplit(paneHeightPx: number): number {
 }
 
 /**
- * Inner list column count. With pane height, prefer one column when all rows fit
- * vertically; otherwise cap width-based columns by height need.
+ * Inner list column count. Lists under {@link CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS}
+ * stay one column unless the pane is too short. Longer lists split by height first;
+ * width-based columns apply only before pane height is known (SSR).
  */
 export function conceptIndexSectionListColumnCount(
   itemCount: number,
   paneHeightPx?: number,
+  _widthCapacity?: number,
 ): number {
   if (!Number.isFinite(itemCount) || itemCount < 8) {
     return 1;
   }
   const byWidth = sectionListColumnsByWidth(itemCount);
+
+  if (itemCount < CONCEPT_INDEX_SECTION_LIST_SPLIT_MIN_ITEMS) {
+    if (
+      paneHeightPx === undefined ||
+      !Number.isFinite(paneHeightPx) ||
+      paneHeightPx <= 0
+    ) {
+      return 1;
+    }
+    const rowsPerPane = rowsPerPaneForSplit(paneHeightPx);
+    if (rowsPerPane < 1 || itemCount <= rowsPerPane) {
+      return 1;
+    }
+    return Math.min(
+      byWidth,
+      Math.min(
+        CONCEPT_INDEX_SECTION_LIST_MAX_COLUMNS,
+        Math.ceil(itemCount / rowsPerPane),
+      ),
+    );
+  }
+
   if (
     paneHeightPx === undefined ||
     !Number.isFinite(paneHeightPx) ||
@@ -67,8 +91,12 @@ export function conceptIndexSectionListColumnCount(
 export function conceptIndexSectionListLayoutClass(
   itemCount: number,
   paneHeightPx?: number,
+  widthCapacity?: number,
 ): string {
-  if (conceptIndexSectionListColumnCount(itemCount, paneHeightPx) > 1) {
+  if (
+    conceptIndexSectionListColumnCount(itemCount, paneHeightPx, widthCapacity) >
+    1
+  ) {
     return CONCEPT_INDEX_SECTION_LIST_SPLIT_CLASS;
   }
   return "";
@@ -81,8 +109,13 @@ export type ConceptIndexSectionListStyle = CSSProperties & {
 export function conceptIndexSectionListSplitStyle(
   itemCount: number,
   paneHeightPx?: number,
+  widthCapacity?: number,
 ): ConceptIndexSectionListStyle | undefined {
-  const columns = conceptIndexSectionListColumnCount(itemCount, paneHeightPx);
+  const columns = conceptIndexSectionListColumnCount(
+    itemCount,
+    paneHeightPx,
+    widthCapacity,
+  );
   if (columns <= 1) {
     return undefined;
   }

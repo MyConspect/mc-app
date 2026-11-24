@@ -620,6 +620,40 @@ article.concept-detail-article > .concept-detail-title {
   max-width: var(--concept-index-col-min);
 }
 
+/* Theory topic stack: one column, links use pane width (not 300px newspaper tracks). */
+.concept-list-index.concept-list-index-stack .concept-index-link {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  )
+  .handbook-subject-index-body:has(.concept-list-index-stack) {
+  flex: 0 1 auto;
+  height: auto;
+  overflow-y: visible;
+}
+
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  ):has(.concept-list-index-stack)
+  > main.handbook-topic-main,
+#handbook-main:has(.handbook-subject-index-body):not(
+    :has(article.concept-detail-article)
+  ):has(.concept-list-index-stack)
+  > main.handbook-subject-main {
+  flex: 0 1 auto;
+  overflow-y: visible;
+}
+
+#handbook-main:has(.concept-list-index-stack):not(
+    :has(article.concept-detail-article)
+  ) {
+  overflow-y: auto !important;
+}
+
 .concept-list-index.handbook-subject-index-grid {
   grid-template-columns: repeat(
     1,

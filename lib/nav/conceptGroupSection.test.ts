@@ -1,25 +1,38 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  conceptGroupDisplayLabel,
   conceptGroupSectionDomId,
-  findConceptGroupBySectionId,
-  isConceptGroupSectionId,
+  sidebarGroupRepeatsTopicLabel,
 } from "./conceptGroupSection";
 
-test("conceptGroupSectionDomId slugifies group labels", () => {
+test("conceptGroupDisplayLabel strips leading ordinals", () => {
+  assert.equal(conceptGroupDisplayLabel("1. Foundations"), "Foundations");
   assert.equal(
-    conceptGroupSectionDomId("Web Security Fundamentals"),
-    "concept-group-web-security-fundamentals",
+    conceptGroupDisplayLabel("2. Distributed systems"),
+    "Distributed systems",
+  );
+  assert.equal(conceptGroupDisplayLabel("Architecture"), "Architecture");
+});
+
+test("sidebarGroupRepeatsTopicLabel matches ordinals and topic title", () => {
+  assert.equal(
+    sidebarGroupRepeatsTopicLabel("9. OOP & SOLID", "OOP & SOLID"),
+    true,
+  );
+  assert.equal(
+    sidebarGroupRepeatsTopicLabel("DRY, KISS, YAGNI", "Design principles"),
+    false,
+  );
+  assert.equal(
+    sidebarGroupRepeatsTopicLabel("Design principles", "Design principles"),
+    true,
   );
 });
 
-test("findConceptGroupBySectionId resolves interview section hashes", () => {
-  const groups = [
-    { key: "a", label: "HTML Basics", concepts: [] },
-    { key: "b", label: null, concepts: [] },
-  ];
-  const id = conceptGroupSectionDomId("HTML Basics");
-  assert.ok(isConceptGroupSectionId(id));
-  assert.equal(findConceptGroupBySectionId(groups, id)?.label, "HTML Basics");
-  assert.equal(findConceptGroupBySectionId(groups, "closures"), null);
+test("conceptGroupSectionDomId keeps full label slug", () => {
+  assert.equal(
+    conceptGroupSectionDomId("1. Foundations"),
+    "concept-group-1-foundations",
+  );
 });

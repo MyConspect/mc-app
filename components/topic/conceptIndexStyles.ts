@@ -59,6 +59,9 @@ export const HANDBOOK_SUBJECT_INDEX_BODY =
  */
 export const HANDBOOK_INDEX_PANE_SECTION = `${CONCEPT_INDEX_CLUSTER_SECTION} flex min-h-0 min-w-0 w-full flex-1 flex-col`;
 
+/** Focused `#concept-group-*` on a topic: pane layout without flex-grow dead space below short lists. */
+export const HANDBOOK_INDEX_FOCUS_SECTION = `${CONCEPT_INDEX_CLUSTER_SECTION} flex min-h-0 min-w-0 w-full flex-col`;
+
 /** Gap after topic `h1` (flex + scroll sizing lives in globals.css on the multicol root). */
 export const HANDBOOK_INDEX_PANE_LIST_SLOT = CONCEPT_INDEX_HEADING_TO_LIST;
 
@@ -66,10 +69,13 @@ export const HANDBOOK_INDEX_PANE_LIST_SLOT = CONCEPT_INDEX_HEADING_TO_LIST;
  * Breadcrumb → first heading: `main` uses `pt-5` only (see page routes).
  * Cluster `h2` / topic `h1` stay `margin-top: 0` (globals.css).
  */
-export const HANDBOOK_INDEX_MAIN_PAD =
-  "px-4 pt-5 pb-10 sm:px-6";
+export const HANDBOOK_INDEX_MAIN_PAD = "px-4 pt-5 pb-10 sm:px-6";
 
 /** Legacy grid packing (concept detail flows use pane columns above). */
+/** Vertical theory topic index — full-width rows, not 300px newspaper tracks. */
+export const CONCEPT_LIST_INDEX_STACK =
+  "concept-list-index concept-list-index-stack w-full";
+
 export const CONCEPT_INDEX_BALANCED_LAYOUT_BASE =
   "concept-list-index handbook-subject-index-grid grid h-full min-h-0 w-full max-w-full flex-1 items-start justify-start gap-x-5 gap-y-8";
 

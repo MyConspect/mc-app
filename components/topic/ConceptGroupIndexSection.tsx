@@ -7,6 +7,7 @@ import {
   conceptIndexSectionListSplitStyle,
 } from "@/lib/catalog/conceptIndexSectionListSplit";
 import { useSearchQuery } from "@/components/search";
+import { useConceptIndexColumnCount } from "./useConceptIndexColumnCount";
 import { useConceptIndexPaneHeight } from "./useConceptIndexPaneHeight";
 import { ConceptGroupSectionHeader } from "./ConceptTitleHeader";
 import type { ConceptGroup } from "./conceptIndexGroups";
@@ -42,11 +43,13 @@ export function ConceptIndexList({
     setMeasureEl(element);
   }, []);
   const paneHeightPx = useConceptIndexPaneHeight(measureEl);
+  const widthCapacity = useConceptIndexColumnCount(measureEl);
   const listClass =
-    `list-none ${conceptIndexSectionListLayoutClass(concepts.length, paneHeightPx)}`.trim();
+    `list-none ${conceptIndexSectionListLayoutClass(concepts.length, paneHeightPx, widthCapacity)}`.trim();
   const listStyle = conceptIndexSectionListSplitStyle(
     concepts.length,
     paneHeightPx,
+    widthCapacity,
   );
 
   return (
@@ -118,7 +121,7 @@ export function ConceptGroupIndexSection({
       className={CONCEPT_INDEX_CLUSTER_SECTION}
     >
       {group.label && !suppressHeading ? (
-        <ConceptGroupSectionHeader title={group.label} chrome={chrome} />
+        <ConceptGroupSectionHeader title={group.label ?? ""} chrome={chrome} />
       ) : null}
       {sectionConcepts.length > 0 ? (
         <div

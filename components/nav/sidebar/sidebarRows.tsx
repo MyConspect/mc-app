@@ -62,8 +62,10 @@ import {
 } from "../utils/location";
 import { clusterHasActiveConcept } from "../utils/location/shared";
 import {
+  conceptGroupDisplayLabel,
   conceptGroupSectionDomId,
   isConceptGroupSectionId,
+  sidebarGroupRepeatsTopicLabel,
 } from "@/lib/nav/conceptGroupSection";
 import { NavCautionBadge } from "../ui/NavCautionBadge";
 import { withHandbookSection } from "@/lib/i18n/sectionPaths";
@@ -336,8 +338,11 @@ function conceptsBySidebarGroup(
     const useGroup =
       rawGroup != null &&
       rawGroup.length > 0 &&
-      !sameTitle(rawGroup, topic.title) &&
-      !(ancestorTitle != null && sameTitle(rawGroup, ancestorTitle)) &&
+      !sidebarGroupRepeatsTopicLabel(rawGroup, topic.title) &&
+      !(
+        ancestorTitle != null &&
+        sidebarGroupRepeatsTopicLabel(rawGroup, ancestorTitle)
+      ) &&
       !sameTitle(rawGroup, concept.title);
     if (!useGroup) {
       ungrouped.push(concept);
@@ -461,7 +466,12 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
           indentClass,
         )} ${rowGapClass}`}
       >
-        <RowTitle text={groupLabel} query={query} marker open={groupOpen} />
+        <RowTitle
+          text={conceptGroupDisplayLabel(groupLabel)}
+          query={query}
+          marker
+          open={groupOpen}
+        />
         {groupOpen ? (
           <span className="mt-0.5 shrink-0">
             <NavChevron open />
@@ -593,7 +603,11 @@ function ConceptItems({
       {groups
         .filter(
           (group) =>
-            !(ancestorTitle != null && sameTitle(group.label, ancestorTitle)),
+            !sidebarGroupRepeatsTopicLabel(group.label, topic.title) &&
+            !(
+              ancestorTitle != null &&
+              sidebarGroupRepeatsTopicLabel(group.label, ancestorTitle)
+            ),
         )
         .map((group, index) => (
           <ConceptGroupRow
