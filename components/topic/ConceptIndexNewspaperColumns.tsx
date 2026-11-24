@@ -2,10 +2,10 @@
 
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useState,
+  type CSSProperties,
 } from "react";
 import {
   clusterIndexFitsPane,
@@ -42,6 +42,10 @@ import { useConceptIndexViewportWidth } from "./useConceptIndexViewportWidth";
 
 const NEWSPAPER_COLUMNS_CLASS =
   "concept-list-index concept-index-newspaper-columns w-full";
+
+type NewspaperColumnStyle = CSSProperties & {
+  "--concept-index-packed-width"?: string;
+};
 
 function panePackActive(
   options: ConceptIndexLayoutColumnNeedOptions | undefined,
@@ -314,13 +318,21 @@ export function ConceptIndexNewspaperColumns({
     entries.length,
   ]);
 
-  useEffect(() => {
+  const layoutResetKey = useMemo(
+    () =>
+      `${entryRevision}\0${availablePaneColumnCount}\0${widthCapacity}`,
+    [entryRevision, availablePaneColumnCount, widthCapacity],
+  );
+  const [prevLayoutResetKey, setPrevLayoutResetKey] =
+    useState(layoutResetKey);
+  if (layoutResetKey !== prevLayoutResetKey) {
+    setPrevLayoutResetKey(layoutResetKey);
     setPaneScrollEngaged(false);
     setCompactPaneHeight(null);
     setDomColumnCount(
       Math.max(1, Math.min(widthCapacity, availablePaneColumnCount)),
     );
-  }, [entryRevision, availablePaneColumnCount, widthCapacity]);
+  }
 
   const indexFitsPane = useMemo(() => {
     if (!panePack || packWeight <= 0) {
@@ -453,17 +465,7 @@ export function ConceptIndexNewspaperColumns({
   ]);
 
   const style = useMemo(() => {
-    const next: {
-      columnCount?: number;
-      columnWidth?: string;
-      columnGap?: string;
-      height?: number;
-      minHeight?: number;
-      maxHeight?: number;
-      width?: string;
-      maxWidth?: string;
-      ["--concept-index-packed-width" as string]?: string;
-    } = {};
+    const next: NewspaperColumnStyle = {};
 
     if (panePack) {
       next.columnCount = newspaperColumnCount;
@@ -517,7 +519,7 @@ export function ConceptIndexNewspaperColumns({
     }
     let frame = 0;
     let layoutSettled = false;
-    let observer: ResizeObserver | undefined;
+    const observerRef: { current?: ResizeObserver } = {};
     const releasePaneScrollEngaged = () => {
       if (subjectHubLayout) {
         setPaneScrollEngaged((engaged) => (engaged ? false : engaged));
@@ -535,7 +537,7 @@ export function ConceptIndexNewspaperColumns({
         return;
       }
       layoutSettled = true;
-      observer?.disconnect();
+      observerRef.current?.disconnect();
     };
     const measureOverflow = () => {
       if (layoutSettled) {
@@ -657,7 +659,8 @@ export function ConceptIndexNewspaperColumns({
     if (!rootEl) {
       return;
     }
-    observer = new ResizeObserver(measureOverflow);
+    const observer = new ResizeObserver(measureOverflow);
+    observerRef.current = observer;
     observer.observe(rootEl);
     const columnsEl =
       rootEl.classList.contains("concept-index-newspaper-pane-scroll") &&
