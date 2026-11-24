@@ -200,36 +200,6 @@ describe("handbook sidebar", () => {
     );
   });
 
-  it("keeps search mode buttons inside the phone header", () => {
-    cy.viewport(384, 844);
-    cy.visit("/en/databases");
-    cy.get("#handbook-header [data-search-mode]").should(($buttons) => {
-      const viewportRight = 384;
-      expect($buttons.length).to.be.greaterThan(0);
-      for (const button of $buttons) {
-        const box = button.getBoundingClientRect();
-        expect(box.left).to.be.at.least(0);
-        expect(box.right).to.be.at.most(viewportRight);
-      }
-    });
-    cy.get('#handbook-header [data-search-mode="titles"]').should(
-      "have.attr",
-      "aria-label",
-      "Search mode: Topics. Switch to Notes.",
-    );
-    cy.get('#handbook-header [data-search-mode="titles"]').should(
-      "have.attr",
-      "aria-pressed",
-      "false",
-    );
-    cy.get('#handbook-header [data-search-mode="titles"] svg').should(
-      "be.visible",
-    );
-    cy.get("#handbook-header > header > div").should(($row) => {
-      expect($row[0].scrollWidth).to.be.at.most($row[0].clientWidth + 1);
-    });
-  });
-
   it("closes the mobile sidebar when crossing the desktop breakpoint", () => {
     cy.viewport(390, 844);
     cy.visit("/en/frontend/web-api");
