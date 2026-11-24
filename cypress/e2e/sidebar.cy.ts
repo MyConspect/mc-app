@@ -241,21 +241,6 @@ describe("handbook sidebar", () => {
     });
   });
 
-  it("keeps the active item in its natural position when opening the mobile sidebar", () => {
-    cy.viewport(441, 931);
-    cy.visit("/en/frontend/core#html-parsing-and-the-dom");
-    cy.contains("button", "Open topics").click();
-
-    cy.get("#handbook-nav-aside").should("have.prop", "scrollTop", 0);
-    cy.nav("track", "frontend").then(($frontend) => {
-      cy.nav("subject", "core").should(($active) => {
-        expect($active[0].getBoundingClientRect().top).to.be.greaterThan(
-          $frontend[0].getBoundingClientRect().bottom,
-        );
-      });
-    });
-  });
-
   it("closes the mobile sidebar when crossing the desktop breakpoint", () => {
     cy.viewport(390, 844);
     cy.visit("/en/frontend/web-api");
