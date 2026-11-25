@@ -16,6 +16,7 @@
     "check-sidebar": "tsx scripts/audit-sidebar-outlines.ts",
     "check-index-shell": "tsx scripts/audit-handbook-index-shell.ts",
     "check-index-layout": "tsx scripts/audit-handbook-index-layout.ts",
+    "check-interview-anchors": "tsx scripts/audit-interview-anchor-parity.ts",
     "reorder-concepts": "tsx scripts/reorder-concepts.ts",
     "start:e2e": "next start -p 3456",
     "dev:e2e": "next dev -p 3001",

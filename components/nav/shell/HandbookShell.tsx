@@ -23,7 +23,6 @@ import {
   useHandbookMobileViewport,
   useMobileNav,
 } from "../hooks/useMobileNav";
-import { useRememberLocation } from "../hooks/useRememberLocation";
 import { useResetMainScroll } from "../hooks/useResetMainScroll";
 import { dispatchSidebarCollapseAll } from "../hooks/useSidebarOpen";
 import { useSidebarCollapsed } from "../hooks/useSidebarCollapsed";
@@ -187,7 +186,6 @@ export function HandbookShell({
       ? SIDEBAR_DESKTOP_PEEK
       : SIDEBAR_DESKTOP_COLLAPSED
     : SIDEBAR_DESKTOP_OPEN;
-  useRememberLocation(shellGroups);
   useApplyPendingHash();
   useResetMainScroll();
 

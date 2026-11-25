@@ -76,7 +76,15 @@ function foldFromSync(
 
   let topicHref: string | null = previous?.topicHref ?? null;
   if (!clearingHash) {
-    topicHref = location.topicHref;
+    if (location.topicHref !== null) {
+      topicHref = location.topicHref;
+    } else if (
+      location.subjectHref === null &&
+      location.clusterKey === null &&
+      location.sectionKey === null
+    ) {
+      topicHref = null;
+    }
   }
 
   const subjectHref =

@@ -4,15 +4,25 @@ import type { NavCluster, NavTopic } from "@/lib/nav";
 import {
   NAV_MULTI_TOPIC_CHILD_LIST_CLASS,
   NAV_NEST_CHILD_RAIL_INSET_CLASS,
+  NAV_CONCEPT_DEEPEST_INDENT,
   NAV_NEST_STEP_1,
   NAV_NEST_STEP_2,
   NAV_NEST_STEP_3,
+  NAV_NEST_STEP_4,
+  navRowNestStepClass,
   NAV_TRACK_CHILD_LIST_CLASS,
   SECTION_TOPIC_CONCEPT_INDENT,
   SECTION_TOPIC_INDENT,
+  NAV_CLUSTER_DEEPER_INDENT,
+  NAV_CONCEPT_UNDER_FOLD_INDENT,
+  NAV_FOLD_CHILD_INDENT,
+  NAV_SUBJECT_CHILD_INDENT,
   clusterChildTopicNestIndent,
   clusterHasMultiTopicChildren,
   clusterRowNestIndent,
+  conceptIndentBelowGroupHeader,
+  flatConceptListIndent,
+  navConceptTreeIndents,
 } from "./sidebarLayout";
 
 function topicStub(index: number): NavTopic {
@@ -34,10 +44,14 @@ function clusterWithTopicCount(count: number): NavCluster {
   };
 }
 
-test("nest step constants match Tailwind pl-* tiers", () => {
+test("nest step constants match 8/11/15/17 px ladder", () => {
   assert.equal(NAV_NEST_STEP_1, "pl-2");
-  assert.equal(NAV_NEST_STEP_2, "pl-4");
-  assert.equal(NAV_NEST_STEP_3, "pl-6");
+  assert.equal(NAV_NEST_STEP_2, "pl-[11px]");
+  assert.equal(NAV_NEST_STEP_3, "pl-[15px]");
+  assert.equal(NAV_NEST_STEP_4, "pl-[17px]");
+  assert.equal(navRowNestStepClass(1), NAV_NEST_STEP_1);
+  assert.equal(navRowNestStepClass(4), NAV_NEST_STEP_4);
+  assert.equal(NAV_CONCEPT_DEEPEST_INDENT, NAV_NEST_STEP_4);
 });
 
 test("track child list class includes yellow rail and base inset", () => {
@@ -60,9 +74,70 @@ test("section topic indents alias nest steps", () => {
   assert.equal(SECTION_TOPIC_CONCEPT_INDENT, NAV_NEST_STEP_3);
 });
 
-test("clusterRowNestIndent steps on topic count", () => {
-  assert.equal(clusterRowNestIndent(clusterWithTopicCount(1)), NAV_NEST_STEP_1);
-  assert.equal(clusterRowNestIndent(clusterWithTopicCount(2)), NAV_NEST_STEP_2);
+test("clusterRowNestIndent steps topic URLs away from subject hub to step 2", () => {
+  const subjectHref = "/en/conspect/computer-science/data-structures";
+  assert.equal(
+    clusterRowNestIndent(
+      "/en/conspect/computer-science/data-structures-advanced",
+      subjectHref,
+    ),
+    NAV_FOLD_CHILD_INDENT,
+  );
+});
+
+test("clusterRowNestIndent keeps hash sections on subject hub at step 1", () => {
+  const subjectHref = "/en/conspect/computer-science/system-design";
+  assert.equal(
+    clusterRowNestIndent(
+      "/en/conspect/computer-science/system-design#architecture",
+      subjectHref,
+    ),
+    NAV_SUBJECT_CHILD_INDENT,
+  );
+  assert.equal(
+    clusterRowNestIndent(
+      "/en/conspect/computer-science/sd-core",
+      subjectHref,
+    ),
+    NAV_FOLD_CHILD_INDENT,
+  );
+  assert.equal(NAV_SUBJECT_CHILD_INDENT, "");
+});
+
+test("flatConceptListIndent uses group tier on track rail step one", () => {
+  assert.equal(
+    flatConceptListIndent(true, NAV_SUBJECT_CHILD_INDENT, NAV_FOLD_CHILD_INDENT),
+    NAV_SUBJECT_CHILD_INDENT,
+  );
+  assert.equal(
+    flatConceptListIndent(false, NAV_SUBJECT_CHILD_INDENT, NAV_FOLD_CHILD_INDENT),
+    NAV_FOLD_CHILD_INDENT,
+  );
+});
+
+test("navConceptTreeIndents steps under subject-child row", () => {
+  const underSubject = navConceptTreeIndents(NAV_SUBJECT_CHILD_INDENT);
+  assert.equal(underSubject.group, NAV_FOLD_CHILD_INDENT);
+  assert.equal(underSubject.concept, NAV_CONCEPT_UNDER_FOLD_INDENT);
+  const underTrackRail = navConceptTreeIndents(NAV_SUBJECT_CHILD_INDENT, {
+    firstRowUnderTrackRail: true,
+  });
+  assert.equal(underTrackRail.group, NAV_SUBJECT_CHILD_INDENT);
+  assert.equal(underTrackRail.concept, NAV_FOLD_CHILD_INDENT);
+  const deeper = navConceptTreeIndents(NAV_NEST_STEP_2);
+  assert.equal(deeper.group, NAV_NEST_STEP_3);
+  assert.equal(deeper.concept, NAV_NEST_STEP_3);
+});
+
+test("conceptIndentBelowGroupHeader steps concepts under ## group headers", () => {
+  assert.equal(
+    conceptIndentBelowGroupHeader(NAV_FOLD_CHILD_INDENT),
+    NAV_CONCEPT_UNDER_FOLD_INDENT,
+  );
+  assert.equal(
+    conceptIndentBelowGroupHeader(NAV_NEST_STEP_3),
+    NAV_NEST_STEP_4,
+  );
 });
 
 test("clusterChildTopicNestIndent only for multi-topic clusters", () => {
@@ -72,7 +147,7 @@ test("clusterChildTopicNestIndent only for multi-topic clusters", () => {
   );
   assert.equal(
     clusterChildTopicNestIndent(clusterWithTopicCount(3)),
-    NAV_NEST_STEP_2,
+    NAV_FOLD_CHILD_INDENT,
   );
 });
 

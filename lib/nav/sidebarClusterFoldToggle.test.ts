@@ -3,8 +3,10 @@ import test from "node:test";
 import { conceptGroupSectionDomId } from "./conceptGroupSection";
 import {
   clusterFoldOpenForClusterRow,
+  clusterRowToggleOpen,
   offHubClusterFoldCollapse,
   subjectHubClusterFoldClick,
+  topicConceptFoldClick,
   topicPageClusterFoldClick,
 } from "./sidebarClusterFoldToggle";
 
@@ -138,4 +140,63 @@ test("topic page fold toggles closed when open even if child concept hash is act
 test("off-hub cluster click collapses when already open", () => {
   assert.equal(offHubClusterFoldCollapse(foldKey, foldKey), true);
   assert.equal(offHubClusterFoldCollapse(null, foldKey), false);
+});
+
+test("subject hub closes when hash focus expanded the row but clusterKey was cleared", () => {
+  const click = subjectHubClusterFoldClick(
+    null,
+    foldKey,
+    "variables",
+    "#variables",
+    true,
+    true,
+    { foldVisuallyOpen: true },
+  );
+  assert.equal(click.closing, true);
+  assert.equal(click.clusterKey, null);
+});
+
+test("topic concept fold toggles from openTopicHref only", () => {
+  const href = "/en/frontend/js-data-types";
+  const open = topicConceptFoldClick(href, href);
+  assert.equal(open.closing, true);
+  assert.equal(open.topicHref, null);
+  const closed = topicConceptFoldClick(null, href);
+  assert.equal(closed.closing, false);
+  assert.equal(closed.topicHref, href);
+});
+
+test("cluster row toggle ignores path-only open state", () => {
+  assert.equal(
+    clusterRowToggleOpen(null, "k", {
+      active: false,
+      hubConceptActive: false,
+      nestedClusterFoldOpen: false,
+      clusterDomId: "core",
+    }),
+    false,
+  );
+  assert.equal(
+    clusterRowToggleOpen(null, "k", {
+      active: true,
+      hubConceptActive: false,
+      nestedClusterFoldOpen: false,
+      clusterDomId: "core",
+    }),
+    true,
+  );
+});
+
+test("topic page cluster closes when group hash expanded the row without clusterKey", () => {
+  const topicKey = `${foldKey}:concept-group-intro`;
+  const click = topicPageClusterFoldClick(
+    null,
+    topicKey,
+    "#concept-group-intro",
+    true,
+    true,
+    true,
+  );
+  assert.equal(click.closing, true);
+  assert.equal(click.clusterKey, null);
 });

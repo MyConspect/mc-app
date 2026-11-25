@@ -1,4 +1,8 @@
-import type { NavGroup, NavSubject, NavTopic } from "@/lib/nav";
+import {
+  coreBrowserConceptSection,
+  isCoreBrowserTopicSlug,
+} from "@/lib/catalog/coreBrowserHub";
+import type { NavConcept, NavGroup, NavSubject, NavTopic } from "@/lib/nav";
 import {
   conceptGroupSectionDomId,
   isConceptGroupSectionId,
@@ -122,6 +126,37 @@ export function clusterKey(subjectHref: string, clusterId: string) {
   return `${subjectHref}#${clusterId}`;
 }
 
+function conceptInTopicTree(
+  topic: NavTopic,
+  hashId: string,
+): NavConcept | undefined {
+  const atRoot = conceptById(topic.concepts, hashId);
+  if (atRoot) {
+    return atRoot;
+  }
+  for (const nested of topic.nestedTopics ?? []) {
+    const hit = conceptInTopicTree(nested, hashId);
+    if (hit) {
+      return hit;
+    }
+  }
+  return undefined;
+}
+
+function conceptGroupLabelForFold(
+  concept: NavConcept,
+  topic: NavTopic,
+): string | undefined {
+  const fromNav = concept.group?.trim();
+  if (fromNav) {
+    return fromNav;
+  }
+  if (isCoreBrowserTopicSlug(topic.slug)) {
+    return coreBrowserConceptSection(concept.title);
+  }
+  return undefined;
+}
+
 /** Topic-page `#concept-group-*` folds use the topic path, not the subject hub hash. */
 function foldClusterKeyOnTopicPage(
   topicPath: string,
@@ -135,10 +170,10 @@ function foldClusterKeyOnTopicPage(
   if (!hashId) {
     return catalogClusterKey;
   }
-  const leaf = navTopicAtPath(topic, topicPath);
-  const concepts = leaf?.concepts ?? topic.concepts;
-  const concept = conceptById(concepts, hashId);
-  const group = concept?.group?.trim();
+  const concept =
+    conceptInTopicTree(topic, hashId) ??
+    conceptById(navTopicAtPath(topic, topicPath)?.concepts ?? [], hashId);
+  const group = concept ? conceptGroupLabelForFold(concept, topic) : undefined;
   if (group) {
     return clusterKey(topicPath, conceptGroupSectionDomId(group));
   }
@@ -152,6 +187,20 @@ function activeTopicForPath(
   return cluster.topics.find((topic) =>
     navTopicTreeContainsHref(topic, pathname),
   );
+}
+
+/** Deepest nav topic for pathname (sibling pages under a hub), not merely a containing tree root. */
+function deepestActiveTopicForPath(
+  cluster: { readonly topics: readonly NavTopic[] },
+  pathname: string,
+): NavTopic | undefined {
+  for (const topic of cluster.topics) {
+    const atPath = navTopicAtPath(topic, pathname);
+    if (atPath) {
+      return atPath;
+    }
+  }
+  return undefined;
 }
 
 export function sectionKey(subjectHref: string, sectionId: string) {
@@ -266,9 +315,10 @@ export function locationForPath(
           }
           if (navPathsEqual(pathname, entry.subjectHref)) {
             hubSubjectHref = entry.subjectHref;
-          }
-          {
-            const activeTopic = activeTopicForPath(entry.cluster, pathname);
+          } else {
+            const activeTopic =
+              deepestActiveTopicForPath(entry.cluster, pathname) ??
+              activeTopicForPath(entry.cluster, pathname);
             if (activeTopic) {
               const catalogClusterKey = clusterKey(
                 entry.subjectHref,
@@ -335,12 +385,21 @@ export function locationForPath(
                 entry.subject,
                 conceptHit.cluster.id,
               );
+              const catalogClusterKey = clusterKey(
+                entry.subject.href,
+                conceptHit.cluster.id,
+              );
+              const onSubjectHub = navPathsEqual(pathname, entry.subject.href);
               return {
-                topicHref: conceptHit.topic.href,
+                topicHref: onSubjectHub
+                  ? entry.subject.href
+                  : conceptHit.topic.href,
                 subjectHref: entry.subject.href,
-                clusterKey: clusterKey(
-                  entry.subject.href,
-                  conceptHit.cluster.id,
+                clusterKey: foldClusterKeyOnTopicPage(
+                  logicalPath,
+                  clusterId,
+                  conceptHit.topic,
+                  catalogClusterKey,
                 ),
                 sectionKey: parentSectionForConcept
                   ? sectionKey(entry.subject.href, parentSectionForConcept.id)
@@ -355,7 +414,9 @@ export function locationForPath(
             };
           }
           for (const cluster of navSubjectClusters(entry.subject)) {
-            const activeTopic = activeTopicForPath(cluster, pathname);
+            const activeTopic =
+              deepestActiveTopicForPath(cluster, pathname) ??
+              activeTopicForPath(cluster, pathname);
             if (activeTopic) {
               const parentSection = collapsibleSectionForCluster(
                 entry.subject,

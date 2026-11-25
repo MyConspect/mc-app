@@ -33,15 +33,17 @@ test("navTopicRowFocusedHighlight counts fold drill without URL active", () => {
 
 test("rowClass appends nest indent padding class", () => {
   const withIndent = rowClass(true, false, NAV_NEST_STEP_2);
-  assert.match(withIndent, /\bpl-4\b/);
+  assert.match(withIndent, /\bpl-\[11px\]/);
   assert.match(withIndent, /\bbg-yellow-50\b/);
   const withoutNestIndent = rowClass(true);
-  assert.doesNotMatch(withoutNestIndent, /\spl-[246]\b/);
+  assert.doesNotMatch(withoutNestIndent, /\spl-(?:\[[0-9]+px\]|[234](?:\.5)?|6)\b/);
 });
 
 test("rowClassNested appends indent and uses nested row sizing", () => {
   const classes = rowClassNested(false, false, NAV_NEST_STEP_2);
-  assert.match(classes, /\bpl-4\b/);
+  assert.match(classes, /\bpl-\[11px\]/);
+  assert.match(classes, /\bpr-2\b/);
+  assert.doesNotMatch(classes, /\bpx-2\b/);
   assert.match(classes, /\bmin-h-9\b/);
 });
 

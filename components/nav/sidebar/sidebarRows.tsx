@@ -69,15 +69,21 @@ import {
 } from "@/lib/nav/conceptGroupSection";
 import { NavCautionBadge } from "../ui/NavCautionBadge";
 import {
+  NAV_CLUSTER_DEEPER_INDENT,
   NAV_MULTI_TOPIC_CHILD_LIST_CLASS,
-  NAV_NEST_STEP_1,
   NAV_NEST_STEP_2,
   NAV_NEST_STEP_3,
+  NAV_SUBJECT_CHILD_INDENT,
   SECTION_TOPIC_CONCEPT_INDENT,
   SECTION_TOPIC_INDENT,
   clusterChildTopicNestIndent,
   clusterHasMultiTopicChildren,
   clusterRowNestIndent,
+  conceptIndentBelowGroupHeader,
+  flatConceptListIndent,
+  navConceptTreeIndents,
+  NAV_CONCEPT_UNDER_FOLD_INDENT,
+  NAV_FOLD_CHILD_INDENT,
 } from "../constants/sidebarLayout";
 import { withHandbookSection } from "@/lib/i18n/sectionPaths";
 import {
@@ -98,6 +104,7 @@ import {
   navTrackSubjectPathHighlight,
   navPathPinned,
   NAV_ROW_GAP,
+  navRowHorizontalPad,
   rowClass,
   rowClassNested,
   useScopedSidebarFold,
@@ -109,8 +116,10 @@ import {
 } from "../context/sidebarContext";
 import { useHandbookMobileNavOpen } from "../context/handbookMobileNavContext";
 import {
+  clusterRowToggleOpen,
   offHubClusterFoldCollapse,
   subjectHubClusterFoldClick,
+  topicConceptFoldClick,
   topicPageClusterFoldClick,
 } from "@/lib/nav/sidebarClusterFoldToggle";
 
@@ -254,12 +263,13 @@ function conceptRowClass(
   indentClass: string,
   rowGapClass: string,
 ): string {
-  const shared =
-    "flex min-h-11 w-full flex-col justify-center touch-manipulation cursor-pointer rounded-md px-2 py-2 text-[15px] font-medium ring-1 ring-inset transition-[color,background-color,box-shadow] duration-150 ease-out motion-reduce:transition-none sm:min-h-9";
+  const pad = navRowHorizontalPad(indentClass);
+  /** Match `rowClassNested` type size — not top-level `rowClass` (`text-base`). */
+  const shared = `flex min-h-9 w-full flex-col justify-center touch-manipulation cursor-pointer rounded-md ${pad} py-1.5 text-left text-[15px] font-medium max-md:min-h-10 ring-1 ring-inset transition-[color,background-color,box-shadow] duration-150 ease-out motion-reduce:transition-none`;
   const highlight = active
     ? `${shared} text-zinc-900 bg-yellow-50 ring-yellow-200 dark:bg-yellow-950 dark:text-zinc-50 dark:ring-yellow-800`
-    : `${shared} text-zinc-600 bg-transparent ring-transparent hover:bg-yellow-50 dark:text-zinc-400 dark:hover:bg-yellow-950/60`;
-  return `${highlight} ${indentClass}${rowGapClass ? ` ${rowGapClass}` : ""}`;
+    : `${shared} text-zinc-600 bg-transparent ring-transparent hover:bg-yellow-50/70 dark:text-zinc-400 dark:hover:bg-yellow-950/40`;
+  return `${highlight}${rowGapClass ? ` ${rowGapClass}` : ""}`;
 }
 
 export const ConceptLink = memo(function ConceptLink({
@@ -396,6 +406,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
   groupLabel,
   concepts,
   indentClass = NAV_NEST_STEP_2,
+  conceptIndentClass,
   rowGapClass = "",
 }: {
   trackId: TrackId;
@@ -403,8 +414,15 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
   groupLabel: string;
   concepts: readonly NavConcept[];
   indentClass?: string;
+  conceptIndentClass?: string;
   rowGapClass?: string;
 }) {
+  const leafIndent =
+    conceptIndentClass != null && conceptIndentClass !== indentClass
+      ? conceptIndentClass
+      : conceptIndentBelowGroupHeader(indentClass);
+  /** Step 1 under track rail — match `SubjectRow` surface (`rowClass`), not nested `pl-4` tier. */
+  const trackRailStepOne = indentClass === NAV_SUBJECT_CHILD_INDENT;
   const { query, pathname, searching, first, goToPath, onNavigate } =
     useSidebarChrome();
   const { highlightPathname, stackPathPins } = useSidebarHighlight();
@@ -424,7 +442,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
   const childConceptActive =
     onTopic && concepts.some((concept) => activeConceptId === concept.id);
   const groupFoldOpen = !searching && openClusterKey === key;
-  const groupOpen =
+  const groupBodyOpen =
     searching ||
     groupFoldOpen ||
     groupHashActive ||
@@ -462,6 +480,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
               hashFragment,
               sameHash,
               groupHashActive,
+              groupBodyOpen,
             );
             if (!searching) {
               patchFold(trackId, {
@@ -488,33 +507,44 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
         }}
         data-search-hit={isHitCluster ? "true" : undefined}
         aria-current={groupHashActive ? "location" : undefined}
-        aria-expanded={groupOpen}
-        className={`${rowClassNested(
-          navPathHighlighted(
-            isHitCluster || groupHashActive || groupFoldOpen,
-            onPath,
-            stackPathPins,
-          ),
-          pinPath,
-          indentClass,
-        )} ${rowGapClass}`}
+        aria-expanded={groupBodyOpen}
+        className={`${
+          trackRailStepOne
+            ? rowClass(
+                navPathHighlighted(
+                  isHitCluster || groupHashActive || groupFoldOpen,
+                  onPath,
+                  stackPathPins,
+                ),
+                pinPath,
+              )
+            : rowClassNested(
+                navPathHighlighted(
+                  isHitCluster || groupHashActive || groupFoldOpen,
+                  onPath,
+                  stackPathPins,
+                ),
+                pinPath,
+                indentClass,
+              )
+        } ${rowGapClass}`}
       >
         <RowTitle
           text={conceptGroupDisplayLabel(groupLabel)}
           query={query}
           marker
-          open={groupOpen}
-        />
+            open={groupBodyOpen}
+          />
         <span className="mt-0.5 shrink-0">
-          <NavChevron open={groupOpen} large />
+          <NavChevron open={groupBodyOpen} large />
         </span>
       </Link>
-      <NavFold open={groupOpen} instant={searching} unbox>
+      <NavFold open={groupBodyOpen} instant={searching} unbox>
         <ul className="contents">
           <ConceptFlatLinks
             topic={topic}
             concepts={concepts}
-            indentClass={indentClass}
+            indentClass={leafIndent}
             ancestorTitle={groupLabel}
           />
         </ul>
@@ -582,6 +612,9 @@ function ConceptItems({
   topic,
   concepts,
   indentClass = NAV_NEST_STEP_3,
+  groupIndentClass,
+  conceptIndentClass,
+  trackRailStepOne = false,
   ancestorTitle,
   tightTopGap = false,
 }: {
@@ -589,17 +622,28 @@ function ConceptItems({
   topic: NavTopic;
   concepts: readonly NavConcept[];
   indentClass?: string;
+  groupIndentClass?: string;
+  conceptIndentClass?: string;
+  /** Leaf track: flat concept list shares step-1 inset (Intro parity). */
+  trackRailStepOne?: boolean;
   /** Subject (or track) title already shown on the parent sidebar row. */
   ancestorTitle?: string;
   tightTopGap?: boolean;
 }) {
+  const groupIndent = groupIndentClass ?? indentClass;
+  const leafIndent = conceptIndentClass ?? indentClass;
+  const flatListIndent = flatConceptListIndent(
+    trackRailStepOne,
+    groupIndent,
+    leafIndent,
+  );
   const { searching } = useSidebarChrome();
   if (searching) {
     return (
       <ConceptFlatLinks
         topic={topic}
         concepts={concepts}
-        indentClass={indentClass}
+        indentClass={flatListIndent}
         ancestorTitle={ancestorTitle}
       />
     );
@@ -615,7 +659,7 @@ function ConceptItems({
       <ConceptFlatLinks
         topic={topic}
         concepts={concepts}
-        indentClass={indentClass}
+        indentClass={flatListIndent}
         ancestorTitle={ancestorTitle}
       />
     );
@@ -627,7 +671,7 @@ function ConceptItems({
         <ConceptFlatLinks
           topic={topic}
           concepts={ungrouped}
-          indentClass={indentClass}
+          indentClass={groupIndent}
           ancestorTitle={ancestorTitle}
         />
       ) : null}
@@ -647,7 +691,8 @@ function ConceptItems({
             topic={topic}
             groupLabel={group.label}
             concepts={group.concepts}
-            indentClass={indentClass}
+            indentClass={groupIndent}
+            conceptIndentClass={leafIndent}
             rowGapClass={
               index === 0 && ungrouped.length === 0
                 ? tightTopGap
@@ -762,7 +807,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
             }
             if (!searching && showTopicFold) {
               patchFold(trackId, {
-                topicHref: openTopicHref === topic.href ? null : topic.href,
+                ...topicConceptFoldClick(openTopicHref, topic.href),
               });
             }
             if (!showTopicFold) {
@@ -911,6 +956,9 @@ function TopicConceptNav({
   topic,
   concepts,
   indentClass = NAV_NEST_STEP_3,
+  groupIndentClass,
+  conceptIndentClass,
+  trackRailStepOne = false,
   ancestorTitle,
   tightTopGap = false,
 }: {
@@ -918,6 +966,9 @@ function TopicConceptNav({
   topic: NavTopic;
   concepts: readonly NavConcept[];
   indentClass?: string;
+  groupIndentClass?: string;
+  conceptIndentClass?: string;
+  trackRailStepOne?: boolean;
   ancestorTitle?: string;
   /** First concept/section row sits flush under an expanded cluster header. */
   tightTopGap?: boolean;
@@ -928,6 +979,9 @@ function TopicConceptNav({
       topic={topic}
       concepts={concepts}
       indentClass={indentClass}
+      groupIndentClass={groupIndentClass}
+      conceptIndentClass={conceptIndentClass}
+      trackRailStepOne={trackRailStepOne}
       ancestorTitle={ancestorTitle}
       tightTopGap={tightTopGap}
     />
@@ -939,10 +993,12 @@ function ClusterSingleTopicConcepts({
   trackId,
   cluster,
   topic,
+  clusterRowIndent = NAV_SUBJECT_CHILD_INDENT,
 }: {
   trackId: TrackId;
   cluster: NavCluster;
   topic: NavTopic;
+  clusterRowIndent?: string;
 }) {
   const { query, mode, pathname, searching } = useSidebarChrome();
   const topicNavConcepts = useTopicNavConcepts();
@@ -955,6 +1011,7 @@ function ClusterSingleTopicConcepts({
   if (sidebarConcepts.length === 0 && !hasNestedTopics) {
     return null;
   }
+  const conceptTreeIndents = navConceptTreeIndents(clusterRowIndent);
   return (
     <li className="contents">
       {sidebarConcepts.length > 0 ? (
@@ -962,7 +1019,8 @@ function ClusterSingleTopicConcepts({
           trackId={trackId}
           topic={navTopic}
           concepts={sidebarConcepts}
-          indentClass={NAV_NEST_STEP_2}
+          groupIndentClass={conceptTreeIndents.group}
+          conceptIndentClass={conceptTreeIndents.concept}
           ancestorTitle={cluster.title}
           tightTopGap
         />
@@ -1125,6 +1183,7 @@ export const TopicRow = memo(function TopicRow({
   /** Intro concept groups share `topic.href` with the subject hub URL — never key off `openTopicHref` alone. */
   const topicFoldOpen = onSubjectHub
     ? hubClusterOpen ||
+      hubClusterActive ||
       hubConceptActive ||
       nestedOpen ||
       nestedOnPath ||
@@ -1148,9 +1207,11 @@ export const TopicRow = memo(function TopicRow({
   // Flatten sticky headers into the track list so nested containing blocks cannot
   // drag Core/Structure above Frontend/HTML while siblings scroll.
   const indent = compact
-    ? (nestIndentClass ?? NAV_NEST_STEP_2)
+    ? (nestIndentClass ?? NAV_SUBJECT_CHILD_INDENT)
     : "";
-  const conceptIndent = NAV_NEST_STEP_3;
+  const conceptTreeIndents = navConceptTreeIndents(indent, {
+    firstRowUnderTrackRail: hideTitle,
+  });
   const clusterHeaderGap =
     stackSiblingGap && !(showTopicFold && topicOpen)
       ? `${NAV_ROW_GAP} mb-1.5`
@@ -1173,7 +1234,9 @@ export const TopicRow = memo(function TopicRow({
               trackId={trackId}
               topic={navTopic}
               concepts={sidebarConcepts}
-              indentClass={conceptIndent}
+              groupIndentClass={conceptTreeIndents.group}
+              conceptIndentClass={conceptTreeIndents.concept}
+              trackRailStepOne={hideTitle}
               ancestorTitle={ancestorTitle}
               tightTopGap={ancestorTitle != null || flushConceptSections}
             />
@@ -1220,6 +1283,10 @@ export const TopicRow = memo(function TopicRow({
               hashFragment,
               sameHash,
               hubClusterActive,
+              {
+                foldVisuallyOpen:
+                  hubClusterOpen || hubClusterActive || hubConceptActive,
+              },
             );
             if (!searching) {
               patchFold(trackId, {
@@ -1237,11 +1304,16 @@ export const TopicRow = memo(function TopicRow({
               scrollIntoView: false,
             });
             patchFold(trackId, {
-              topicHref: topicOpen ? null : topic.href,
+              ...topicConceptFoldClick(
+                openTopicHref,
+                navTopic.href,
+                openTopicHref === navTopic.href,
+              ),
             });
             return;
           }
-          if (isActiveHref(highlightPathname, topic.href)) {
+          const onTopicPageNow = isActiveHref(highlightPathname, navTopic.href);
+          if (onTopicPageNow) {
             event.preventDefault();
             pinNavElement(event.currentTarget, {
               hold: false,
@@ -1252,8 +1324,7 @@ export const TopicRow = memo(function TopicRow({
             }
             if (!searching && showTopicFold) {
               patchFold(trackId, {
-                topicHref:
-                  openTopicHref === navTopic.href ? null : navTopic.href,
+                ...topicConceptFoldClick(openTopicHref, navTopic.href),
               });
             }
             if (!showTopicFold) {
@@ -1319,7 +1390,8 @@ export const TopicRow = memo(function TopicRow({
               trackId={trackId}
               topic={navTopic}
               concepts={sidebarConcepts}
-              indentClass={conceptIndent}
+              groupIndentClass={conceptTreeIndents.group}
+              conceptIndentClass={conceptTreeIndents.concept}
               ancestorTitle={ancestorTitle}
               tightTopGap={tightConceptGroupsUnderTopic}
             />
@@ -1347,6 +1419,7 @@ export const ClusterRow = memo(function ClusterRow({
   cluster,
   hubFoldExclusive = false,
   leafInSidebar = false,
+  nestIndentClass,
 }: {
   trackId: TrackId;
   subjectHref: string;
@@ -1355,6 +1428,8 @@ export const ClusterRow = memo(function ClusterRow({
   hubFoldExclusive?: boolean;
   /** Conspect subject hubs: cluster rows are leaves (no topic/concept folds). */
   leafInSidebar?: boolean;
+  /** Override nest step when this cluster is nested under another cluster row. */
+  nestIndentClass?: string;
 }) {
   const { query, mode, pathname, searching, first, goToPath, onNavigate } =
     useSidebarChrome();
@@ -1386,7 +1461,8 @@ export const ClusterRow = memo(function ClusterRow({
   );
   const clusterLeafMode =
     leafInSidebar && !searching && !conspectSingleTopicExpand;
-  const clusterNestIndent = clusterRowNestIndent(cluster);
+  const clusterNestIndent =
+    nestIndentClass ?? clusterRowNestIndent(navigateHref, subjectPath);
 
   if (clusterLeafMode) {
     if (hasNestedGroups) {
@@ -1399,6 +1475,7 @@ export const ClusterRow = memo(function ClusterRow({
               subjectHref={subjectPath}
               cluster={nested}
               leafInSidebar
+              nestIndentClass={NAV_CLUSTER_DEEPER_INDENT}
             />
           ))}
         </>
@@ -1477,6 +1554,12 @@ export const ClusterRow = memo(function ClusterRow({
                 {
                   hubSectionConceptsMode: showHubSectionConcepts,
                   sectionConceptsOpen,
+                  foldVisuallyOpen: clusterRowToggleOpen(openClusterKey, key, {
+                    active,
+                    hubConceptActive,
+                    nestedClusterFoldOpen: false,
+                    clusterDomId: cluster.id,
+                  }),
                 },
               );
               if (!searching) {
@@ -1540,7 +1623,12 @@ export const ClusterRow = memo(function ClusterRow({
               trackId={trackId}
               topic={hubTopicNav}
               concepts={sidebarConcepts}
-              indentClass={NAV_NEST_STEP_3}
+              groupIndentClass={
+                navConceptTreeIndents(clusterNestIndent).group
+              }
+              conceptIndentClass={
+                navConceptTreeIndents(clusterNestIndent).concept
+              }
             />
           </NavFold>
         ) : null}
@@ -1556,6 +1644,7 @@ export const ClusterRow = memo(function ClusterRow({
         compact
         navKind="cluster"
         navId={cluster.id}
+        nestIndentClass={clusterNestIndent}
       />
     );
   }
@@ -1569,6 +1658,7 @@ export const ClusterRow = memo(function ClusterRow({
         compact
         navKind="cluster"
         navId={cluster.id}
+        nestIndentClass={clusterNestIndent}
         stackSiblingGap={!leafInSidebar}
         ancestorTitle={cluster.title}
       />
@@ -1600,6 +1690,12 @@ export const ClusterRow = memo(function ClusterRow({
     navTopicTreeContainsHref(topic, highlightPathname),
   );
   const clusterFoldOpen = !searching && openClusterKey === key;
+  const clusterToggleOpen = clusterRowToggleOpen(openClusterKey, key, {
+    active,
+    hubConceptActive,
+    nestedClusterFoldOpen,
+    clusterDomId: cluster.id,
+  });
   const clusterOpen =
     searching ||
     clusterFoldOpen ||
@@ -1650,6 +1746,7 @@ export const ClusterRow = memo(function ClusterRow({
               hashFragment,
               sameHash,
               active,
+              { foldVisuallyOpen: clusterToggleOpen },
             );
             if (!searching) {
               const topicHref =
@@ -1682,6 +1779,7 @@ export const ClusterRow = memo(function ClusterRow({
               hashFragment,
               sameHash,
               groupHashActive,
+              clusterToggleOpen,
             );
             const topicHref = cluster.topics[0]?.href ?? null;
             if (!searching) {
@@ -1752,6 +1850,7 @@ export const ClusterRow = memo(function ClusterRow({
                 cluster={nested}
                 hubFoldExclusive={hubFoldExclusive}
                 leafInSidebar={leafInSidebar}
+                nestIndentClass={NAV_CLUSTER_DEEPER_INDENT}
               />
             ))
           ) : cluster.topics.length === 1 &&
@@ -1763,6 +1862,7 @@ export const ClusterRow = memo(function ClusterRow({
               trackId={trackId}
               cluster={cluster}
               topic={onlyTopic}
+              clusterRowIndent={clusterNestIndent}
             />
           ) : (
             cluster.topics.map((topic) => (
@@ -1822,7 +1922,7 @@ export const SectionRow = memo(function SectionRow({
     section,
     subjectPath,
     openSectionKey,
-    searching || hasActiveChild,
+    searching || hasActiveChild || hashMatchesSection,
   );
   const isHitSection =
     first?.pathname === subjectPath && first.hash === `#${section.id}`;
@@ -1850,7 +1950,7 @@ export const SectionRow = memo(function SectionRow({
             event.preventDefault();
             const next = `#${section.id}`;
             const sameHash = onHub && window.location.hash === next;
-            if (sameHash || hasActiveChild) {
+            if (sameHash || hasActiveChild || hashMatchesSection) {
               const opening = !sectionOpen;
               patchFold(trackId, {
                 sectionKey: sectionOpen ? closed : key,
@@ -1877,7 +1977,7 @@ export const SectionRow = memo(function SectionRow({
             stackPathPins,
           ),
           pinPath,
-          NAV_NEST_STEP_1,
+          NAV_SUBJECT_CHILD_INDENT,
         )} ${NAV_ROW_GAP}`}
       >
         <RowTitle
