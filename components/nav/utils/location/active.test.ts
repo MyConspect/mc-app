@@ -92,6 +92,21 @@ describe("locationForPath", () => {
     assert.equal(location.clusterKey, null);
   });
 
+  it("pins Core sibling topic fold on js-operators, not js-core-hub", () => {
+    const groups = navGroupsForRootSection(
+      handbookNavSections("en"),
+      "conspect",
+    );
+    const location = locationForPath(
+      groups,
+      "/en/frontend/js-operators",
+      "",
+    );
+    assert.equal(location.subjectHref, "/en/frontend/javascript");
+    assert.equal(location.clusterKey, "/en/frontend/javascript#core");
+    assert.equal(location.topicHref, "/en/frontend/js-operators");
+  });
+
   it("opens SQL section fold on the database-sql topic URL", () => {
     const groups = navGroupsForRootSection(
       handbookNavSections("en"),

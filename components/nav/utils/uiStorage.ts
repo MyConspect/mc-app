@@ -8,7 +8,6 @@ export type ConceptDepthPreference = "quick" | "detailed";
 export type StoredUi = {
   readonly query: string;
   readonly mode: SearchMode;
-  readonly href: string;
   readonly sidebarCollapsed: boolean;
   readonly theme: StoredTheme;
   readonly conceptDepth: ConceptDepthPreference;
@@ -17,7 +16,6 @@ export type StoredUi = {
 const EMPTY: StoredUi = {
   query: "",
   mode: "titles",
-  href: "/",
   sidebarCollapsed: false,
   theme: null,
   conceptDepth: "quick",
@@ -87,17 +85,6 @@ function asQuery(value: unknown): string {
   return value.slice(0, SEARCH_QUERY_MAX_LENGTH);
 }
 
-function asHref(value: unknown): string {
-  if (
-    typeof value !== "string" ||
-    !value.startsWith("/") ||
-    value.startsWith("//")
-  ) {
-    return "/";
-  }
-  return value;
-}
-
 function asTheme(value: unknown): StoredTheme {
   switch (value) {
     case "light":
@@ -118,7 +105,6 @@ function parseStoredUi(raw: string): StoredUi {
   return {
     query: asQuery(record.query),
     mode: asSearchMode(record.mode),
-    href: asHref(record.href),
     sidebarCollapsed: record.sidebarCollapsed === true,
     theme: asTheme(record.theme),
     conceptDepth: "quick",
