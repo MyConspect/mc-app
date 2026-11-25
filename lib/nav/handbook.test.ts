@@ -146,7 +146,7 @@ describe("handbookNavSections layout", () => {
     assert.ok(messageBroker?.kind === "subject");
     assert.deepEqual(
       messageBroker.subject.clusters.map((cluster) => cluster.title),
-      ["Core", "Brokers"],
+      ["Message broker", "Brokers"],
     );
   });
 
@@ -786,7 +786,7 @@ describe("handbookNavSections layout", () => {
       (item) => item.id === "core",
     );
     assert.ok(cluster);
-    assert.equal(cluster.title, "Core");
+    assert.equal(cluster.title, "Intro");
     const topic = cluster.topics.find(
       (item) => item.slug === "computer-science",
     );

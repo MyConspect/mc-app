@@ -386,6 +386,29 @@ export function syncStickyScopeRelease(
   return overflow;
 }
 
+/** Bottom Y (scroller-relative) of the pinned path stack — not the document offset of the last row. */
+export function pinnedPathStackCoverBottomPx(
+  rows: ReadonlyArray<{
+    stickyTop: number;
+    height: number;
+    shifted: boolean;
+    relativeTop: number;
+  }>,
+  gap: number,
+): number {
+  let stackBottom = 0;
+  for (const row of rows) {
+    const bottom = row.shifted
+      ? row.relativeTop + row.height
+      : row.stickyTop + row.height;
+    stackBottom = Math.max(stackBottom, bottom);
+  }
+  if (stackBottom <= 0) {
+    return 0;
+  }
+  return Math.max(0, Math.round(stackBottom + gap));
+}
+
 export function measureStickyCover(
   navElement?: HTMLElement,
   vars?: StickyVars,
@@ -398,22 +421,25 @@ export function measureStickyCover(
   const scrollerStyle = getComputedStyle(scroller);
   const scrollerTop = scroller.getBoundingClientRect().top;
   const { gap } = stickySpacing(nav);
-  let cover = 0;
+  const pinnedRows: Array<{
+    stickyTop: number;
+    height: number;
+    shifted: boolean;
+    relativeTop: number;
+  }> = [];
   for (const element of pathElements(nav)) {
     const rect = element.getBoundingClientRect();
     const relativeTop = rect.top - scrollerTop;
     const stickyTop = stickyTopPx(element, scrollerStyle, vars);
     const pinned = relativeTop <= stickyTop + 0.5;
     if (pinned) {
-      const shifted = element.style.transform.includes("translateY");
-      const bottom = shifted
-        ? relativeTop + rect.height
-        : Math.max(relativeTop + rect.height, stickyTop + rect.height);
-      cover = Math.max(cover, bottom);
+      pinnedRows.push({
+        stickyTop,
+        height: element.offsetHeight,
+        shifted: element.style.transform.includes("translateY"),
+        relativeTop,
+      });
     }
   }
-  if (cover > 0) {
-    cover += gap;
-  }
-  return Math.max(0, Math.round(cover));
+  return pinnedPathStackCoverBottomPx(pinnedRows, gap);
 }

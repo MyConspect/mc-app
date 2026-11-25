@@ -45,6 +45,28 @@ function subjectInGroup(trackId: string, subjectSlug: string) {
   return entry.subject;
 }
 
+test("web-api subject uses flatNav for hub topic siblings", () => {
+  const web = subjectInGroup("frontend", "web-api");
+  assert.ok(web);
+  assert.equal(web.flatNav, true);
+  const topicTitles = web.clusters.flatMap((cluster) => {
+    if ((cluster.nestedClusters?.length ?? 0) > 0) {
+      return cluster.nestedClusters!.map((nested) => nested.title);
+    }
+    return cluster.topics.map((topic) => topic.title);
+  });
+  assert.deepEqual(topicTitles, [
+    "Internet",
+    "HTTP",
+    "Performance",
+    "API styles",
+    "Auth & storage",
+    "10. Protocols",
+    "11. Real-time & rendering",
+    "12. Types of web apps",
+  ]);
+});
+
 test("conspect sidebar schema is two-level cluster leaves", () => {
   assert.deepEqual(navSidebarSchema("conspect"), {
     mode: "two-level",
@@ -229,6 +251,35 @@ test("interview nav topics keep catalog URLs after hoist from subject clusters",
     htmlInterview?.kind === "topic" ? htmlInterview.topic.href : "",
     "/en/frontend/html-interview",
   );
+});
+
+test("multi-topic cluster store topics are leaves with title-twin concepts", () => {
+  const brokers = subjectInGroup("advanced", "message-broker")?.clusters.find(
+    (cluster) => cluster.id === "brokers",
+  );
+  assert.ok(brokers);
+  assert.ok(brokers.topics.length > 1);
+  const kafka = brokers.topics.find(
+    (topic) => topic.slug === "message-broker-kafka",
+  );
+  const nosqlEntry = conspectGroup("databases").entries.find(
+    (entry) => entry.kind === "cluster" && entry.cluster.id === "nosql",
+  );
+  assert.equal(nosqlEntry?.kind, "cluster");
+  const redis =
+    nosqlEntry?.kind === "cluster"
+      ? nosqlEntry.cluster.topics.find(
+          (topic) => topic.slug === "database-redis",
+        )
+      : undefined;
+  assert.ok(kafka && redis);
+  for (const topic of [kafka, redis]) {
+    assert.equal(topic.concepts.length, 1);
+    assert.equal(
+      topic.concepts[0]?.title.toLowerCase(),
+      topic.title.toLowerCase(),
+    );
+  }
 });
 
 test("title-twin flatNav subjects flag duplicate sidebar topic rows", () => {
