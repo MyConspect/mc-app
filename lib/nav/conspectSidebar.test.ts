@@ -74,9 +74,9 @@ test("conspect sidebar schema is two-level cluster leaves", () => {
     trackHeader: true,
     hubSectionConcepts: false,
   });
-  assert.deepEqual(navSidebarSchema("interviews"), { mode: "topic-tree" });
+  assert.deepEqual(navSidebarSchema("interviews"), navSidebarSchema("conspect"));
   assert.equal(conspectClusterLeavesInSidebar("conspect"), true);
-  assert.equal(conspectClusterLeavesInSidebar("interviews"), false);
+  assert.equal(conspectClusterLeavesInSidebar("interviews"), true);
 });
 
 test("single-subject track Databases promotes clusters like Testing", () => {
@@ -99,6 +99,48 @@ test("single-subject track Databases promotes clusters like Testing", () => {
       (entry) => entry.kind === "cluster" && entry.cluster.id === "core",
     ),
   );
+});
+
+function interviewsGroup(trackId: string) {
+  const interviews = handbookNavSections("en").find(
+    (section) => section.id === "interviews",
+  );
+  assert.ok(interviews);
+  const group = interviews.groups.find((item) => item.id === trackId);
+  assert.ok(group, trackId);
+  return group;
+}
+
+test("multi-subject interviews tracks mirror conspect subject rows", () => {
+  for (const trackId of MULTI_SUBJECT_CONSPECT_TRACKS) {
+    const conspect = conspectGroup(trackId);
+    const group = (() => {
+      try {
+        return interviewsGroup(trackId);
+      } catch {
+        return undefined;
+      }
+    })();
+    if (!group) {
+      continue;
+    }
+  assert.equal(
+      group.entries.some((entry) => entry.kind === "topic"),
+      false,
+      `${trackId}: interviews must not hoist flat topic rows`,
+    );
+    if (conspect.entries.every((entry) => entry.kind === "subject")) {
+      assert.ok(
+        group.entries.some((entry) => entry.kind === "subject"),
+        `${trackId}: expected subject rows`,
+      );
+    } else {
+      assert.ok(
+        group.entries.some((entry) => entry.kind === "cluster"),
+        `${trackId}: expected promoted cluster rows`,
+      );
+    }
+  }
 });
 
 test("multi-subject conspect tracks share CS-shaped sidebar entries", () => {
@@ -242,15 +284,25 @@ test("interview nav topics keep catalog URLs after hoist from subject clusters",
     groupNavigateHref(frontend, "interviews"),
     "/en/frontend/web-security-questions",
   );
-  assert.equal(testing.leafTopic?.href, "/en/testing/interview");
-
-  const htmlInterview = frontend.entries.find(
-    (entry) => entry.kind === "topic" && entry.topic.slug === "html-interview",
+  const testingInterview = testing.entries.find(
+    (entry) => entry.kind === "cluster" && entry.cluster.id === "interview",
   );
   assert.equal(
-    htmlInterview?.kind === "topic" ? htmlInterview.topic.href : "",
-    "/en/frontend/html-interview",
+    testingInterview?.kind === "cluster"
+      ? testingInterview.cluster.topics[0]?.href
+      : "",
+    "/en/testing/interview",
   );
+
+  const htmlSubject = frontend.entries.find(
+    (entry) =>
+      entry.kind === "subject" && entry.subject.slug === "html",
+  );
+  assert.equal(htmlSubject?.kind, "subject");
+  const htmlInterview = htmlSubject?.subject.clusters
+    .find((cluster) => cluster.id === "interview")
+    ?.topics.find((topic) => topic.slug === "html-interview");
+  assert.equal(htmlInterview?.href, "/en/frontend/html-interview");
 });
 
 test("multi-topic cluster store topics are leaves with title-twin concepts", () => {

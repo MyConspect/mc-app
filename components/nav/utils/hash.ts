@@ -1,12 +1,16 @@
-import { splitHref } from "@/lib/nav";
+import { conceptHref, splitHref } from "@/lib/nav";
 import { inferNavRootSection } from "@/lib/nav/sections";
 import { readPersistedNavRootSection } from "@/lib/nav/rootSectionPreference";
-import { withHandbookSection } from "@/lib/i18n/sectionPaths";
+import {
+  handbookLogicalPathname,
+  withHandbookSection,
+} from "@/lib/i18n/sectionPaths";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { setBookmarkNavMode } from "./bookmarkNavMode";
 import { clearConceptNavForPath, recordConceptNav } from "./conceptNavBack";
 
 let suppressConceptNavRecord = false;
+let suppressNextConceptHash = 0;
 
 /** Skip recording on the next same-document hash change (concept back/forward chrome). */
 export function suppressNextConceptNavRecord() {
@@ -38,6 +42,8 @@ function notifyHashListeners() {
 export function subscribeHash(onStoreChange: () => void) {
   hashListeners.add(onStoreChange);
   window.addEventListener("hashchange", onStoreChange);
+  // Hard reload keeps `#` in the URL but skips `hashchange` — re-read after hydration.
+  queueMicrotask(onStoreChange);
   return () => {
     hashListeners.delete(onStoreChange);
     window.removeEventListener("hashchange", onStoreChange);
@@ -176,6 +182,10 @@ function handbookHref(href: string, currentPath: string): string {
   return withHandbookSection(href, sectionForHandbookNav(currentPath));
 }
 
+function pendingPathMatches(pathA: string, pathB: string): boolean {
+  return handbookLogicalPathname(pathA) === handbookLogicalPathname(pathB);
+}
+
 export function followHandbookHref(
   href: string,
   currentPath: string,
@@ -198,7 +208,7 @@ export function takePendingHashForPath(pathname: string): string | null {
   if (!pendingPathHash) {
     return null;
   }
-  if (pendingPathHash.pathname !== pathname) {
+  if (!pendingPathMatches(pendingPathHash.pathname, pathname)) {
     pendingPathHash = null;
     notifyPendingPathListeners();
     return null;
@@ -219,8 +229,62 @@ export function setHashOnPath(pathname: string, id: string, scroll = true) {
     maybeRecordConceptNav(pathname, hashIdFrom(window.location.hash), id);
     window.history.replaceState(window.history.state, "", url);
   }
-  clearPendingPathHash();
+  if (typeof document !== "undefined") {
+    document.documentElement.dataset.conceptHash = id;
+  }
   dispatchHashChange(scroll);
+  const pendingAligned =
+    pendingPathHash !== null &&
+    pendingPathMatches(pendingPathHash.pathname, pathname) &&
+    pendingPathHash.hash === next;
+  if (!pendingAligned) {
+    clearPendingPathHash();
+  }
+}
+
+/**
+ * Same-topic concept from sidebar/search: optimistic pending hash, then URL.
+ * Keeps {@link useHandbookLocation} on the target concept before the drawer closes.
+ */
+/** Skip one `nextConceptHash` pass after chrome initiated a concept hop. */
+export function consumeSuppressNextConceptHash(): boolean {
+  if (suppressNextConceptHash > 0) {
+    suppressNextConceptHash -= 1;
+    return true;
+  }
+  return false;
+}
+
+export function armSuppressNextConceptHash(): void {
+  suppressNextConceptHash += 1;
+}
+
+function markConceptNavFromChrome(): void {
+  armSuppressNextConceptHash();
+}
+
+export function applySameTopicConceptHash(
+  topicHref: string,
+  conceptId: string,
+  committedPathname: string,
+  scroll = true,
+): void {
+  markConceptNavFromChrome();
+  const targetHref = conceptHref(topicHref, conceptId);
+  queueHandbookHref(targetHref, committedPathname);
+  const { pathname: canonicalPath } = splitHref(
+    handbookHref(targetHref, committedPathname),
+  );
+  let pathForHash = canonicalPath;
+  if (typeof window !== "undefined") {
+    if (pendingPathMatches(window.location.pathname, canonicalPath)) {
+      pathForHash = window.location.pathname;
+    }
+  }
+  if (typeof document !== "undefined") {
+    document.documentElement.dataset.conceptHash = conceptId;
+  }
+  setHashOnPath(pathForHash, conceptId, scroll);
 }
 
 export function setHashIfChanged(id: string, scroll = true) {

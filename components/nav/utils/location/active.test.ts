@@ -2,7 +2,62 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { handbookNavForTrack, handbookNavSections } from "@/lib/nav/handbook";
 import { navGroupsForRootSection } from "@/lib/nav/sections";
-import { isConceptActiveOnPage, locationForPath } from "./active";
+import {
+  isConceptActiveOnPage,
+  isOnSubjectPath,
+  locationForPath,
+} from "./active";
+
+describe("isOnSubjectPath", () => {
+  it("matches child topic URL under a conspect subject", () => {
+    const groups = navGroupsForRootSection(
+      handbookNavSections("en"),
+      "conspect",
+    );
+    const topicHref = "/en/backend/nodejs-modules";
+    const subjectHref = "/en/backend/nodejs";
+    const nodejs = groups
+      .find((group) => group.id === "backend")
+      ?.entries.find(
+        (entry) =>
+          entry.kind === "subject" && entry.subject.href === subjectHref,
+      );
+    assert.ok(nodejs && nodejs.kind === "subject");
+    assert.equal(isOnSubjectPath(topicHref, nodejs.subject, ""), true);
+    assert.equal(isOnSubjectPath(subjectHref, nodejs.subject, ""), true);
+  });
+
+  it("matches subject hub when activeConceptId lives under the subject", () => {
+    const groups = navGroupsForRootSection(
+      handbookNavSections("en"),
+      "conspect",
+    );
+    const topicHref = "/en/backend/nodejs-modules";
+    const conceptId = "require-and-packages";
+    const subjectHref = "/en/backend/nodejs";
+    const nodejs = groups
+      .find((group) => group.id === "backend")
+      ?.entries.find(
+        (entry) =>
+          entry.kind === "subject" && entry.subject.href === subjectHref,
+      );
+    assert.ok(nodejs && nodejs.kind === "subject");
+    assert.equal(
+      isOnSubjectPath(subjectHref, nodejs.subject, conceptId),
+      true,
+    );
+    assert.equal(
+      isOnSubjectPath(topicHref, nodejs.subject, conceptId),
+      true,
+    );
+    const location = locationForPath(
+      groups,
+      topicHref,
+      `#${conceptId}`,
+    );
+    assert.equal(location.subjectHref, subjectHref);
+  });
+});
 
 describe("isConceptActiveOnPage", () => {
   it("matches concept when URL has conspect section prefix", () => {

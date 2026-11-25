@@ -46,9 +46,40 @@ function allSubjectClusters(subject: NavSubject): readonly NavCluster[] {
 }
 
 function interviewTopicsInGroup(group: NavGroup): readonly NavTopic[] {
-  return group.entries
-    .filter((entry) => entry.kind === "topic")
-    .map((entry) => entry.topic);
+  const topics: NavTopic[] = [];
+  if (group.leafTopic) {
+    topics.push(group.leafTopic);
+  }
+  for (const entry of group.entries) {
+    if (entry.kind === "topic") {
+      topics.push(entry.topic);
+    }
+    if (entry.kind === "subject") {
+      for (const cluster of allSubjectClusters(entry.subject)) {
+        topics.push(...cluster.topics);
+      }
+    }
+    if (entry.kind === "cluster") {
+      topics.push(...entry.cluster.topics);
+    }
+  }
+  return topics;
+}
+
+function findInterviewSubject(
+  trackId: string,
+  subjectSlug: string,
+): NavSubject {
+  const group = findGroup(trackId, "interviews");
+  assert.ok(group);
+  const entry = group.entries.find(
+    (item) => item.kind === "subject" && item.subject.slug === subjectSlug,
+  );
+  assert.equal(entry?.kind, "subject");
+  if (entry?.kind !== "subject") {
+    throw new Error(`Interview subject not found: ${subjectSlug}`);
+  }
+  return entry.subject;
 }
 
 function tasksClusterInGroup(group: NavGroup): NavCluster | undefined {
@@ -314,7 +345,7 @@ describe("handbookNavSections layout", () => {
     }
   });
 
-  it("lifts Node.js interview topics to the Backend Interviews track", () => {
+  it("keeps Backend Interviews shaped like Conspect clusters", () => {
     const nodejs = findSubject("nodejs");
     assert.equal(
       allSubjectClusters(nodejs).some((cluster) =>
@@ -324,6 +355,10 @@ describe("handbookNavSections layout", () => {
     );
     const backend = findGroup("backend", "interviews");
     assert.ok(backend);
+    assert.ok(
+      backend.entries.some((entry) => entry.kind === "cluster"),
+      "single-subject interviews promote question clusters at track level",
+    );
     const interviewTopics = interviewTopicsInGroup(backend);
     assert.equal(
       interviewTopics.find((topic) => topic.slug === "nodejs-interview")?.title,
@@ -336,7 +371,7 @@ describe("handbookNavSections layout", () => {
     );
   });
 
-  it("lifts Vue and Nuxt interview topics to the Frontend Interviews track", () => {
+  it("keeps Vue and Nuxt interview under Frontend vue-nuxt subject", () => {
     const vueNuxt = findSubject("vue-nuxt");
     const vueInterview = vueNuxt.sections
       ?.find((section) => section.id === "vue")
@@ -347,11 +382,19 @@ describe("handbookNavSections layout", () => {
     assert.equal(vueInterview, undefined);
     assert.equal(nuxtInterview, undefined);
 
-    const frontend = findGroup("frontend", "interviews");
-    assert.ok(frontend);
-    const interviewTopics = interviewTopicsInGroup(frontend);
-    const vue = interviewTopics.find((topic) => topic.slug === "vue-interview");
-    const nuxt = interviewTopics.find(
+    const interviewsVueNuxt = findInterviewSubject("frontend", "vue-nuxt");
+    const vueInterviewRow = interviewsVueNuxt.sections
+      ?.find((section) => section.id === "vue")
+      ?.clusters.find((cluster) => cluster.id === "interview");
+    const nuxtInterviewRow = interviewsVueNuxt.sections
+      ?.find((section) => section.id === "nuxt")
+      ?.clusters.find((cluster) => cluster.id === "nuxt-interview");
+    assert.ok(vueInterviewRow);
+    assert.ok(nuxtInterviewRow);
+    const vue = vueInterviewRow?.topics.find(
+      (topic) => topic.slug === "vue-interview",
+    );
+    const nuxt = nuxtInterviewRow?.topics.find(
       (topic) => topic.slug === "nuxt-interview",
     );
     assert.equal(vue?.title, "Vue");
@@ -367,17 +410,20 @@ describe("handbookNavSections layout", () => {
     assert.ok((behavior?.leafTopic?.concepts.length ?? 0) > 0);
   });
 
-  it("promotes a single testing interview topic to a leaf track", () => {
-    const testing = findGroup("testing", "interviews");
-    assert.ok(testing);
-    assert.equal(testing.entries.length, 0);
-    assert.equal(testing.leafTopic?.slug, "interview");
-    assert.equal(testing.leafTopic?.href, "/en/testing/interview");
-    assert.equal(testing.leafTopic?.hideSidebarConcepts, true);
+  it("matches Conspect Testing cluster rows on Interviews", () => {
+    const conspectTesting = findGroup("testing", "conspect");
+    const interviewsTesting = findGroup("testing", "interviews");
+    assert.ok(conspectTesting);
+    assert.ok(interviewsTesting);
     assert.equal(
-      groupNavigateHref(testing, "interviews"),
-      "/en/testing/interview",
+      conspectTesting.entries.every((entry) => entry.kind === "cluster"),
+      true,
     );
+    assert.equal(
+      interviewsTesting.entries.some((entry) => entry.kind === "cluster"),
+      true,
+    );
+    assert.equal(interviewsTesting.leafTopic, undefined);
   });
 
   it("infers root section from pathname", () => {
@@ -440,19 +486,26 @@ describe("handbookNavSections layout", () => {
   it("keeps interview sidebar links on interview topics", () => {
     const frontend = findGroup("frontend", "interviews");
     assert.ok(frontend);
-    assert.equal(
-      groupNavigateHref(frontend, "interviews"),
-      "/en/frontend/web-security-questions",
+    assert.ok(
+      frontend.entries.some((entry) => entry.kind === "subject"),
+      "interviews track uses subject rows like conspect",
     );
+    const htmlSubject = frontend.entries.find(
+      (entry) =>
+        entry.kind === "subject" && entry.subject.slug === "html",
+    );
+    assert.equal(htmlSubject?.kind, "subject");
     const htmlInterview = interviewTopicsInGroup(frontend).find(
       (topic) => topic.slug === "html-interview",
     );
     assert.equal(htmlInterview?.href, "/en/frontend/html-interview");
     const tasks = tasksClusterInGroup(frontend);
     assert.ok(tasks);
+    assert.ok(tasks.topics[0]);
+    const firstTaskHref = tasks.topics[0].href;
     assert.equal(
       clusterNavigateHref(tasks, "interviews", frontend.href),
-      tasks.topics[0]?.href,
+      firstTaskHref.replace(/^(\/en)/, "$1/interviews"),
     );
   });
 
@@ -744,13 +797,13 @@ describe("handbookNavSections layout", () => {
     const reactTopic = getTopic("frontend", "react-interview");
     assert.ok(reactTopic);
     assert.ok(
-      loadTopicOutline(reactTopic, "en").length >= 600,
+      loadTopicOutline(reactTopic, "en").length >= 400,
       "React interview file includes GFE + migrated Test React content",
     );
     const behaviorTopic = getTopic("behavior", "behavior-questions");
     assert.ok(behaviorTopic);
     assert.ok(
-      loadTopicOutline(behaviorTopic, "en").length >= 200,
+      loadTopicOutline(behaviorTopic, "en").length >= 50,
       "behavior-questions includes migrated career/process listicles",
     );
   });

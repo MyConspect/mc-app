@@ -175,12 +175,43 @@ export function isQuestionCluster(clusterId: string): boolean {
   );
 }
 
-export function isInterviewSectionTopic(
-  topic: Pick<Topic, "slug" | "file" | "grouping"> & {
-    readonly title?: string;
-  },
+type SidebarInterviewTopicRef = Pick<Topic, "slug"> & {
+  readonly title?: string;
+  readonly file?: string;
+  readonly grouping?: Topic["grouping"];
+  readonly hideSidebarConcepts?: boolean;
+};
+
+/** Interviews nav: list practice questions even when conspect hides concept bullets. */
+export function shouldShowInterviewTopicSidebarConcepts(
+  sectionId: string,
+  topic: SidebarInterviewTopicRef,
+  visibleConceptCount: number,
 ): boolean {
-  if (isBehaviorQuestionsTopic(topic)) {
+  return (
+    sectionId === "interviews" &&
+    visibleConceptCount > 0 &&
+    isInterviewSectionTopic(topic)
+  );
+}
+
+export function shouldOpenInterviewTopicFold(
+  sectionId: string,
+  topic: SidebarInterviewTopicRef,
+  onTopicPage: boolean,
+  childConceptActive: boolean,
+): boolean {
+  return (
+    sectionId === "interviews" &&
+    isInterviewSectionTopic(topic) &&
+    (onTopicPage || childConceptActive)
+  );
+}
+
+export function isInterviewSectionTopic(
+  topic: SidebarInterviewTopicRef,
+): boolean {
+  if (isBehaviorQuestionsTopic({ slug: topic.slug, file: topic.file ?? "" })) {
     return true;
   }
   if (

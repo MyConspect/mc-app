@@ -70,6 +70,7 @@ import {
   conspectClusterExpandsInSidebar,
   conspectClusterLeavesInSidebar,
 } from "@/lib/nav/conspectSidebar";
+import { isInterviewSectionTopic } from "@/lib/nav/navUtils";
 import {
   SidebarFoldScopeProvider,
   SidebarNavProvider,
@@ -111,7 +112,13 @@ export const TopicSidebar = memo(function TopicSidebar({
   searchLoading?: boolean;
   hideNavChromeOnMobile?: boolean;
 }) {
-  const { pathname, highlightPathname, location, hash } = useHandbookLocation();
+  const {
+    pathname,
+    highlightPathname,
+    location,
+    hash,
+    activeConceptId: resolvedConceptId,
+  } = useHandbookLocation();
   const mode = useSearchMode();
   const pathGroups = useMemo(
     () => navGroupsForPath(sections, highlightPathname),
@@ -155,7 +162,6 @@ export const TopicSidebar = memo(function TopicSidebar({
   );
   const searching = query.trim().length > 0;
   const {
-    activeConceptId,
     isTrackOpen,
     toggleTrackId,
     ensureTrackOpen,
@@ -189,7 +195,7 @@ export const TopicSidebar = memo(function TopicSidebar({
     hash: navHash,
     navRevision,
     firstHref,
-    activeConceptId,
+    activeConceptId: resolvedConceptId,
     highlightPathname,
   });
 
@@ -226,29 +232,43 @@ export const TopicSidebar = memo(function TopicSidebar({
       stackPathPins,
       routeTrackId,
       focusedOpenTrackId,
+      syncRevision: navRevision,
     }),
-    [highlightPathname, stackPathPins, routeTrackId, focusedOpenTrackId],
+    [
+      highlightPathname,
+      stackPathPins,
+      routeTrackId,
+      focusedOpenTrackId,
+      navRevision,
+    ],
   );
   const chromeValue = useMemo(
     () => ({
       query,
       mode,
-      pathname,
+      pathname: highlightPathname,
       searching,
       first,
       goToPath,
       onNavigate,
     }),
-    [query, mode, pathname, searching, first, goToPath, onNavigate],
+    [query, mode, highlightPathname, searching, first, goToPath, onNavigate],
   );
   const foldValue = useMemo(
     () => ({
       getTrackFold,
       patchTrackFold,
+      syncRevision: navRevision,
     }),
-    [getTrackFold, patchTrackFold],
+    [getTrackFold, patchTrackFold, navRevision],
   );
-  const activeValue = useMemo(() => ({ activeConceptId }), [activeConceptId]);
+  const activeValue = useMemo(
+    () => ({
+      activeConceptId: resolvedConceptId,
+      syncRevision: navRevision,
+    }),
+    [resolvedConceptId, navRevision],
+  );
   const trackOpenValue = useMemo(
     () => ({
       toggleTrackId,
@@ -471,10 +491,16 @@ const TrackGroup = memo(function TrackGroup({
       Boolean(concept.group),
     ) ?? false;
   const leafTopic = group.leafTopic;
+  const leafInterviewQuestions =
+    rootSectionId === "interviews" &&
+    leafTopic !== undefined &&
+    isInterviewSectionTopic(leafTopic) &&
+    (leafTopic.concepts?.length ?? 0) > 0;
   const showLeafConcepts =
     isLeafTrack &&
     leafTopic !== undefined &&
-    (!leafTopic.hideSidebarConcepts ||
+    (leafInterviewQuestions ||
+      !leafTopic.hideSidebarConcepts ||
       (leafTopic.nestedTopics?.length ?? 0) > 0 ||
       leafHasConceptGroups);
   const hasSidebarChildren =
@@ -573,32 +599,6 @@ const TrackGroup = memo(function TrackGroup({
     }
     if (!hasSidebarChildren) {
       onNavigate?.();
-    }
-    if (rootSectionId === "interviews" && onThisTrack && hasSidebarChildren) {
-      event.preventDefault();
-      if (!searching) {
-        toggleTrackId(group.id);
-      }
-      return true;
-    }
-    if (
-      rootSectionId === "interviews" &&
-      !onThisTrack &&
-      hasSidebarChildren &&
-      !searching
-    ) {
-      event.preventDefault();
-      const wasOpen = trackOpen;
-      toggleTrackId(group.id);
-      if (!wasOpen) {
-        patchFold(group.id, {
-          topicHref: null,
-          subjectHref: null,
-          clusterKey: null,
-          sectionKey: null,
-        });
-      }
-      return true;
     }
     if (!searching && trackOpen && hasSidebarChildren) {
       event.preventDefault();

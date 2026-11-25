@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { NAV_NEST_STEP_2 } from "../constants/sidebarLayout";
 import {
+  navAncestorPathHighlightForTrack,
   navHighlightOffRouteDrill,
   navPathHighlighted,
   navPathHighlightedForTrack,
@@ -30,6 +31,29 @@ test("navPathHighlighted includes onPath only when stackPathPins", () => {
 test("navTrackSubjectPathHighlight includes onPath on mobile", () => {
   assert.equal(navTrackSubjectPathHighlight(false, true, false), true);
   assert.equal(navTrackSubjectPathHighlight(false, false, false), false);
+});
+
+test("navAncestorPathHighlightForTrack counts onPath on mobile for route track", () => {
+  assert.equal(
+    navAncestorPathHighlightForTrack(
+      "backend",
+      "backend",
+      false,
+      true,
+      false,
+    ),
+    true,
+  );
+  assert.equal(
+    navAncestorPathHighlightForTrack(
+      "backend",
+      "frontend",
+      false,
+      true,
+      false,
+    ),
+    false,
+  );
 });
 
 test("navTrackPathChromeActive only when open on route or section-home drill", () => {

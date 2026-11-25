@@ -15,11 +15,11 @@ import {
 } from "@/lib/nav/bookmarks";
 import type { ChromeCopy } from "@/lib/nav";
 import { hashIdFrom } from "@/lib/nav/navUtils";
+import { followHandbookHref, queueHandbookHref } from "../utils/hash";
 import {
-  followHandbookHref,
-  queueHandbookHref,
-  setHashOnPath,
-} from "../utils/hash";
+  navigateHandbookConcept,
+  parseConceptLeafHref,
+} from "../utils/navigateHandbookConcept";
 import { setBookmarkNavMode } from "../utils/bookmarkNavMode";
 import { useHandbookLocation } from "../hooks/useHandbookLocation";
 import { NAV_TRACK_CHILD_LIST_CLASS } from "../constants/sidebarLayout";
@@ -129,15 +129,23 @@ export function BookmarksPanel({
                         const { pathname: targetPath, hash } = splitHref(
                           bookmark.href,
                         );
-                        if (targetPath === pathname) {
-                          if (hash) {
-                            setHashOnPath(pathname, hashIdFrom(hash));
-                          }
-                          setBookmarkNavMode(true);
-                          onNavigate?.();
+                        const conceptId = hash ? hashIdFrom(hash) : "";
+                        setBookmarkNavMode(true);
+                        if (conceptId) {
+                          const leaf = parseConceptLeafHref(bookmark.href);
+                          navigateHandbookConcept({
+                            topicHref: leaf.topicHref,
+                            conceptId,
+                            committedPathname: pathname,
+                            href: bookmark.href,
+                            goToPath: (path) => {
+                              router.push(path, { scroll: false });
+                            },
+                            onNavigate,
+                            followOptions: { bookmarkNav: true },
+                          });
                           return;
                         }
-                        setBookmarkNavMode(true);
                         queueHandbookHref(bookmark.href);
                         followHandbookHref(
                           bookmark.href,

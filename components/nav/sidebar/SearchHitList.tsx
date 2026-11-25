@@ -7,11 +7,13 @@ import { chromeFor } from "@/lib/i18n/chrome";
 import { localeFromPathname } from "@/lib/i18n/paths";
 import { CHROME, splitHref, type SearchSidebarHit } from "@/lib/nav";
 import {
-  closeNavSoon,
   NAV_ROW_GAP,
   useSidebarChrome,
 } from "../context/sidebarContext";
-import { followHandbookHref, setHashOnPath } from "../utils/hash";
+import {
+  navigateHandbookConcept,
+  parseConceptLeafHref,
+} from "../utils/navigateHandbookConcept";
 
 export const SearchHitList = memo(function SearchHitList({
   hits,
@@ -39,8 +41,6 @@ export const SearchHitList = memo(function SearchHitList({
       {hits.map((hit, index) => {
         const { pathname: hitPath, hash } = splitHref(hit.href);
         const isFirstHit = first?.pathname === hitPath && first.hash === hash;
-        const onCurrentTopic = pathname === hit.topicHref;
-
         return (
           <li key={`${hit.href}:${hit.concept.id}`}>
             <Link
@@ -52,13 +52,15 @@ export const SearchHitList = memo(function SearchHitList({
               data-search-in={hit.snippet ? "notes" : undefined}
               onNavigate={(event) => {
                 event.preventDefault();
-                if (onCurrentTopic) {
-                  setHashOnPath(pathname, hit.concept.id);
-                  closeNavSoon(onNavigate);
-                  return;
-                }
-                closeNavSoon(onNavigate);
-                followHandbookHref(hit.href, pathname, goToPath);
+                const leaf = parseConceptLeafHref(hit.href);
+                navigateHandbookConcept({
+                  topicHref: hit.topicHref || leaf.topicHref,
+                  conceptId: hit.concept.id,
+                  committedPathname: pathname,
+                  href: hit.href,
+                  goToPath,
+                  onNavigate,
+                });
               }}
               className={`block w-full cursor-pointer rounded-md bg-yellow-50 px-2 py-1.5 text-sm font-medium text-zinc-900 ring-1 ring-yellow-200 dark:bg-yellow-950 dark:text-zinc-50 dark:ring-yellow-800 pl-4${
                 index === 0 ? ` ${NAV_ROW_GAP}` : " mt-0.5"

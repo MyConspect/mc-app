@@ -6,6 +6,8 @@ import {
   isRedundantSubjectTopicNavRow,
   isRedundantTopicConceptTitle,
   sameTitle,
+  shouldOpenInterviewTopicFold,
+  shouldShowInterviewTopicSidebarConcepts,
   shouldShowTopicConceptFold,
   topicLeafIndexHeading,
 } from "./navUtils";
@@ -21,6 +23,27 @@ test("areRedundantNavTitles matches exact and singular/plural pairs", () => {
 test("isRedundantSubjectTopicNavRow uses redundant nav title rule", () => {
   assert.equal(isRedundantSubjectTopicNavRow("Databases", "Database"), true);
   assert.equal(isRedundantSubjectTopicNavRow("Workflow", "Workflow"), true);
+});
+
+test("interviews section keeps question bullets when hideSidebarConcepts", () => {
+  const vue = getTopic("frontend", "vue-interview");
+  assert.ok(vue);
+  assert.equal(
+    shouldShowInterviewTopicSidebarConcepts("interviews", vue, 3),
+    true,
+  );
+  assert.equal(
+    shouldShowInterviewTopicSidebarConcepts("conspect", vue, 3),
+    false,
+  );
+  assert.equal(
+    shouldOpenInterviewTopicFold("interviews", vue, true, false),
+    true,
+  );
+  assert.equal(
+    shouldOpenInterviewTopicFold("interviews", vue, false, false),
+    false,
+  );
 });
 
 test("sidebar fold requires visible children, not outline title twins alone", () => {

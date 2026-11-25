@@ -540,14 +540,19 @@ function syncOpenState({
       });
     }
   } else if (activeConceptId && activeConceptId !== snapshot.activeConceptId) {
-    if (activeTrackScope && location.topicHref) {
+    if (activeTrackScope) {
+      setOpenTrackIds((previous) => {
+        if (previous.has(activeTrackScope)) {
+          return previous;
+        }
+        return new Set([activeTrackScope]);
+      });
       setTrackFolds((previous) => {
         const next = new Map(previous);
-        const current = next.get(activeTrackScope) ?? EMPTY_FOLD;
-        next.set(activeTrackScope, {
-          ...current,
-          topicHref: location.topicHref,
-        });
+        next.set(
+          activeTrackScope,
+          foldFromSync(location, previous.get(activeTrackScope), false),
+        );
         return next;
       });
     }

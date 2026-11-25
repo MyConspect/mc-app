@@ -7,7 +7,7 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
-  useState,
+  useSyncExternalStore,
 } from "react";
 import { usePathname } from "next/navigation";
 import { useHandbookContentLinks } from "@/components/nav/hooks/useHandbookContentLinks";
@@ -19,12 +19,20 @@ import {
   useSearchQueryEdited,
 } from "@/components/search";
 import { highlightQueryInHtml } from "@/components/search/utils/highlightQueryInHtml";
-import { setHashIfChanged, setHashOnPath } from "@/components/nav/utils/hash";
+import {
+  consumeSuppressNextConceptHash,
+  getPendingHash,
+  getServerPendingHash,
+  setHashIfChanged,
+  setHashOnPath,
+  subscribePendingPath,
+} from "@/components/nav/utils/hash";
 import { nextConceptHash, resolveConceptId } from "@/lib/nav/conceptHash";
 import {
   conceptGroupSectionDomId,
   findConceptGroupBySectionId,
 } from "@/lib/nav/conceptGroupSection";
+import { resolveHandbookConceptId } from "@/lib/nav/resolveHandbookConcept";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { resetHandbookReadingScroll } from "@/components/topic/utils/conceptScroll";
 import { CopyConceptLinkButton } from "./CopyConceptLinkButton";
@@ -56,7 +64,6 @@ import {
 import { ConceptGroupIndexSection } from "./ConceptGroupIndexSection";
 import {
   CONCEPT_INDEX_DOT_INTERACTIVE,
-  CONCEPT_INDEX_LINK,
   CONCEPT_INDEX_HEADING_TO_LIST,
   CONCEPT_INDEX_ROW,
   CONCEPT_INDEX_CLUSTER_SECTION,
@@ -64,6 +71,7 @@ import {
   HANDBOOK_INDEX_FOCUS_SECTION,
   HANDBOOK_INDEX_PANE_LIST_SLOT,
   HANDBOOK_INDEX_PANE_SECTION,
+  conceptIndexLinkClass,
 } from "./conceptIndexStyles";
 import { conceptIndexLayoutModeForEntries } from "@/lib/catalog/conceptIndexPaneLayoutMode";
 import { TopicPageTitle } from "./TopicPageTitle";
@@ -100,19 +108,30 @@ export function ConceptList({
     () => chromeFor(localeFromPathname(pathname)),
     [pathname],
   );
-  const { activeConceptId, location } = useHandbookLocation();
-  const [bootConceptId, setBootConceptId] = useState("");
+  const { activeConceptId, location, hash } = useHandbookLocation();
+  const committedLocationHash =
+    hashIdFrom(location.hash).length > 0 ? location.hash : hash;
+  const pendingHash = useSyncExternalStore(
+    subscribePendingPath,
+    getPendingHash,
+    getServerPendingHash,
+  );
   const flat = concepts.length === 1;
-  const resolvedConceptId = useMemo(() => {
-    const raw = activeConceptId || bootConceptId;
-    return resolveConceptId(raw, concepts) || raw;
-  }, [activeConceptId, bootConceptId, concepts]);
+  const resolvedConceptId = useMemo(
+    () =>
+      resolveHandbookConceptId(concepts, {
+        pendingHash,
+        locationHash: committedLocationHash,
+        activeConceptId,
+      }),
+    [activeConceptId, committedLocationHash, concepts, pendingHash],
+  );
   const activeConcept = useMemo(
     () => concepts.find((concept) => concept.id === resolvedConceptId) ?? null,
     [resolvedConceptId, concepts],
   );
   const accordionIndex = interviewAccordionIndex && !flat;
-  const locationHashId = hashIdFrom(location.hash);
+  const locationHashId = hashIdFrom(committedLocationHash);
   useLayoutEffect(() => {
     function syncConceptHashFromUrl() {
       const raw = hashIdFrom(window.location.hash);
@@ -120,11 +139,9 @@ export function ConceptList({
       const root = document.documentElement;
       if (id && concepts.some((concept) => concept.id === id)) {
         root.dataset.conceptHash = id;
-        setBootConceptId(id);
         return;
       }
       delete root.dataset.conceptHash;
-      setBootConceptId("");
     }
     syncConceptHashFromUrl();
     window.addEventListener("hashchange", syncConceptHashFromUrl);
@@ -148,11 +165,11 @@ export function ConceptList({
     [topicTitle],
   );
   const activeInterviewGroup = useMemo(() => {
-    if (!interviewAccordionDrilldown || activeConcept) {
+    if (!interviewAccordionDrilldown || resolvedConceptId) {
       return null;
     }
     return findConceptGroupBySectionId(groups, locationHashId);
-  }, [activeConcept, groups, interviewAccordionDrilldown, locationHashId]);
+  }, [groups, interviewAccordionDrilldown, locationHashId, resolvedConceptId]);
   const activeTheoryGroup = useMemo(() => {
     if (
       activeConcept ||
@@ -207,6 +224,9 @@ export function ConceptList({
   const arrivalRef = useRef<{ path: string; hash: string } | null>(null);
 
   useEffect(() => {
+    if (consumeSuppressNextConceptHash()) {
+      return;
+    }
     if (!arrivalRef.current || arrivalRef.current.path !== pathname) {
       arrivalRef.current = {
         path: pathname,
@@ -260,6 +280,7 @@ export function ConceptList({
   if (activeConcept) {
     return (
       <ConceptDetail
+        key={activeConcept.id}
         concept={activeConcept}
         notesQuery={notesQuery}
         chrome={chrome}
@@ -326,22 +347,23 @@ export function ConceptList({
             if (!label) {
               return null;
             }
+            const sectionId = conceptGroupSectionDomId(label);
             const rowCount = conceptsForIndexSection(group).length;
+            const sectionActive =
+              locationHashId === sectionId ||
+              (activeConceptId === sectionId && !resolvedConceptId);
             return (
               <li
                 key={group.key}
-                id={conceptGroupSectionDomId(label)}
+                id={sectionId}
                 className={CONCEPT_INDEX_ROW}
               >
                 <button
                   type="button"
-                  className={CONCEPT_INDEX_LINK}
+                  className={conceptIndexLinkClass(sectionActive)}
+                  aria-current={sectionActive ? "location" : undefined}
                   onClick={() =>
-                    setHashOnPath(
-                      pathname,
-                      conceptGroupSectionDomId(label),
-                      false,
-                    )
+                    setHashOnPath(pathname, sectionId, false)
                   }
                 >
                   <span

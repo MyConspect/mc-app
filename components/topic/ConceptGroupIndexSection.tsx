@@ -18,10 +18,11 @@ import {
   CONCEPT_INDEX_CLUSTER_SECTION,
   CONCEPT_INDEX_HEADING_TO_LIST,
   CONCEPT_INDEX_DOT_INTERACTIVE,
-  CONCEPT_INDEX_LINK,
   CONCEPT_INDEX_ROW,
+  conceptIndexLinkClass,
 } from "./conceptIndexStyles";
 import { HighlightedText } from "@/components/search";
+import { useHandbookLocation } from "@/components/nav/hooks/useHandbookLocation";
 import { setHashOnPath } from "@/components/nav/utils/hash";
 import { conceptGroupSectionDomId } from "@/lib/nav/conceptGroupSection";
 
@@ -42,6 +43,7 @@ export function ConceptIndexList({
   const setPaneMeasureRef = useCallback((element: HTMLElement | null) => {
     setMeasureEl(element);
   }, []);
+  const { activeConceptId } = useHandbookLocation();
   const paneHeightPx = useConceptIndexPaneHeight(measureEl);
   const widthCapacity = useConceptIndexColumnCount(measureEl);
   const listClass =
@@ -60,6 +62,7 @@ export function ConceptIndexList({
     >
       <ul className={listClass} style={listStyle}>
         {concepts.map((concept) => {
+          const conceptActive = activeConceptId === concept.id;
           const href = conceptHrefFor?.(concept);
           const label = (
             <>
@@ -75,13 +78,18 @@ export function ConceptIndexList({
           return (
             <li key={concept.id} id={concept.id} className={CONCEPT_INDEX_ROW}>
               {href ? (
-                <Link href={href} className={CONCEPT_INDEX_LINK}>
+                <Link
+                  href={href}
+                  className={conceptIndexLinkClass(conceptActive)}
+                  aria-current={conceptActive ? "location" : undefined}
+                >
                   {label}
                 </Link>
               ) : (
                 <button
                   type="button"
-                  className={CONCEPT_INDEX_LINK}
+                  className={conceptIndexLinkClass(conceptActive)}
+                  aria-current={conceptActive ? "location" : undefined}
                   onClick={() => setHashOnPath(pathname, concept.id, false)}
                 >
                   {label}

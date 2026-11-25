@@ -4,6 +4,8 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { TrackId } from "@/lib/catalog";
 import type { NavRootSectionId, SearchMode } from "@/lib/nav";
 import { isHandbookMobileViewport } from "../hooks/useMobileNav";
+import { hashIdFrom } from "@/lib/nav/navUtils";
+import { getPendingHash } from "../utils/hash";
 import type { NavLocation } from "../utils/location";
 
 export type SearchHit = {
@@ -30,6 +32,8 @@ export type SidebarHighlightValue = {
   routeTrackId: TrackId | null;
   /** Track id whose fold is open in the active tab (header drill). */
   focusedOpenTrackId: TrackId | null;
+  /** Bumps when folds, path, or hash change — keeps memoized rows in sync on mobile. */
+  syncRevision: string;
 };
 
 /** Rows under another open track must not inherit path yellow (browse-only drill). */
@@ -64,6 +68,23 @@ export function navTrackSubjectPathHighlightForTrack(
     return false;
   }
   return navTrackSubjectPathHighlight(highlighted, onPath, stackPathPins);
+}
+
+/** Interview topic + section group + catalog section — mobile counts `onPath` like subject. */
+export function navAncestorPathHighlightForTrack(
+  trackId: TrackId,
+  routeTrackId: TrackId | null,
+  highlighted: boolean,
+  onPath: boolean,
+  stackPathPins: boolean,
+): boolean {
+  return navTrackSubjectPathHighlightForTrack(
+    trackId,
+    routeTrackId,
+    highlighted,
+    onPath,
+    stackPathPins,
+  );
 }
 
 /** Pin this row in the sticky path stack (ancestors only on desktop). */
@@ -168,10 +189,12 @@ export type SidebarFoldValue = {
     trackId: TrackId,
     patch: Partial<NavLocation>,
   ) => void;
+  syncRevision: string;
 };
 
 export type SidebarActiveValue = {
   activeConceptId: string;
+  syncRevision: string;
 };
 
 export type SidebarTrackOpenValue = {
@@ -330,15 +353,72 @@ export function useSidebarActive() {
  * Dismiss the mobile drawer after navigation (via `onNavigate`).
  * @param keepDrawerOpenOnMobile On phones, skip dismiss while drilling the tree
  *   (track/subject hub). Leaf navigations must pass `false` so content is visible.
+ * @param afterMainPaint On mobile leaf hops, wait for a painted concept swap before
+ *   revealing `#handbook-main` (avoids one frame of stale detail).
  */
 export function closeNavSoon(
+  onNavigate?: () => void,
+  keepDrawerOpenOnMobile = false,
+  afterMainPaint = false,
+) {
+  if (keepDrawerOpenOnMobile && isHandbookMobileViewport()) {
+    return;
+  }
+  if (!onNavigate) {
+    return;
+  }
+  const run = () => onNavigate();
+  if (afterMainPaint && isHandbookMobileViewport()) {
+    queueMicrotask(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(run);
+      });
+    });
+    return;
+  }
+  queueMicrotask(run);
+}
+
+const LEAF_NAV_CLOSE_MAX_FRAMES = 10;
+
+/** Close the mobile drawer only after the target concept id is visible to main content. */
+export function closeNavWhenLeafConcept(
+  conceptId: string,
   onNavigate?: () => void,
   keepDrawerOpenOnMobile = false,
 ) {
   if (keepDrawerOpenOnMobile && isHandbookMobileViewport()) {
     return;
   }
-  queueMicrotask(() => onNavigate?.());
+  if (!onNavigate) {
+    return;
+  }
+  if (!isHandbookMobileViewport()) {
+    queueMicrotask(() => onNavigate());
+    return;
+  }
+
+  const conceptIsLive = () => {
+    const domId = document.documentElement.dataset.conceptHash ?? "";
+    const hashId = hashIdFrom(window.location.hash);
+    const pendingId = hashIdFrom(getPendingHash());
+    return (
+      conceptId.length > 0 &&
+      (domId === conceptId || hashId === conceptId || pendingId === conceptId)
+    );
+  };
+
+  let frames = 0;
+  const tryClose = () => {
+    frames += 1;
+    if (conceptIsLive() || frames >= LEAF_NAV_CLOSE_MAX_FRAMES) {
+      onNavigate();
+      return;
+    }
+    requestAnimationFrame(tryClose);
+  };
+
+  queueMicrotask(() => requestAnimationFrame(tryClose));
 }
 
 /** Shared vertical gap between nested sidebar path rows. */

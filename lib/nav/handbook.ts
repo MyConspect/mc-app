@@ -256,12 +256,26 @@ function subjectNavEntry(
       .map((cluster) => {
         const subjectPath = localizeHref(locale, subjectHref(subject));
         const topics = navTopicsForCluster(subject, cluster.id, locale);
-        const catalogTopics = topicsForCluster(subject, cluster.id);
-        let nestedClusters: NavCluster[] | undefined;
-        const catalogTopic = catalogTopics[0];
         const clusterDefinition = subject.clusters.find(
           (item) => item.id === cluster.id,
         );
+        if (
+          clusterDefinition &&
+          topics.some((topic) => (topic.nestedTopics?.length ?? 0) > 0)
+        ) {
+          return {
+            id: cluster.id,
+            title: cluster.title,
+            href: localizeHref(
+              locale,
+              clusterTargetHref(subject, clusterDefinition),
+            ),
+            topics,
+          };
+        }
+        const catalogTopics = topicsForCluster(subject, cluster.id);
+        let nestedClusters: NavCluster[] | undefined;
+        const catalogTopic = catalogTopics[0];
         const titleTwinDedicatedTopic =
           catalogTopics.length === 1 &&
           topics.length === 1 &&
@@ -461,6 +475,60 @@ function hoistedTopicTitle(
   return subject.title;
 }
 
+function interviewNavTopicsInCluster(
+  trackId: TrackId,
+  subject: NavSubject,
+  cluster: NavCluster,
+  locale: Locale,
+): NavTopic[] {
+  return cluster.topics.map((topic) => {
+    const canonical = interviewNavTopicFromCatalog(trackId, topic, locale);
+    return {
+      ...canonical,
+      title: hoistedTopicTitle(
+        trackId,
+        subject,
+        cluster,
+        canonical,
+        locale,
+      ),
+    };
+  });
+}
+
+function interviewQuestionClustersInList(
+  trackId: TrackId,
+  subject: NavSubject,
+  clusters: readonly NavCluster[],
+  locale: Locale,
+  includeTasks: boolean,
+): NavCluster[] {
+  const out: NavCluster[] = [];
+  for (const cluster of clusters) {
+    if (!isQuestionCluster(cluster.id)) {
+      continue;
+    }
+    const isTasks =
+      cluster.id === "tasks" || cluster.id.endsWith("-tasks");
+    if (includeTasks !== isTasks) {
+      continue;
+    }
+    const topics = interviewNavTopicsInCluster(trackId, subject, cluster, locale);
+    if (topics.length === 0) {
+      continue;
+    }
+    out.push({
+      ...cluster,
+      href:
+        topics.length === 1
+          ? topics[0]!.href
+          : cluster.href,
+      topics,
+    });
+  }
+  return out;
+}
+
 function takeQuestionClusters(
   trackId: TrackId,
   subject: NavSubject,
@@ -480,19 +548,12 @@ function takeQuestionClusters(
         kept.push(cluster);
         continue;
       }
-      const topics = cluster.topics.map((topic) => {
-        const canonical = interviewNavTopicFromCatalog(trackId, topic, locale);
-        return {
-          ...canonical,
-          title: hoistedTopicTitle(
-            trackId,
-            subject,
-            cluster,
-            canonical,
-            locale,
-          ),
-        };
-      });
+      const topics = interviewNavTopicsInCluster(
+        trackId,
+        subject,
+        cluster,
+        locale,
+      );
       if (cluster.id === "tasks" || cluster.id.endsWith("-tasks")) {
         tasks.push(...topics);
       } else {
@@ -582,33 +643,228 @@ function stripQuestionEntries(
   return next;
 }
 
-function interviewOnlyEntries(
+function clusterTitleFromCatalog(
+  trackId: TrackId,
+  subjectSlug: string,
+  clusterId: string,
+  locale: Locale,
+): string {
+  const subject = getSubject(trackId, subjectSlug);
+  const cluster = subject?.clusters.find((item) => item.id === clusterId);
+  return cluster ? catalogBlurb(locale, cluster.title) : clusterId;
+}
+
+function mergeInterviewFlatTopicIntoSubject(
+  trackId: TrackId,
+  subject: NavSubject,
+  topic: NavTopic,
+  locale: Locale,
+): NavSubject {
+  const catalog = getTopic(trackId, topic.slug);
+  const clusterId = catalog?.grouping?.cluster;
+  if (!catalog || !clusterId) {
+    return subject;
+  }
+  const canonical = interviewNavTopicFromCatalog(trackId, topic, locale);
+  const shell: NavCluster = {
+    id: clusterId,
+    title: clusterTitleFromCatalog(trackId, subject.slug, clusterId, locale),
+    href: canonical.href,
+    topics: [],
+  };
+  const navTopic = {
+    ...canonical,
+    title: hoistedTopicTitle(trackId, subject, shell, canonical, locale),
+  };
+
+  const upsertCluster = (clusters: readonly NavCluster[]): NavCluster[] => {
+    const idx = clusters.findIndex((item) => item.id === clusterId);
+    if (idx >= 0) {
+      const existing = clusters[idx]!;
+      const topics = existing.topics.some((item) => item.slug === navTopic.slug)
+        ? existing.topics
+        : [...existing.topics, navTopic];
+      return clusters.map((item, index) =>
+        index === idx ? { ...existing, topics } : item,
+      );
+    }
+    return [
+      ...clusters,
+      {
+        id: clusterId,
+        title: shell.title,
+        href: navTopic.href,
+        topics: [navTopic],
+      },
+    ];
+  };
+
+  return {
+    ...subject,
+    clusters: upsertCluster(subject.clusters),
+    sections: subject.sections?.map((section) => ({
+      ...section,
+      clusters: upsertCluster(section.clusters),
+    })),
+    clustersAfterSections: subject.clustersAfterSections
+      ? upsertCluster(subject.clustersAfterSections)
+      : undefined,
+  };
+}
+
+/** Sidebar rows only mount `clusters` and section clusters, not `clustersAfterSections`. */
+function promoteInterviewClustersForSidebar(subject: NavSubject): NavSubject {
+  const after = subject.clustersAfterSections ?? [];
+  if (after.length === 0) {
+    return subject;
+  }
+  return {
+    ...subject,
+    clusters: [...subject.clusters, ...after],
+    clustersAfterSections: undefined,
+  };
+}
+
+function buildInterviewSubject(
+  trackId: TrackId,
+  subject: NavSubject,
+  locale: Locale,
+): NavSubject | null {
+  const clusters = interviewQuestionClustersInList(
+    trackId,
+    subject,
+    subject.clusters,
+    locale,
+    false,
+  );
+  const sections = subject.sections
+    ?.map((section) => ({
+      ...section,
+      clusters: interviewQuestionClustersInList(
+        trackId,
+        subject,
+        section.clusters,
+        locale,
+        false,
+      ),
+    }))
+    .filter((section) => section.clusters.length > 0);
+  const after = subject.clustersAfterSections
+    ? interviewQuestionClustersInList(
+        trackId,
+        subject,
+        subject.clustersAfterSections,
+        locale,
+        false,
+      )
+    : undefined;
+  const built = promoteInterviewClustersForSidebar({
+    ...subject,
+    clusters,
+    sections: sections?.length ? sections : undefined,
+    clustersAfterSections: after?.length ? after : undefined,
+  });
+  if (!subjectHasNavContent(built)) {
+    return null;
+  }
+  return built;
+}
+
+function collectInterviewTaskTopics(
+  trackId: TrackId,
+  subject: NavSubject,
+  locale: Locale,
+): NavTopic[] {
+  const tasks: NavTopic[] = [];
+  const addFrom = (list: readonly NavCluster[]) => {
+    for (const cluster of interviewQuestionClustersInList(
+      trackId,
+      subject,
+      list,
+      locale,
+      true,
+    )) {
+      tasks.push(...cluster.topics);
+    }
+  };
+  addFrom(subject.clusters);
+  if (subject.sections) {
+    for (const section of subject.sections) {
+      addFrom(section.clusters);
+    }
+  }
+  if (subject.clustersAfterSections) {
+    addFrom(subject.clustersAfterSections);
+  }
+  return tasks;
+}
+
+function interviewSubjectEntries(
   entries: readonly NavEntry[],
   trackId: TrackId,
   locale: Locale,
   localizedTrackHref: string,
 ): readonly NavEntry[] {
-  const interview: NavTopic[] = [];
+  const subjects = new Map<string, NavSubject>();
   const tasks: NavTopic[] = [];
   for (const entry of entries) {
-    if (entry.kind === "topic") {
-      const catalog = getTopic(trackId, entry.topic.slug);
-      if (catalog && isInterviewSectionTopic(catalog)) {
-        interview.push(entry.topic);
-      }
-      continue;
-    }
     if (entry.kind !== "subject") {
       continue;
     }
-    const pulled = takeQuestionClusters(trackId, entry.subject, locale);
-    interview.push(...pulled.interview);
-    tasks.push(...pulled.tasks);
+    const built = buildInterviewSubject(trackId, entry.subject, locale);
+    if (built) {
+      subjects.set(entry.subject.slug, built);
+    }
+    tasks.push(...collectInterviewTaskTopics(trackId, entry.subject, locale));
   }
-  const next: NavEntry[] = interview.map((topic) => ({
-    kind: "topic" as const,
-    topic,
-  }));
+  for (const entry of entries) {
+    if (entry.kind !== "topic") {
+      continue;
+    }
+    const catalog = getTopic(trackId, entry.topic.slug);
+    if (!catalog || !isInterviewSectionTopic(catalog)) {
+      continue;
+    }
+    const subjectSlug = catalog.grouping?.subject;
+    if (!subjectSlug) {
+      continue;
+    }
+    const rawSubject = entries.find(
+      (item) =>
+        item.kind === "subject" && item.subject.slug === subjectSlug,
+    );
+    if (rawSubject?.kind !== "subject") {
+      continue;
+    }
+    const base =
+      subjects.get(subjectSlug) ??
+      buildInterviewSubject(trackId, rawSubject.subject, locale) ?? {
+        slug: rawSubject.subject.slug,
+        href: rawSubject.subject.href,
+        title: rawSubject.subject.title,
+        blurb: rawSubject.subject.blurb,
+        clusters: [],
+        sections: rawSubject.subject.sections?.map((section) => ({
+          ...section,
+          clusters: [],
+        })),
+        clustersAfterSections: [],
+      };
+    subjects.set(
+      subjectSlug,
+      promoteInterviewClustersForSidebar(
+        mergeInterviewFlatTopicIntoSubject(
+          trackId,
+          base,
+          entry.topic,
+          locale,
+        ),
+      ),
+    );
+  }
+  const next: NavEntry[] = [...subjects.values()]
+    .filter((subject) => subjectHasNavContent(subject))
+    .map((subject) => ({ kind: "subject" as const, subject }));
   const tasksEntry = questionClusterEntry(
     localizedTrackHref,
     "tasks",
@@ -619,6 +875,41 @@ function interviewOnlyEntries(
     next.push(tasksEntry);
   }
   return next;
+}
+
+function interviewClustersAtTrackLevel(
+  trackId: TrackId,
+  subject: NavSubject,
+  locale: Locale,
+  trackHref: string,
+): NavEntry[] {
+  const built = buildInterviewSubject(trackId, subject, locale);
+  const tasks = collectInterviewTaskTopics(trackId, subject, locale);
+  const entries: NavEntry[] = [];
+  if (built) {
+    const promote = [
+      ...built.clusters,
+      ...(built.sections?.flatMap((section) => section.clusters) ?? []),
+      ...(built.clustersAfterSections ?? []),
+    ];
+    for (const cluster of promote) {
+      entries.push({
+        kind: "cluster",
+        subjectHref: built.href,
+        cluster,
+      });
+    }
+  }
+  const tasksEntry = questionClusterEntry(
+    trackHref,
+    "tasks",
+    catalogBlurb(locale, "Tasks"),
+    tasks,
+  );
+  if (tasksEntry) {
+    entries.push(tasksEntry);
+  }
+  return entries;
 }
 
 function interviewsNavGroup(
@@ -710,10 +1001,14 @@ function buildTrackNavGroup(
     };
   }
 
-  if (section === "interviews" && isSingleSubjectTrack) {
+  if (
+    section === "interviews" &&
+    isSingleSubjectTrack &&
+    only?.kind === "subject"
+  ) {
     return interviewsNavGroup(
       track,
-      interviewOnlyEntries(rawEntries, track.id, locale, href),
+      interviewClustersAtTrackLevel(track.id, only.subject, locale, href),
       locale,
       href,
     );
@@ -722,7 +1017,7 @@ function buildTrackNavGroup(
   const entries =
     section === "conspect"
       ? stripQuestionEntries(rawEntries, track.id, locale)
-      : interviewOnlyEntries(rawEntries, track.id, locale, href);
+      : interviewSubjectEntries(rawEntries, track.id, locale, href);
 
   if (section === "interviews") {
     return interviewsNavGroup(track, entries, locale, href);

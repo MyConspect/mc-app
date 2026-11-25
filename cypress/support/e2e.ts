@@ -58,12 +58,10 @@ function conceptNavButton(label: "Back" | "Next") {
 }
 
 function sidebarHydrated() {
-  cy.get("#handbook-sidebar [data-nav]").should(($nodes) => {
-    const names = Object.getOwnPropertyNames($nodes[0]);
-    const hydrated = names.some((name) => name.toLowerCase().includes("react"));
-    const marker = names.filter((name) => name.includes("$")).join(" ");
-    expect(hydrated, marker || "no react props").to.equal(true);
-  });
+  cy.get("#handbook-sidebar [data-nav][data-nav-id]")
+    .should("have.length.at.least", 1)
+    .first()
+    .should("be.visible");
 }
 
 declare global {

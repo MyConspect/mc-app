@@ -15,32 +15,28 @@ export type ConspectSidebarSchema = {
   readonly hubSectionConcepts: false;
 };
 
-/** Interviews: track → topic tree (and optional Tasks cluster). */
-export type InterviewsSidebarSchema = {
-  readonly mode: "topic-tree";
+export type InterviewsSidebarSchema = ConspectSidebarSchema;
+
+export type NavSidebarSchema = ConspectSidebarSchema;
+
+const HANDBOOK_SIDEBAR_SCHEMA: ConspectSidebarSchema = {
+  mode: "two-level",
+  clusterLeaves: true,
+  trackHeader: true,
+  hubSectionConcepts: false,
 };
 
-export type NavSidebarSchema = ConspectSidebarSchema | InterviewsSidebarSchema;
-
 export function navSidebarSchema(
-  rootSectionId: NavRootSectionId,
+  _rootSectionId: NavRootSectionId,
 ): NavSidebarSchema {
-  if (rootSectionId === "conspect") {
-    return {
-      mode: "two-level",
-      clusterLeaves: true,
-      trackHeader: true,
-      hubSectionConcepts: false,
-    };
-  }
-  return { mode: "topic-tree" };
+  return HANDBOOK_SIDEBAR_SCHEMA;
 }
 
-/** Conspect subject clusters render as sidebar leaves (hash or hub), not topic folds. */
+/** Subject-hub cluster leaves (hash or hub) — same tree policy for Conspect and Interviews. */
 export function conspectClusterLeavesInSidebar(
-  rootSectionId: NavRootSectionId,
+  _rootSectionId: NavRootSectionId,
 ): boolean {
-  return rootSectionId === "conspect";
+  return HANDBOOK_SIDEBAR_SCHEMA.clusterLeaves;
 }
 
 /**

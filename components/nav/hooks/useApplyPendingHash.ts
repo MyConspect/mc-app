@@ -2,7 +2,11 @@
 
 import { useLayoutEffect } from "react";
 import { usePathname } from "next/navigation";
-import { dispatchHashChange, takePendingHashForPath } from "../utils/hash";
+import {
+  dispatchHashChange,
+  getHash,
+  takePendingHashForPath,
+} from "../utils/hash";
 
 export function useApplyPendingHash() {
   const pathname = usePathname() ?? "/";
@@ -10,6 +14,9 @@ export function useApplyPendingHash() {
   useLayoutEffect(() => {
     const hash = takePendingHashForPath(pathname);
     if (hash === null) {
+      if (typeof window !== "undefined" && window.location.hash !== getHash()) {
+        dispatchHashChange(false);
+      }
       return;
     }
     if (hash === "") {
