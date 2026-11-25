@@ -261,7 +261,7 @@ export function HandbookShell({
                     sections={enrichedSections}
                     chrome={chrome}
                     onNavigate={selectNavResult}
-                    className="shrink-0 border-b border-zinc-200 pb-3 md:hidden dark:border-zinc-800"
+                    className="shrink-0 border-b border-zinc-200 md:hidden dark:border-zinc-800"
                   />
                   <div
                     id={HANDBOOK_NAV_ASIDE_ID}

@@ -36,8 +36,8 @@ export function subjectHubClusterFoldClick(
   clusterDomId: string,
   hashFragment: string,
   sameHash: boolean,
-  active: boolean,
-  options: SubjectHubClusterFoldOptions = {},
+  _active: boolean,
+  _options: SubjectHubClusterFoldOptions = {},
 ): SidebarClusterFoldClick {
   /** Markdown `##` groups on a subject hub: sidebar fold only — no hub hash jump. */
   if (isConceptGroupSectionId(clusterDomId)) {
@@ -54,17 +54,11 @@ export function subjectHubClusterFoldClick(
     foldKey,
     clusterDomId,
   );
-  const hubSection =
-    options.hubSectionConceptsMode === true &&
-    options.sectionConceptsOpen === true &&
-    sameHash;
-  const closing = hubSection || (foldOpen && !options.hubSectionConceptsMode);
+  const closing = foldOpen;
 
   let replaceHashWith: string | null = null;
   if (closing) {
-    if (sameHash || active || options.sectionConceptsOpen === true) {
-      replaceHashWith = "";
-    }
+    replaceHashWith = "";
   } else if (!sameHash) {
     replaceHashWith = hashFragment;
   }
@@ -82,17 +76,14 @@ export function topicPageClusterFoldClick(
   foldKey: string,
   hashFragment: string,
   sameHash: boolean,
-  active: boolean,
+  _active: boolean,
 ): SidebarClusterFoldClick {
   const foldOpen = openClusterKey === foldKey;
-  /** Close on repeat click only when the section hash is focused — not when a child concept is open. */
-  const closing = foldOpen && (sameHash || active);
+  const closing = foldOpen;
 
   let replaceHashWith: string | null = null;
   if (closing) {
-    if (sameHash || active) {
-      replaceHashWith = "";
-    }
+    replaceHashWith = "";
   } else if (!sameHash) {
     replaceHashWith = hashFragment;
   }

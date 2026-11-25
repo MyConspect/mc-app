@@ -75,6 +75,7 @@ import {
   SidebarNavProvider,
   closeNavSoon,
   navPathPinned,
+  navTrackSubjectPathHighlight,
   trackHeaderClass,
   useSidebarChrome,
   useSidebarHighlight,
@@ -455,13 +456,24 @@ const TrackGroup = memo(function TrackGroup({
   const trackActive = isActiveHref(highlightPathname, group.href);
   const onThisTrack = isActiveTrack(highlightPathname, group.href);
   const trackOpen = searching || (hasSidebarChildren && isTrackOpen(group.id));
+  const onSectionHome =
+    rootSectionId === activeRootSectionId &&
+    isSectionHomePathname(highlightPathname || committedPathname);
+  const trackFocusedOnSectionHome =
+    onSectionHome && trackOpen && !searching;
   const onPath =
-    !searching && rootSectionId === activeRootSectionId && onThisTrack;
+    !searching &&
+    rootSectionId === activeRootSectionId &&
+    (onThisTrack || trackFocusedOnSectionHome);
   const pinPath = navPathPinned(onPath, trackActive, stackPathPins);
   const needle = query.trim().toLowerCase();
   const trackHighlighted = searching
     ? needle.length > 0 && matchesQuery(group.title, needle)
-    : onPath;
+    : navTrackSubjectPathHighlight(
+        trackActive || trackFocusedOnSectionHome,
+        onPath,
+        stackPathPins,
+      );
   const headerClass = trackHeaderClass(trackHighlighted);
   const stickyScope = onPath && stackPathPins;
   const searchHits = useMemo(
@@ -484,12 +496,9 @@ const TrackGroup = memo(function TrackGroup({
     />
   );
   const chevron = hasSidebarChildren ? <NavChevron open={trackOpen} /> : null;
-  const onInterviewsHome =
-    rootSectionId === "interviews" &&
-    isSectionHomePathname(highlightPathname || committedPathname);
   const asButton =
     hasSidebarChildren &&
-    (showLeafConcepts ? trackActive : onThisTrack || onInterviewsHome);
+    (showLeafConcepts ? trackActive : onThisTrack || onSectionHome);
   const navigateHref = withHandbookSection(
     rootSectionId === "interviews"
       ? groupNavigateHref(group, rootSectionId)
@@ -497,15 +506,24 @@ const TrackGroup = memo(function TrackGroup({
     rootSectionId,
   );
   const keepDrawerOpenOnTrackNav =
-    rootSectionId === "conspect" && hasSidebarChildren;
+    hasSidebarChildren &&
+    (rootSectionId === "conspect" || rootSectionId === "interviews");
 
   const navigateTrackFromHeader = (event: { preventDefault: () => void }) => {
-    if (onInterviewsHome && hasSidebarChildren) {
+    if (onSectionHome && hasSidebarChildren) {
       event.preventDefault();
       if (!searching) {
+        const wasOpen = trackOpen;
         toggleTrackId(group.id);
+        if (!wasOpen) {
+          patchFold(group.id, {
+            topicHref: null,
+            subjectHref: null,
+            clusterKey: null,
+            sectionKey: null,
+          });
+        }
       }
-      closeNavSoon(onNavigate);
       return true;
     }
     if (!hasSidebarChildren) {
@@ -516,7 +534,23 @@ const TrackGroup = memo(function TrackGroup({
       if (!searching) {
         toggleTrackId(group.id);
       }
-      closeNavSoon(onNavigate);
+      return true;
+    }
+    if (!searching && trackOpen && hasSidebarChildren) {
+      event.preventDefault();
+      toggleTrackId(group.id);
+      patchFold(group.id, {
+        topicHref: null,
+        subjectHref: null,
+        clusterKey: null,
+        sectionKey: null,
+      });
+      const onTrackPath =
+        handbookLogicalPathname(committedPathname) ===
+        handbookLogicalPathname(navigateHref);
+      if (onTrackPath && window.location.hash) {
+        applySameDocumentHref(committedPathname, "", committedPathname);
+      }
       return true;
     }
     const onTrackHub =
@@ -569,9 +603,6 @@ const TrackGroup = memo(function TrackGroup({
             if (!searching) {
               toggleTrackId(group.id);
             }
-            if (rootSectionId === "interviews") {
-              closeNavSoon(onNavigate);
-            }
           }}
           aria-current={isLeafTrack ? undefined : "true"}
           className={headerClass}
@@ -588,7 +619,12 @@ const TrackGroup = memo(function TrackGroup({
           data-nav-path={pinPath ? "true" : undefined}
           onClick={(event) => {
             pinNavForHref(event.currentTarget, committedPathname, navigateHref);
-            navigateTrackFromHeader(event);
+            if (navigateTrackFromHeader(event)) {
+              return;
+            }
+            if (!searching && hasSidebarChildren) {
+              toggleTrackId(group.id);
+            }
           }}
           data-search-hit={
             isLeafTrack && first?.pathname === navigateHref && first.hash === ""

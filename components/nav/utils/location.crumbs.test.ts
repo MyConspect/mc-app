@@ -150,11 +150,12 @@ function trail(pathname: string, hash = "") {
   );
 }
 
-test("Node.js hub does not treat a same-named cluster hash as the current page", () => {
+test("Node.js hub cluster hash includes cluster in breadcrumbs", () => {
   assert.deepEqual(trail("/backend/nodejs", "#http"), [
     "Home",
     "Backend",
     "Node.js",
+    "HTTP",
   ]);
 });
 
@@ -270,11 +271,12 @@ test("subject index repeats group label when overview concept shares the group t
   );
 });
 
-test("Core cluster hash on the hub does not nest under Core", () => {
+test("Core cluster hash on the hub includes cluster in breadcrumbs", () => {
   assert.deepEqual(trail("/backend/nodejs", "#core"), [
     "Home",
     "Backend",
     "Node.js",
+    "Core",
   ]);
 });
 
@@ -963,6 +965,21 @@ test("computer-science Core topic stops breadcrumbs at subject", () => {
       labels,
     ).map((crumb) => crumb.label),
     ["Home", "Computer Science", "Core"],
+  );
+});
+
+test("javascript hub hash browser includes cluster in breadcrumbs", () => {
+  const groups = handbookNavForTrack("en", "frontend");
+  const sections = handbookNavSections("en");
+  assert.deepEqual(
+    crumbsForPath(
+      groups,
+      "/en/conspect/frontend/javascript",
+      "#browser",
+      labels,
+      sections,
+    ).map((crumb) => crumb.label),
+    ["Home", "Frontend", "JavaScript", "Browser"],
   );
 });
 

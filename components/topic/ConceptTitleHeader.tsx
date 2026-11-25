@@ -42,6 +42,9 @@ const DETAIL_TITLE_CLASS =
 const DETAIL_TITLE_ROW =
   "flex w-full flex-wrap items-start justify-between gap-x-2 gap-y-2";
 
+/** Long interview titles: mobile expand control without ResizeObserver on detail. */
+const DETAIL_MOBILE_EXPAND_MIN_CHARS = 52;
+
 const DETAIL_TITLE_ACTIONS =
   "ml-auto flex shrink-0 flex-wrap items-start justify-end gap-x-0.5 gap-y-1 self-start";
 
@@ -212,8 +215,13 @@ function ConceptTitleHeading({
   const titleContent = <HighlightedText text={title} query={query} />;
   const expanded = expandedTitle === title;
   const [truncated, setTruncated] = useState(false);
+  const detailLongTitle =
+    variant === "detail" && title.length >= DETAIL_MOBILE_EXPAND_MIN_CHARS;
 
   useLayoutEffect(() => {
+    if (variant === "detail") {
+      return;
+    }
     const el = titleRef.current;
     if (!el) {
       return;
@@ -227,7 +235,13 @@ function ConceptTitleHeading({
       if (expanded) {
         return;
       }
-      setTruncated(el.scrollHeight > el.clientHeight + 1);
+      const overflow = el.scrollHeight - el.clientHeight;
+      setTruncated((prev) => {
+        if (prev) {
+          return overflow > -2;
+        }
+        return overflow > 4;
+      });
     };
 
     measure();
@@ -238,13 +252,14 @@ function ConceptTitleHeading({
       observer.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [title, expanded]);
+  }, [title, expanded, variant]);
 
   const clampClass = expanded ? "" : "max-sm:line-clamp-2";
   const toggleLabel = expanded
     ? chrome.collapseConceptTitle
     : chrome.expandConceptTitle;
-  const showToggle = truncated || expanded;
+  const showToggle =
+    variant === "detail" ? detailLongTitle || expanded : truncated || expanded;
 
   const inner = onTitleActivate ? (
     <button
@@ -296,6 +311,10 @@ function ConceptTitleHeading({
 const DETAIL_ACTIONS_DOCK =
   "flex min-h-[3.5rem] touch-manipulation items-center justify-center border-t border-zinc-200 bg-white px-4 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-zinc-800 dark:bg-zinc-900";
 
+/** Spacer inside the article — fixed height, no ResizeObserver → CSS var feedback. */
+const DETAIL_DOCK_SPACER =
+  "concept-detail-dock-spacer shrink-0 sm:hidden min-h-[3.5rem] pb-[max(0.75rem,env(safe-area-inset-bottom))]";
+
 export function ConceptDetailActionsFooter(props: ConceptHeaderActionProps) {
   const navOpen = useHandbookMobileNavOpen();
   const dockRef = useRef<HTMLDivElement>(null);
@@ -306,38 +325,6 @@ export function ConceptDetailActionsFooter(props: ConceptHeaderActionProps) {
   );
   const hasActions =
     props.showBack || props.showNext || props.showBookmark || props.showShare;
-
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    if (!hasActions || navOpen) {
-      root.style.removeProperty("--handbook-concept-dock-h");
-      return;
-    }
-    const node = dockRef.current;
-    const syncHeight = () => {
-      const height = node?.offsetHeight ?? 0;
-      if (height > 0) {
-        root.style.setProperty("--handbook-concept-dock-h", `${height}px`);
-      }
-    };
-    syncHeight();
-    if (!node) {
-      return;
-    }
-    const observer = new ResizeObserver(syncHeight);
-    observer.observe(node);
-    return () => {
-      observer.disconnect();
-      root.style.removeProperty("--handbook-concept-dock-h");
-    };
-  }, [
-    hasActions,
-    navOpen,
-    props.showBack,
-    props.showNext,
-    props.showBookmark,
-    props.showShare,
-  ]);
 
   if (!hasActions || navOpen) {
     return null;
@@ -359,11 +346,7 @@ export function ConceptDetailActionsFooter(props: ConceptHeaderActionProps) {
 
   return (
     <>
-      <div
-        className="shrink-0 sm:hidden"
-        style={{ height: "var(--handbook-concept-dock-h, 3.5rem)" }}
-        aria-hidden="true"
-      />
+      <div className={DETAIL_DOCK_SPACER} aria-hidden="true" />
       {dock}
     </>
   );

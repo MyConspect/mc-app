@@ -9,6 +9,7 @@ import { resolveConceptId } from "@/lib/nav/conceptHash";
 import { isConceptGroupSectionId } from "@/lib/nav/conceptGroupSection";
 import { navSubjectClusters } from "@/lib/nav/subjectClusters";
 import { areRedundantNavTitles, sameTitle } from "@/lib/nav/navUtils";
+import { isActiveHref } from "./active";
 
 export function conceptById(
   concepts: readonly NavConcept[],
@@ -72,7 +73,7 @@ export function subjectHubClusterCrumbs(
   if (trail.length > 0) {
     return trail;
   }
-  if (pathname === subject.href) {
+  if (isActiveHref(pathname, subject.href)) {
     return [
       {
         label: cluster.title,

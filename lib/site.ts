@@ -14,6 +14,9 @@ export const SITE_NAME = "MyConspect";
 export const SITE_DESCRIPTION =
   "A browse-only study handbook of frontend, backend, system design, algorithms, data structures, AI, and related concepts.";
 
+/** Default social / LinkedIn link preview image (under `public/`). */
+export const SITE_OG_IMAGE_PATH = "/og-image.png";
+
 export type SiteContactId = "linkedin" | "github";
 
 export type SiteContact = {

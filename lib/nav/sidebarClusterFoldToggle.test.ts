@@ -53,7 +53,22 @@ test("subject hub second click closes even if hash not synced yet", () => {
   );
   assert.equal(click.closing, true);
   assert.equal(click.clusterKey, null);
-  assert.equal(click.replaceHashWith, null);
+  assert.equal(click.replaceHashWith, "");
+});
+
+test("subject hub hub-section accordion closes on repeat click without sameHash", () => {
+  const click = subjectHubClusterFoldClick(
+    foldKey,
+    foldKey,
+    "additional",
+    "#child-concept",
+    false,
+    true,
+    { hubSectionConceptsMode: true, sectionConceptsOpen: true },
+  );
+  assert.equal(click.closing, true);
+  assert.equal(click.clusterKey, null);
+  assert.equal(click.replaceHashWith, "");
 });
 
 test("catalog cluster id does not count as fold-open for concept-group sections", () => {
@@ -104,7 +119,7 @@ test("topic page cluster fold toggles when section hash is focused", () => {
   assert.equal(click.replaceHashWith, "");
 });
 
-test("topic page section click while child concept is open focuses section", () => {
+test("topic page fold toggles closed when open even if child concept hash is active", () => {
   const topicKey =
     "/en/databases/database-sql#concept-group-intro";
   const hash = "#concept-group-intro";
@@ -115,9 +130,9 @@ test("topic page section click while child concept is open focuses section", () 
     false,
     false,
   );
-  assert.equal(click.closing, false);
-  assert.equal(click.clusterKey, topicKey);
-  assert.equal(click.replaceHashWith, hash);
+  assert.equal(click.closing, true);
+  assert.equal(click.clusterKey, null);
+  assert.equal(click.replaceHashWith, "");
 });
 
 test("off-hub cluster click collapses when already open", () => {

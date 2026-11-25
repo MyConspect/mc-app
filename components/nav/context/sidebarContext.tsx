@@ -40,8 +40,26 @@ export function navPathPinned(
   return stackPathPins || pinLeaf;
 }
 
-/** Yellow active surface for every row on the current path (mobile and desktop). */
+/** Nested rows (cluster, topic fold, section, concept group): full pill when focused; path ancestors only on desktop stack. */
 export function navPathHighlighted(
+  highlighted: boolean,
+  onPath: boolean,
+  stackPathPins: boolean,
+): boolean {
+  return highlighted || (onPath && stackPathPins);
+}
+
+/** Topic/topic-fold row: fold drill counts as focused; URL `active` always counts. */
+export function navTopicRowFocusedHighlight(
+  isHit: boolean,
+  pageActive: boolean,
+  topicDrillOpen: boolean,
+): boolean {
+  return isHit || pageActive || topicDrillOpen;
+}
+
+/** Track + subject rows: show on-path highlight on mobile too (parent of open leaf). */
+export function navTrackSubjectPathHighlight(
   highlighted: boolean,
   onPath: boolean,
   _stackPathPins: boolean,

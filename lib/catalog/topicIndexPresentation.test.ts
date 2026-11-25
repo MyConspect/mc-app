@@ -5,6 +5,8 @@ import {
   getTopic,
   isInterviewTopic,
   isInterviewTasksTopic,
+  isNavHubTopic,
+  navChildBrowseCards,
 } from "@/lib/catalog";
 import { subjectClusterSectionsForLocale } from "./localizeSubjectClusters";
 import { filterSubjectClusterSectionsForIntro } from "./subjectIntroClusters";
@@ -20,6 +22,14 @@ test("html-interview uses interview accordion", () => {
   const topic = getTopic("frontend", "html-interview");
   assert.ok(topic);
   assert.equal(isInterviewTopic(topic), true);
+});
+
+test("react-interview is an interview accordion topic, not a nav hub", () => {
+  const topic = getTopic("frontend", "react-interview");
+  assert.ok(topic);
+  assert.equal(isInterviewTopic(topic), true);
+  assert.equal(navChildBrowseCards(topic).length, 0);
+  assert.equal(isNavHubTopic(topic), false);
 });
 
 test("core intro omits platform cluster and keeps accessibility and security", () => {

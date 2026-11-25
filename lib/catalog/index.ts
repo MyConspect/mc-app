@@ -850,7 +850,7 @@ const SUBJECTS_BASE: readonly Subject[] = [
     clusters: [
       {
         id: "core",
-        title: "Core",
+        title: "Intro",
         blurb:
           "Computation, programming paradigms, imperative vs declarative, and logic programming.",
       },
@@ -2252,7 +2252,6 @@ const TOPICS_BASE: Topic[] = [
     "frontend",
     "react",
     "interview",
-    { hideFromSubjectNav: true, navParentSlug: "react-interview" },
   ),
   grouped(
     "redux-questions",
@@ -2848,7 +2847,7 @@ const TOPICS_BASE: Topic[] = [
   grouped(
     "computer-science",
     "7_special_cs.md",
-    "Core",
+    "Intro",
     "What computation is, plus programming paradigms and logic programming.",
     "computer-science",
     "core",
@@ -3972,6 +3971,9 @@ export function navChildBrowseCards(topic: Topic): readonly BrowseCard[] {
 }
 
 export function isNavHubTopic(topic: Topic): boolean {
+  if (isInterviewTopic(topic)) {
+    return false;
+  }
   return navChildBrowseCards(topic).length > 0;
 }
 

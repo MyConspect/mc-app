@@ -755,24 +755,20 @@ describe("handbookNavSections layout", () => {
     );
   });
 
-  it("nests machine coding interview under React Interview", () => {
+  it("lists machine coding interview as a sibling of React Interview", () => {
     const frontendInterviews = interviewTopicsInGroup(
       findGroup("frontend", "interviews")!,
     );
     const react = frontendInterviews.find(
       (topic) => topic.slug === "react-interview",
     );
-    assert.ok(react?.nestedTopics);
+    assert.ok(react);
+    assert.equal(react!.nestedTopics?.length ?? 0, 0);
     assert.ok(
-      react.nestedTopics!.some(
+      frontendInterviews.some(
         (topic) => topic.slug === "react-machine-coding-interview",
       ),
-    );
-    assert.ok(
-      !frontendInterviews.some(
-        (topic) => topic.slug === "react-machine-coding-interview",
-      ),
-      "machine coding interview must not lift to frontend track interviews",
+      "machine coding interview is a top-level interview topic like Redux",
     );
   });
 

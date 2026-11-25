@@ -47,7 +47,7 @@ test("Computer Science track browse lists Core cluster topic under Core subject"
   assert.equal(normalized.length, 1);
   assert.deepEqual(
     normalized[0]?.items.map((item) => item.title),
-    ["Core"],
+    ["Intro"],
   );
   assert.ok(
     normalized[0]?.items[0]?.href.includes(
