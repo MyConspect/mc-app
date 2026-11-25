@@ -33,6 +33,15 @@ export const CONCEPT_INDEX_ROW = "group";
 
 export const CONCEPT_INDEX_LINK = `concept-index-link flex touch-manipulation cursor-pointer items-start ${CONCEPT_INDEX_ROW_GAP} ${CONCEPT_INDEX_ROW_INSET} py-1 text-left text-base font-medium leading-snug text-zinc-700 transition-colors hover:text-yellow-500 hover:no-underline group-hover:text-yellow-500 dark:text-zinc-400 dark:hover:text-yellow-300 dark:group-hover:text-yellow-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:focus-visible:ring-zinc-500/40`;
 
+export const CONCEPT_INDEX_LINK_ACTIVE =
+  "!text-zinc-900 bg-yellow-50 ring-1 ring-inset ring-yellow-200 dark:!text-zinc-50 dark:bg-yellow-950 dark:ring-yellow-800";
+
+export function conceptIndexLinkClass(active: boolean): string {
+  return active
+    ? `${CONCEPT_INDEX_LINK} ${CONCEPT_INDEX_LINK_ACTIVE}`
+    : CONCEPT_INDEX_LINK;
+}
+
 /**
  * Row-major grid for uniform sections. Column track sizes live in
  * {@code .concept-index-sections-grid} (globals.css). Prefer

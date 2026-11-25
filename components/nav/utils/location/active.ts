@@ -108,6 +108,7 @@ export function topicIsMobileNavLeaf(
 export function isOnSubjectPath(
   pathname: string,
   subject: NavSubject,
+  activeConceptId = "",
 ): boolean {
   if (navPathsEqual(pathname, subject.href)) {
     return true;
@@ -118,6 +119,9 @@ export function isOnSubjectPath(
     ) {
       return true;
     }
+  }
+  if (activeConceptId) {
+    return clusterForConceptInSubject(subject, activeConceptId) !== undefined;
   }
   return false;
 }

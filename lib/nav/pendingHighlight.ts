@@ -1,3 +1,4 @@
+import { handbookLogicalPathname } from "@/lib/i18n/sectionPaths";
 import { inferNavRootSection } from "./sections";
 import { readPersistedNavRootSection } from "./rootSectionPreference";
 
@@ -8,6 +9,12 @@ export function shouldUsePendingNavPath(
 ): boolean {
   if (!pendingPath) {
     return false;
+  }
+  if (
+    handbookLogicalPathname(committedPath) ===
+    handbookLogicalPathname(pendingPath)
+  ) {
+    return true;
   }
   const persistedTab = readPersistedNavRootSection();
   const pendingSection = inferNavRootSection(pendingPath);

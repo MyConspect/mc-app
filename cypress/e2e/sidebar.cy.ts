@@ -266,6 +266,22 @@ describe("handbook sidebar", () => {
     cy.conceptArticle("core-web-vitals").should("not.exist");
   });
 
+  it("@mobile-interview-concept-swap swaps concepts from the mobile drawer without stale detail", () => {
+    cy.viewport(390, 844);
+    cy.visit("/en/interviews/frontend/react-core#jsx");
+    cy.conceptArticle("jsx").should("be.visible");
+    cy.contains("button", "Open topics").click();
+    cy.get("#handbook-sidebar").should("be.visible");
+    cy.get('#handbook-sidebar [data-concept-id="fragments"]').click({
+      scrollBehavior: false,
+      force: true,
+    });
+    cy.location("hash").should("eq", "#fragments");
+    cy.conceptArticle("fragments").should("be.visible");
+    cy.conceptArticle("jsx").should("not.exist");
+    cy.get("main article.concept-detail-article").should("have.length", 1);
+  });
+
   it("restores search and the last page from browser storage", () => {
     cy.visit("/en/frontend/react-core");
     cy.desktopSearchMode("notes").click();

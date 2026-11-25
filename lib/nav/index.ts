@@ -1,12 +1,20 @@
 export { CHROME, INSTRUCTIONS_HREF } from "./chrome";
 export { resolveConceptId } from "./conceptHash";
 export {
+  conceptIdFromFragment,
+  readDomHandbookConceptId,
+  resolveHandbookConceptId,
+  type HandbookConceptSources,
+} from "./resolveHandbookConcept";
+export {
   areRedundantNavTitles,
   filterInterviewConcepts,
   hashIdFrom,
   isRedundantSubjectTopicNavRow,
   sameTitle,
   shouldHideSidebarConcepts,
+  shouldOpenInterviewTopicFold,
+  shouldShowInterviewTopicSidebarConcepts,
   shouldShowTopicIndexTitle,
 } from "./navUtils";
 export {
