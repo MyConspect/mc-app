@@ -75,6 +75,8 @@ import {
   SidebarNavProvider,
   closeNavSoon,
   navPathPinned,
+  navTrackChromeActive,
+  navTrackPathRailActive,
   navTrackSubjectPathHighlight,
   trackHeaderClass,
   useSidebarChrome,
@@ -83,11 +85,16 @@ import {
   useScopedTrackOpen,
   useSidebarFoldScope,
 } from "../context/sidebarContext";
-import { NAV_TRACK_CHILD_LIST_CLASS } from "../constants/sidebarLayout";
+import { trackChildListClass } from "../constants/sidebarLayout";
 import { SearchHitList } from "./SearchHitList";
 import { ClusterRow, SubjectRow, TopicRow } from "./sidebarRows";
 import { SidebarNavChrome } from "./SidebarNavChrome";
-import { foldRevision, useSidebarOpen } from "../hooks/useSidebarOpen";
+import {
+  activeTrackIdForActiveSection,
+  focusedOpenTrackIdForSection,
+  foldRevision,
+  useSidebarOpen,
+} from "../hooks/useSidebarOpen";
 
 export const TopicSidebar = memo(function TopicSidebar({
   sections,
@@ -111,6 +118,15 @@ export const TopicSidebar = memo(function TopicSidebar({
     [sections, highlightPathname],
   );
   const activeRootSectionId = inferNavRootSection(highlightPathname);
+  const routeTrackId = useMemo(
+    () =>
+      activeTrackIdForActiveSection(
+        sections,
+        activeRootSectionId,
+        highlightPathname,
+      ),
+    [sections, activeRootSectionId, highlightPathname],
+  );
   const scopedGroups = useMemo(
     () =>
       sections.flatMap((section) =>
@@ -197,9 +213,21 @@ export const TopicSidebar = memo(function TopicSidebar({
     [bookmarkKeys],
   );
   const stackPathPins = useStackPathPins();
+  const focusedOpenTrackId = useMemo(
+    () =>
+      searching
+        ? null
+        : focusedOpenTrackIdForSection(openTrackIds, activeRootSectionId),
+    [searching, openTrackIds, activeRootSectionId],
+  );
   const highlightValue = useMemo(
-    () => ({ highlightPathname, stackPathPins }),
-    [highlightPathname, stackPathPins],
+    () => ({
+      highlightPathname,
+      stackPathPins,
+      routeTrackId,
+      focusedOpenTrackId,
+    }),
+    [highlightPathname, stackPathPins, routeTrackId, focusedOpenTrackId],
   );
   const chromeValue = useMemo(
     () => ({
@@ -275,6 +303,7 @@ export const TopicSidebar = memo(function TopicSidebar({
                 <TrackGroup
                   rootSectionId={sectionId}
                   activeRootSectionId={activeRootSectionId}
+                  routeTrackId={routeTrackId}
                   group={group}
                   query={query}
                   mode={mode}
@@ -292,6 +321,7 @@ export const TopicSidebar = memo(function TopicSidebar({
                   key={group.id}
                   rootSectionId={activeRootSectionId}
                   activeRootSectionId={activeRootSectionId}
+                  routeTrackId={routeTrackId}
                   group={group}
                   query={query}
                   mode={mode}
@@ -418,6 +448,7 @@ function StickyPathStyles({ revision }: { revision: string }) {
 const TrackGroup = memo(function TrackGroup({
   rootSectionId,
   activeRootSectionId,
+  routeTrackId,
   group,
   query,
   mode,
@@ -426,6 +457,7 @@ const TrackGroup = memo(function TrackGroup({
 }: {
   rootSectionId: NavRootSectionId;
   activeRootSectionId: NavRootSectionId;
+  routeTrackId: TrackId | null;
   group: NavGroup;
   query: string;
   mode: SearchMode;
@@ -452,7 +484,13 @@ const TrackGroup = memo(function TrackGroup({
     goToPath,
     pathname: committedPathname,
   } = useSidebarChrome();
-  const { stackPathPins, highlightPathname } = useSidebarHighlight();
+  const {
+    stackPathPins,
+    highlightPathname,
+    routeTrackId: routeTrackIdFromContext,
+    focusedOpenTrackId,
+  } = useSidebarHighlight();
+  const effectiveRouteTrackId = routeTrackId ?? routeTrackIdFromContext;
   const { patchFold } = useScopedSidebarFold();
   const trackActive = isActiveHref(highlightPathname, group.href);
   const onThisTrack = isActiveTrack(highlightPathname, group.href);
@@ -462,21 +500,27 @@ const TrackGroup = memo(function TrackGroup({
     isSectionHomePathname(highlightPathname || committedPathname);
   const trackFocusedOnSectionHome =
     onSectionHome && trackOpen && !searching;
-  const onPath =
-    !searching &&
-    rootSectionId === activeRootSectionId &&
-    (onThisTrack || trackFocusedOnSectionHome);
-  const pinPath = navPathPinned(onPath, trackActive, stackPathPins);
+  const trackChrome = navTrackChromeActive(
+    group.id,
+    effectiveRouteTrackId,
+    focusedOpenTrackId,
+    trackFocusedOnSectionHome,
+  );
+  const pathRailActive = navTrackPathRailActive(trackOpen, trackChrome);
+  const onPathHeader =
+    !searching && rootSectionId === activeRootSectionId && trackChrome;
+  const onPathSticky = onPathHeader && pathRailActive;
+  const pinPath = navPathPinned(onPathSticky, trackActive, stackPathPins);
   const needle = query.trim().toLowerCase();
   const trackHighlighted = searching
     ? needle.length > 0 && matchesQuery(group.title, needle)
     : navTrackSubjectPathHighlight(
         trackActive || trackFocusedOnSectionHome,
-        onPath,
+        onPathHeader,
         stackPathPins,
       );
   const headerClass = trackHeaderClass(trackHighlighted);
-  const stickyScope = onPath && stackPathPins;
+  const stickyScope = onPathSticky && stackPathPins;
   const searchHits = useMemo(
     () =>
       searching
@@ -537,6 +581,25 @@ const TrackGroup = memo(function TrackGroup({
       }
       return true;
     }
+    if (
+      rootSectionId === "interviews" &&
+      !onThisTrack &&
+      hasSidebarChildren &&
+      !searching
+    ) {
+      event.preventDefault();
+      const wasOpen = trackOpen;
+      toggleTrackId(group.id);
+      if (!wasOpen) {
+        patchFold(group.id, {
+          topicHref: null,
+          subjectHref: null,
+          clusterKey: null,
+          sectionKey: null,
+        });
+      }
+      return true;
+    }
     if (!searching && trackOpen && hasSidebarChildren) {
       event.preventDefault();
       toggleTrackId(group.id);
@@ -593,9 +656,8 @@ const TrackGroup = memo(function TrackGroup({
           data-nav-id={group.id}
           data-nav-path={pinPath ? "true" : undefined}
           onClick={(event) => {
-            // Fold toggles remount nested rows; scroll pin fights sticky remeasure.
             pinNavElement(event.currentTarget, {
-              hold: false,
+              hold: true,
               scrollIntoView: false,
             });
             if (navigateTrackFromHeader(event)) {
@@ -619,7 +681,10 @@ const TrackGroup = memo(function TrackGroup({
           data-nav-id={group.id}
           data-nav-path={pinPath ? "true" : undefined}
           onClick={(event) => {
-            pinNavForHref(event.currentTarget, committedPathname, navigateHref);
+            pinNavElement(event.currentTarget, {
+              hold: true,
+              scrollIntoView: false,
+            });
             if (navigateTrackFromHeader(event)) {
               return;
             }
@@ -640,7 +705,7 @@ const TrackGroup = memo(function TrackGroup({
         </Link>
       )}
       <NavFold open={hasSidebarChildren && trackOpen} instant={searching} unbox>
-        <ul className={NAV_TRACK_CHILD_LIST_CLASS}>
+        <ul className={trackChildListClass(pathRailActive)}>
           {searching ? (
             <SearchHitList
               hits={searchHits.hits}

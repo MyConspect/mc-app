@@ -99,9 +99,9 @@ import {
 } from "@/lib/nav/conspectSidebar";
 import {
   closeNavSoon,
-  navPathHighlighted,
+  navPathHighlightedForTrack,
   navTopicRowFocusedHighlight,
-  navTrackSubjectPathHighlight,
+  navTrackSubjectPathHighlightForTrack,
   navPathPinned,
   NAV_ROW_GAP,
   navRowHorizontalPad,
@@ -425,7 +425,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
   const trackRailStepOne = indentClass === NAV_SUBJECT_CHILD_INDENT;
   const { query, pathname, searching, first, goToPath, onNavigate } =
     useSidebarChrome();
-  const { highlightPathname, stackPathPins } = useSidebarHighlight();
+  const { highlightPathname, stackPathPins, routeTrackId } = useSidebarHighlight();
   const { fold, patchFold } = useScopedSidebarFold();
   const { activeConceptId } = useSidebarActive();
   const topicPath = topic.href.split("#")[0] ?? topic.href;
@@ -511,7 +511,9 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
         className={`${
           trackRailStepOne
             ? rowClass(
-                navPathHighlighted(
+                navPathHighlightedForTrack(
+                  trackId,
+                  routeTrackId,
                   isHitCluster || groupHashActive || groupFoldOpen,
                   onPath,
                   stackPathPins,
@@ -519,7 +521,9 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
                 pinPath,
               )
             : rowClassNested(
-                navPathHighlighted(
+                navPathHighlightedForTrack(
+                  trackId,
+                  routeTrackId,
                   isHitCluster || groupHashActive || groupFoldOpen,
                   onPath,
                   stackPathPins,
@@ -565,7 +569,7 @@ function ConceptFlatLinks({
   ancestorTitle?: string;
 }) {
   const { first, searching } = useSidebarChrome();
-  const { highlightPathname, stackPathPins } = useSidebarHighlight();
+  const { highlightPathname, stackPathPins, routeTrackId } = useSidebarHighlight();
   const { activeConceptId } = useSidebarActive();
   const visible = concepts.filter(
     (concept) =>
@@ -721,7 +725,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
 }) {
   const { query, mode, pathname, searching, first, onNavigate, goToPath } =
     useSidebarChrome();
-  const { highlightPathname, stackPathPins } = useSidebarHighlight();
+  const { highlightPathname, stackPathPins, routeTrackId } = useSidebarHighlight();
   const { activeConceptId } = useSidebarActive();
   const { fold, patchFold } = useScopedSidebarFold();
   const { topicHref: openTopicHref } = fold(trackId);
@@ -778,7 +782,13 @@ const SectionTopicLink = memo(function SectionTopicLink({
     : showTopicFold && topicFoldOpen;
 
   const linkClass = `${rowClassNested(
-    navPathHighlighted(isHitTopic || active, onPath, stackPathPins),
+    navPathHighlightedForTrack(
+      trackId,
+      routeTrackId,
+      isHitTopic || active,
+      onPath,
+      stackPathPins,
+    ),
     pinPath,
     SECTION_TOPIC_INDENT,
   )}${rowGapClass ? ` ${rowGapClass}` : ""}`;
@@ -1072,7 +1082,7 @@ export const TopicRow = memo(function TopicRow({
   const { query, mode, pathname, searching, first, onNavigate, goToPath } =
     useSidebarChrome();
   const mobileNavOpen = useHandbookMobileNavOpen();
-  const { highlightPathname, stackPathPins } = useSidebarHighlight();
+  const { highlightPathname, stackPathPins, routeTrackId } = useSidebarHighlight();
   const { activeConceptId } = useSidebarActive();
   const { fold, patchFold } = useScopedSidebarFold();
   const { topicHref: openTopicHref, clusterKey: openClusterKey } =
@@ -1344,7 +1354,9 @@ export const TopicRow = memo(function TopicRow({
         aria-current={active ? "page" : undefined}
         aria-expanded={showTopicFold ? topicOpen : undefined}
         className={`${(compact ? rowClassNested : rowClass)(
-          navPathHighlighted(
+          navPathHighlightedForTrack(
+            trackId,
+            routeTrackId,
             navTopicRowFocusedHighlight(
               isHitTopic,
               active,
@@ -1433,7 +1445,7 @@ export const ClusterRow = memo(function ClusterRow({
 }) {
   const { query, mode, pathname, searching, first, goToPath, onNavigate } =
     useSidebarChrome();
-  const { highlightPathname, stackPathPins } = useSidebarHighlight();
+  const { highlightPathname, stackPathPins, routeTrackId } = useSidebarHighlight();
   const { fold, patchFold } = useScopedSidebarFold();
   const sectionId = useSidebarFoldScope();
   const { clusterKey: openClusterKey } = fold(trackId);
@@ -1592,7 +1604,9 @@ export const ClusterRow = memo(function ClusterRow({
             showHubSectionConcepts ? sectionConceptsOpen : undefined
           }
           className={`${rowClassNested(
-            navPathHighlighted(
+            navPathHighlightedForTrack(
+              trackId,
+              routeTrackId,
               isHitCluster || active || hubClusterFoldOpen,
               onPath,
               stackPathPins,
@@ -1818,7 +1832,9 @@ export const ClusterRow = memo(function ClusterRow({
         aria-current={active ? "location" : undefined}
         aria-expanded={clusterOpen}
         className={`${rowClassNested(
-          navPathHighlighted(
+          navPathHighlightedForTrack(
+            trackId,
+            routeTrackId,
             isHitCluster || active || clusterFoldOpen,
             onPath,
             stackPathPins,
@@ -1901,7 +1917,7 @@ export const SectionRow = memo(function SectionRow({
   clusterLeafInSidebar?: boolean;
 }) {
   const { query, pathname, searching, first, onNavigate } = useSidebarChrome();
-  const { highlightPathname, stackPathPins } = useSidebarHighlight();
+  const { highlightPathname, stackPathPins, routeTrackId } = useSidebarHighlight();
   const { fold, patchFold } = useScopedSidebarFold();
   const { activeConceptId } = useSidebarActive();
   const collapsible =
@@ -1971,7 +1987,9 @@ export const SectionRow = memo(function SectionRow({
         data-search-hit={isHitSection ? "true" : undefined}
         aria-expanded={sectionOpen}
         className={`${rowClassNested(
-          navPathHighlighted(
+          navPathHighlightedForTrack(
+            trackId,
+            routeTrackId,
             isHitSection || hashMatchesSection,
             onPath,
             stackPathPins,
@@ -2067,7 +2085,7 @@ export const SubjectRow = memo(function SubjectRow({
   const subjectNavHref = navSubjectNavigateHref(group, subject, sectionId);
   const { query, pathname, searching, first, goToPath, onNavigate } =
     useSidebarChrome();
-  const { highlightPathname, stackPathPins } = useSidebarHighlight();
+  const { highlightPathname, stackPathPins, routeTrackId } = useSidebarHighlight();
   const { fold, patchFold } = useScopedSidebarFold();
   const { subjectHref: openSubjectHref } = fold(trackId);
   const subjectOnPath = isOnSubjectPath(highlightPathname, subject);
@@ -2222,7 +2240,9 @@ export const SubjectRow = memo(function SubjectRow({
         aria-current={active ? "page" : undefined}
         aria-expanded={subjectOpen}
         className={`${rowClass(
-          navTrackSubjectPathHighlight(
+          navTrackSubjectPathHighlightForTrack(
+            trackId,
+            routeTrackId,
             isHitSubject || active,
             onPath,
             stackPathPins,

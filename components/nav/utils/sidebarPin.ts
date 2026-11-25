@@ -33,6 +33,11 @@ type SidebarPin = {
 };
 
 let sidebarPin: SidebarPin | null = null;
+
+/** True while a click handler is holding scroll under a pinned row (fold / track swap). */
+export function isSidebarPinHeld(): boolean {
+  return sidebarPin !== null;
+}
 let pinCleanup: (() => void) | null = null;
 let restoringPin = false;
 let pinFrame = 0;

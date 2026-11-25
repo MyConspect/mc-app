@@ -10,7 +10,9 @@ import {
   NAV_NEST_STEP_3,
   NAV_NEST_STEP_4,
   navRowNestStepClass,
+  NAV_TRACK_CHILD_DRILL_LIST_CLASS,
   NAV_TRACK_CHILD_LIST_CLASS,
+  trackChildListClass,
   SECTION_TOPIC_CONCEPT_INDENT,
   SECTION_TOPIC_INDENT,
   NAV_CLUSTER_DEEPER_INDENT,
@@ -59,6 +61,12 @@ test("track child list class includes yellow rail and base inset", () => {
   assert.match(NAV_TRACK_CHILD_LIST_CLASS, /\bborder-yellow-200\b/);
   assert.match(NAV_TRACK_CHILD_LIST_CLASS, /\bml-1\.5\b/);
   assert.match(NAV_TRACK_CHILD_LIST_CLASS, /\bpl-2\b/);
+});
+
+test("trackChildListClass switches rail for drill vs path track", () => {
+  assert.equal(trackChildListClass(true), NAV_TRACK_CHILD_LIST_CLASS);
+  assert.equal(trackChildListClass(false), NAV_TRACK_CHILD_DRILL_LIST_CLASS);
+  assert.match(NAV_TRACK_CHILD_DRILL_LIST_CLASS, /\bborder-zinc-200\b/);
 });
 
 test("multi-topic child list composes rail inset", () => {

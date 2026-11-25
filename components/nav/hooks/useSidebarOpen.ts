@@ -13,11 +13,13 @@ import {
   SIDEBAR_COLLAPSE_ALL_EVENT,
   SIDEBAR_COLLAPSE_TRACKS_EVENT,
 } from "@/constants";
-import type { TrackId } from "@/lib/catalog";
+import { isTrackId, type TrackId } from "@/lib/catalog";
 import type { NavRootSection, NavRootSectionId } from "@/lib/nav";
 import { readPersistedNavRootSection } from "@/lib/nav/rootSectionPreference";
+import { handbookLogicalPathname } from "@/lib/i18n/sectionPaths";
 import {
   navGroupsForPath,
+  navGroupsForRootSection,
   navTrackScope,
   type NavTrackScope,
 } from "@/lib/nav/sections";
@@ -161,6 +163,22 @@ export function sidebarNavLocation(
   };
 }
 
+/** Sole open track in a section tab (fold drill focus). */
+export function focusedOpenTrackIdForSection(
+  openTrackIds: ReadonlySet<NavTrackScope>,
+  sectionId: NavRootSectionId,
+): TrackId | null {
+  const prefix = `${sectionId}:`;
+  for (const scope of openTrackIds) {
+    if (!scope.startsWith(prefix)) {
+      continue;
+    }
+    const id = scope.slice(prefix.length);
+    return isTrackId(id) ? id : null;
+  }
+  return null;
+}
+
 /** Match open-track sync to the effective nav path (includes optimistic pending routes). */
 export function activeTrackIdForNavPath(
   sections: readonly NavRootSection[],
@@ -170,6 +188,28 @@ export function activeTrackIdForNavPath(
   return (
     groups.find((group) => isActiveTrack(navPathname, group.href))?.id ?? null
   );
+}
+
+/** Route track for a tab's tree — uses that section's groups, not inferNavRootSection(path). */
+export function activeTrackIdForActiveSection(
+  sections: readonly NavRootSection[],
+  sectionId: NavRootSectionId,
+  navPathname: string,
+): TrackId | null {
+  const groups = navGroupsForRootSection(sections, sectionId);
+  const current = handbookLogicalPathname(navPathname);
+  let match: TrackId | null = null;
+  let bestPrefix = -1;
+  for (const group of groups) {
+    const target = handbookLogicalPathname(group.href);
+    if (current === target || current.startsWith(`${target}/`)) {
+      if (target.length > bestPrefix) {
+        bestPrefix = target.length;
+        match = group.id;
+      }
+    }
+  }
+  return match;
 }
 
 export function useSidebarOpen({
@@ -354,9 +394,15 @@ export function useSidebarOpen({
     (sectionId: NavRootSectionId, trackId: TrackId) => {
       const scope = navTrackScope(sectionId, trackId);
       setOpenTrackIds((previous) => {
-        if (previous.has(scope)) {
+        const closing = previous.has(scope);
+        if (closing) {
           return new Set();
         }
+        setTrackFolds((folds) => {
+          const next = new Map(folds);
+          next.set(scope, EMPTY_FOLD);
+          return next;
+        });
         return new Set([scope]);
       });
     },

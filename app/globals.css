@@ -1845,6 +1845,7 @@ article.concept-detail-article .concept-body details + details {
   --nav-sticky-track: var(--nav-sticky-row);
   --nav-sticky-row: 40px;
   --nav-sticky-cover: 0px;
+  overflow-anchor: auto;
 }
 
 /* Phone/tablet: scroll the tree normally; sticky stacks need a wide sidebar. */
