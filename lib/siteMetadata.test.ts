@@ -8,7 +8,8 @@ test("buildRootMetadata includes Open Graph image for link previews", () => {
   process.env.NEXT_PUBLIC_SITE_URL = "https://myconspect.vercel.app";
   try {
     const meta = buildRootMetadata();
-    assert.equal(meta.metadataBase?.href, "https://myconspect.vercel.app/");
+    assert.ok(meta.metadataBase instanceof URL);
+    assert.equal(meta.metadataBase.href, "https://myconspect.vercel.app/");
     const images = meta.openGraph?.images;
     assert.ok(images);
     const first = Array.isArray(images) ? images[0] : images;
