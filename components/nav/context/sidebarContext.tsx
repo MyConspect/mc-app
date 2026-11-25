@@ -258,27 +258,38 @@ export const NAV_ROW_GAP = "mt-1.5";
 const NAV_ROW_SURFACE =
   "ring-1 ring-inset transition-[color,background-color,box-shadow] duration-150 ease-out motion-reduce:transition-none";
 
-export function rowClass(active: boolean, sticky = false, indentClass = "") {
+function navRowClass({
+  nested,
+  active,
+  sticky,
+  indentClass,
+}: {
+  nested: boolean;
+  active: boolean;
+  sticky: boolean;
+  indentClass: string;
+}): string {
   // Indent with padding (not margin) so `w-full` rows keep one shared right edge.
-  // Inactive rows keep a transparent ring so active highlight does not shift layout.
-  const shared = `flex min-h-11 w-full touch-manipulation cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-base font-medium max-md:min-h-11 ${NAV_ROW_SURFACE}`;
+  const shared = nested
+    ? `flex min-h-9 w-full touch-manipulation cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[15px] font-medium max-md:min-h-10 ${NAV_ROW_SURFACE}`
+    : `flex min-h-11 w-full touch-manipulation cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-base font-medium max-md:min-h-11 ${NAV_ROW_SURFACE}`;
   const highlight = active
     ? `${shared} text-zinc-900 bg-yellow-50 ring-yellow-200 dark:bg-yellow-950 dark:text-zinc-50 dark:ring-yellow-800`
-    : `${shared} text-zinc-600 bg-transparent ring-transparent hover:bg-yellow-50 dark:text-zinc-400 dark:hover:bg-yellow-950/60`;
+    : nested
+      ? `${shared} text-zinc-600 bg-transparent ring-transparent hover:bg-yellow-50/70 dark:text-zinc-400 dark:hover:bg-yellow-950/40`
+      : `${shared} text-zinc-600 bg-transparent ring-transparent hover:bg-yellow-50 dark:text-zinc-400 dark:hover:bg-yellow-950/60`;
   const stickyClass = sticky ? " sticky" : "";
   const indent = indentClass ? ` ${indentClass}` : "";
   return `${highlight}${stickyClass}${indent}`;
 }
 
+export function rowClass(active: boolean, sticky = false, indentClass = "") {
+  return navRowClass({ nested: false, active, sticky, indentClass });
+}
+
 /** Nested folds under subject (cluster, topic, section) — quieter than track/subject. */
 export function rowClassNested(active: boolean, sticky = false, indentClass = "") {
-  const shared = `flex min-h-9 w-full touch-manipulation cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[15px] font-medium max-md:min-h-10 ${NAV_ROW_SURFACE}`;
-  const highlight = active
-    ? `${shared} text-zinc-900 bg-yellow-50 ring-yellow-200 dark:bg-yellow-950 dark:text-zinc-50 dark:ring-yellow-800`
-    : `${shared} text-zinc-600 bg-transparent ring-transparent hover:bg-yellow-50/70 dark:text-zinc-400 dark:hover:bg-yellow-950/40`;
-  const stickyClass = sticky ? " sticky" : "";
-  const indent = indentClass ? ` ${indentClass}` : "";
-  return `${highlight}${stickyClass}${indent}`;
+  return navRowClass({ nested: true, active, sticky, indentClass });
 }
 
 export function trackHeaderClass(highlighted: boolean) {

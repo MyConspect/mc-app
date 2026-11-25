@@ -22,6 +22,7 @@ import {
 } from "../utils/hash";
 import { setBookmarkNavMode } from "../utils/bookmarkNavMode";
 import { useHandbookLocation } from "../hooks/useHandbookLocation";
+import { NAV_TRACK_CHILD_LIST_CLASS } from "../constants/sidebarLayout";
 import { trackHeaderClass } from "../context/sidebarContext";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { NavFold } from "../ui/NavFold";
@@ -102,8 +103,7 @@ export function BookmarksPanel({
         </div>
       </div>
       <NavFold open={open}>
-        <div className="mt-1.5 ml-1.5 border-l-2 border-yellow-200 pl-2 dark:border-yellow-800">
-          <ul className="space-y-0.5">
+        <ul className={NAV_TRACK_CHILD_LIST_CLASS}>
             {bookmarks.map((bookmark) => {
               const active = isActive(bookmark);
               return (
@@ -179,8 +179,7 @@ export function BookmarksPanel({
                 </li>
               );
             })}
-          </ul>
-        </div>
+        </ul>
       </NavFold>
       <ConfirmDialog
         open={clearConfirmOpen}
