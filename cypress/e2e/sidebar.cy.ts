@@ -54,6 +54,92 @@ describe("handbook sidebar", () => {
     });
   });
 
+  it("does not yellow-rail Computer Science while drilling from a Frontend interview", () => {
+    cy.viewport(1280, 720);
+    cy.visit("/en/interviews/frontend/web-security-questions");
+    cy.nav("track", "frontend").should(
+      "have.attr",
+      "aria-expanded",
+      "true",
+    );
+    cy.nav("track", "computer-science").click();
+    cy.nav("track", "computer-science").should(
+      "have.attr",
+      "aria-expanded",
+      "true",
+    );
+    cy.url().should("include", "/frontend/web-security-questions");
+    cy.nav("track", "frontend").should(
+      "have.attr",
+      "aria-expanded",
+      "false",
+    );
+    cy.nav("track", "computer-science").should(($el) => {
+      expect($el.attr("class") ?? "").to.match(/\bbg-yellow-50\b/);
+    });
+    cy.get(
+      '#handbook-sidebar [data-nav="track"][data-nav-id="computer-science"] + ul',
+    ).should(($ul) => {
+      const cls = $ul.attr("class") ?? "";
+      expect(cls).to.match(/border-yellow-200/);
+      expect(cls).not.to.match(/border-zinc-200/);
+    });
+    cy.nav("track", "frontend").should(($el) => {
+      expect($el.attr("class") ?? "").not.to.match(/\bbg-yellow-50\b/);
+    });
+    cy.nav("topic", "hash-tables-questions").should(($el) => {
+      expect($el.attr("class") ?? "").not.to.match(/\bbg-yellow-50\b/);
+    });
+  });
+
+  it("keeps Advanced in the aside when Frontend collapses on conspect home", () => {
+    cy.viewport(1280, 560);
+    cy.visit("/en/conspect");
+    cy.nav("track", "frontend").click();
+    cy.nav("track", "frontend").should(
+      "have.attr",
+      "aria-expanded",
+      "true",
+    );
+
+    cy.get("#handbook-nav-aside").then(($aside) => {
+      const aside = $aside[0];
+      const advanced = aside.querySelector(
+        '[data-nav="track"][data-nav-id="advanced"]',
+      ) as HTMLElement | null;
+      expect(advanced, "Advanced track row").to.exist;
+      if (!advanced) {
+        return;
+      }
+      aside.scrollTop +=
+        advanced.getBoundingClientRect().top -
+        aside.getBoundingClientRect().top -
+        aside.clientHeight +
+        advanced.offsetHeight +
+        48;
+    });
+
+    cy.nav("track", "advanced").click({ scrollBehavior: false, force: true });
+    cy.nav("track", "advanced").should(
+      "have.attr",
+      "aria-expanded",
+      "true",
+    );
+    cy.nav("track", "frontend").should(
+      "have.attr",
+      "aria-expanded",
+      "false",
+    );
+    cy.nav("track", "advanced").should(($el) => {
+      const liveAside = Cypress.$("#handbook-nav-aside")[0];
+      expect(liveAside, "sidebar scroller").to.exist;
+      const box = $el[0].getBoundingClientRect();
+      const asideBox = liveAside.getBoundingClientRect();
+      expect(box.top).to.be.gte(asideBox.top - 1);
+      expect(box.top).to.be.lt(asideBox.bottom);
+    });
+  });
+
   it("opens a concept in detail view when chosen from the page list", () => {
     cy.viewport(390, 844);
     cy.visit("/en/frontend/react-core");

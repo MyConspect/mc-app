@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { HANDBOOK_SIDEBAR_ID, NAV_FOLD_OPEN_MS } from "@/constants";
 import { splitHref } from "@/lib/nav";
 import {
+  isSidebarPinHeld,
   resetNavAsideScroll,
   restoreSidebarPin,
   scrollSidebarActivePath,
@@ -46,8 +47,12 @@ export function useSidebarAsideScroll({
       const previous = prevPathnameRef.current;
       prevPathnameRef.current = pathname;
       if (shouldResetNavAsideScroll(previous, pathname)) {
-        skipPinRestoreRef.current = true;
-        resetNavAsideScroll();
+        if (isSidebarPinHeld()) {
+          skipPinRestoreRef.current = false;
+        } else {
+          skipPinRestoreRef.current = true;
+          resetNavAsideScroll();
+        }
       }
       return;
     }

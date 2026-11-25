@@ -26,7 +26,45 @@ export type SidebarHighlightValue = {
   highlightPathname: string;
   /** When false (viewport under 1024px), only the leaf row is pinned/highlighted. */
   stackPathPins: boolean;
+  /** Track id for the current URL in the active Conspect/Interviews tab. */
+  routeTrackId: TrackId | null;
+  /** Track id whose fold is open in the active tab (header drill). */
+  focusedOpenTrackId: TrackId | null;
 };
+
+/** Rows under another open track must not inherit path yellow (browse-only drill). */
+export function navHighlightOffRouteDrill(
+  trackId: TrackId,
+  routeTrackId: TrackId | null,
+): boolean {
+  return routeTrackId !== null && routeTrackId !== trackId;
+}
+
+export function navPathHighlightedForTrack(
+  trackId: TrackId,
+  routeTrackId: TrackId | null,
+  highlighted: boolean,
+  onPath: boolean,
+  stackPathPins: boolean,
+): boolean {
+  if (navHighlightOffRouteDrill(trackId, routeTrackId)) {
+    return false;
+  }
+  return navPathHighlighted(highlighted, onPath, stackPathPins);
+}
+
+export function navTrackSubjectPathHighlightForTrack(
+  trackId: TrackId,
+  routeTrackId: TrackId | null,
+  highlighted: boolean,
+  onPath: boolean,
+  stackPathPins: boolean,
+): boolean {
+  if (navHighlightOffRouteDrill(trackId, routeTrackId)) {
+    return false;
+  }
+  return navTrackSubjectPathHighlight(highlighted, onPath, stackPathPins);
+}
 
 /** Pin this row in the sticky path stack (ancestors only on desktop). */
 export function navPathPinned(
@@ -66,6 +104,57 @@ export function navTrackSubjectPathHighlight(
 ): boolean {
   void _stackPathPins;
   return highlighted || onPath;
+}
+
+/** Track matches the route (or section-home drill on the opened track). */
+export function navTrackRouteActive(
+  routeTrackId: string | null,
+  groupId: string,
+  trackFocusedOnSectionHome: boolean,
+): boolean {
+  return groupId === routeTrackId || trackFocusedOnSectionHome;
+}
+
+/** Yellow track header + child rail (layer A — not nested row pills). */
+export function navTrackChromeActive(
+  groupId: TrackId,
+  routeTrackId: TrackId | null,
+  focusedOpenTrackId: TrackId | null,
+  trackFocusedOnSectionHome: boolean,
+): boolean {
+  if (trackFocusedOnSectionHome && groupId === focusedOpenTrackId) {
+    return true;
+  }
+  if (focusedOpenTrackId === groupId) {
+    return true;
+  }
+  if (
+    routeTrackId === groupId &&
+    (focusedOpenTrackId === null || focusedOpenTrackId === routeTrackId)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** Yellow child-list rail only when the route track's fold is open. */
+export function navTrackPathRailActive(
+  trackOpen: boolean,
+  routeTrack: boolean,
+): boolean {
+  return trackOpen && routeTrack;
+}
+
+/** @deprecated Use navTrackRouteActive + navTrackPathRailActive */
+export function navTrackPathChromeActive(
+  trackOpen: boolean,
+  onThisTrack: boolean,
+  trackFocusedOnSectionHome: boolean,
+): boolean {
+  return navTrackPathRailActive(
+    trackOpen,
+    onThisTrack || trackFocusedOnSectionHome,
+  );
 }
 
 export type SidebarBookmarksValue = {

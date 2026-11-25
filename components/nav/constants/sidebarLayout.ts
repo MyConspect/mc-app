@@ -29,6 +29,16 @@ export function navRowNestStepClass(step: NavNestStep): string {
 export const NAV_TRACK_CHILD_LIST_CLASS =
   "mt-1.5 ml-1.5 space-y-0.5 border-l-2 border-yellow-200 pl-2 dark:border-yellow-800";
 
+/** Expanded track without route path (browse another track while URL stays put). */
+export const NAV_TRACK_CHILD_DRILL_LIST_CLASS =
+  "mt-1.5 ml-1.5 space-y-0.5 border-l-2 border-zinc-200 pl-2 dark:border-zinc-700";
+
+export function trackChildListClass(pathChromeActive: boolean): string {
+  return pathChromeActive
+    ? NAV_TRACK_CHILD_LIST_CLASS
+    : NAV_TRACK_CHILD_DRILL_LIST_CLASS;
+}
+
 /** Horizontal inset shared by track rail and multi-topic child lists. */
 export const NAV_NEST_CHILD_RAIL_INSET_CLASS = "ml-1.5 pl-2";
 
