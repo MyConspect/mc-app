@@ -271,6 +271,15 @@ function subjectNavEntry(
           clusterTargetHref(subject, clusterDefinition) !==
             clusterHref(subject, clusterDefinition);
         if (titleTwinDedicatedTopic) {
+          const nested = titleTwinMarkdownGroupClusters(
+            subjectPath,
+            cluster.title,
+            catalogTopic,
+            locale,
+          );
+          const promoteMarkdownGroups =
+            nested.length > 1 ||
+            (nested.length === 1 && nested[0]?.title !== "Overview");
           return {
             id: cluster.id,
             title: cluster.title,
@@ -279,6 +288,11 @@ function subjectNavEntry(
               clusterTargetHref(subject, clusterDefinition),
             ),
             topics,
+            ...(subject.flatNav &&
+            promoteMarkdownGroups &&
+            nested.length > 0
+              ? { nestedClusters: [...nested] }
+              : {}),
           };
         }
         if (

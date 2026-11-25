@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, type ReactElement } from "react";
 import Link from "next/link";
 import { SidebarHighlightedText } from "@/components/search";
 import type { TrackId } from "@/lib/catalog";
@@ -68,6 +68,17 @@ import {
   sidebarGroupRepeatsTopicLabel,
 } from "@/lib/nav/conceptGroupSection";
 import { NavCautionBadge } from "../ui/NavCautionBadge";
+import {
+  NAV_MULTI_TOPIC_CHILD_LIST_CLASS,
+  NAV_NEST_STEP_1,
+  NAV_NEST_STEP_2,
+  NAV_NEST_STEP_3,
+  SECTION_TOPIC_CONCEPT_INDENT,
+  SECTION_TOPIC_INDENT,
+  clusterChildTopicNestIndent,
+  clusterHasMultiTopicChildren,
+  clusterRowNestIndent,
+} from "../constants/sidebarLayout";
 import { withHandbookSection } from "@/lib/i18n/sectionPaths";
 import {
   clusterNavigateHref,
@@ -650,14 +661,6 @@ function ConceptItems({
   );
 }
 
-/** Per-level inset matching the track children list (`pl-2` on the bordered `ul`). */
-const NAV_NEST_STEP_1 = "pl-2";
-const NAV_NEST_STEP_2 = "pl-4";
-const NAV_NEST_STEP_3 = "pl-6";
-
-const SECTION_TOPIC_INDENT = NAV_NEST_STEP_2;
-const SECTION_TOPIC_CONCEPT_INDENT = NAV_NEST_STEP_3;
-
 const SectionTopicLink = memo(function SectionTopicLink({
   trackId,
   topic,
@@ -991,6 +994,7 @@ export const TopicRow = memo(function TopicRow({
   linkHref,
   stackSiblingGap = false,
   ancestorTitle,
+  nestIndentClass,
 }: {
   trackId: TrackId;
   topic: NavTopic;
@@ -1004,6 +1008,8 @@ export const TopicRow = memo(function TopicRow({
   stackSiblingGap?: boolean;
   /** Parent subject/track title — suppress duplicate group rows. */
   ancestorTitle?: string;
+  /** One nest step past the parent cluster row (e.g. NoSQL → Intro). */
+  nestIndentClass?: string;
 }) {
   const { query, mode, pathname, searching, first, onNavigate, goToPath } =
     useSidebarChrome();
@@ -1137,9 +1143,13 @@ export const TopicRow = memo(function TopicRow({
       : (showTopicFold && topicFoldOpen) ||
         (onSubjectHub && (hubClusterOpen || hubConceptActive));
   const topicBookmarked = isBookmarked(navTopic.href);
+  /** Right-edge alignment for compact leaves — spacer only, no fake expand affordance. */
+  const compactLeafChevronSpacer = compact && !showTopicFold;
   // Flatten sticky headers into the track list so nested containing blocks cannot
   // drag Core/Structure above Frontend/HTML while siblings scroll.
-  const indent = compact ? NAV_NEST_STEP_2 : "";
+  const indent = compact
+    ? (nestIndentClass ?? NAV_NEST_STEP_2)
+    : "";
   const conceptIndent = NAV_NEST_STEP_3;
   const clusterHeaderGap =
     stackSiblingGap && !(showTopicFold && topicOpen)
@@ -1289,6 +1299,13 @@ export const TopicRow = memo(function TopicRow({
           <span className="mt-0.5 shrink-0">
             <NavChevron open={topicOpen} large />
           </span>
+        ) : compactLeafChevronSpacer ? (
+          <span
+            className="mt-0.5 shrink-0 invisible pointer-events-none"
+            aria-hidden="true"
+          >
+            <NavChevron open={false} large />
+          </span>
         ) : null}
       </Link>
       <NavFold
@@ -1369,6 +1386,7 @@ export const ClusterRow = memo(function ClusterRow({
   );
   const clusterLeafMode =
     leafInSidebar && !searching && !conspectSingleTopicExpand;
+  const clusterNestIndent = clusterRowNestIndent(cluster);
 
   if (clusterLeafMode) {
     if (hasNestedGroups) {
@@ -1497,7 +1515,7 @@ export const ClusterRow = memo(function ClusterRow({
               stackPathPins,
             ),
             pinPath,
-            NAV_NEST_STEP_1,
+            clusterNestIndent,
           )} ${NAV_ROW_GAP}`}
         >
           <RowTitle
@@ -1708,7 +1726,7 @@ export const ClusterRow = memo(function ClusterRow({
             stackPathPins,
           ),
           pinPath,
-          NAV_NEST_STEP_1,
+          clusterNestIndent,
         )} ${NAV_ROW_GAP}`}
       >
         <RowTitle
@@ -1722,8 +1740,10 @@ export const ClusterRow = memo(function ClusterRow({
         </span>
       </Link>
       <NavFold open={clusterOpen} instant={searching} unbox>
-        <ul className="contents">
-          {hasNestedGroups ? (
+        {(() => {
+          const multiTopicChildList =
+            !hasNestedGroups && clusterHasMultiTopicChildren(cluster);
+          const topicRows = hasNestedGroups ? (
             cluster.nestedClusters?.map((nested) => (
               <ClusterRow
                 key={nested.id}
@@ -1751,12 +1771,19 @@ export const ClusterRow = memo(function ClusterRow({
                 trackId={trackId}
                 topic={topic}
                 compact
+                nestIndentClass={clusterChildTopicNestIndent(cluster)}
                 navKind="topic"
                 navId={topic.slug}
               />
             ))
-          )}
-        </ul>
+          );
+          const body = <ul className="contents">{topicRows}</ul>;
+          return multiTopicChildList ? (
+            <div className={NAV_MULTI_TOPIC_CHILD_LIST_CLASS}>{body}</div>
+          ) : (
+            body
+          );
+        })()}
       </NavFold>
     </li>
   );
@@ -1877,6 +1904,54 @@ export const SectionRow = memo(function SectionRow({
     </li>
   );
 });
+
+function flatNavTopicRows(
+  trackId: TrackId,
+  subject: NavSubject,
+  clusters: readonly NavCluster[],
+): ReactElement[] {
+  return clusters.flatMap((cluster) => {
+    const nested = cluster.nestedClusters ?? [];
+    if (nested.length > 0) {
+      return nested.flatMap((section) => {
+        const topic = section.topics[0];
+        if (!topic) {
+          return [];
+        }
+        return [
+          <TopicRow
+            key={`${cluster.id}:${section.id}`}
+            trackId={trackId}
+            topic={{ ...topic, title: section.title }}
+            linkHref={section.href}
+            compact
+            navKind="topic"
+            navId={section.id}
+          />,
+        ];
+      });
+    }
+    return cluster.topics.map((topic) => {
+      const hideTopicTitle = isRedundantSubjectTopicNavRow(
+        subject.title,
+        topic.title,
+      );
+      return (
+        <TopicRow
+          key={topic.slug}
+          trackId={trackId}
+          topic={topic}
+          compact
+          nestIndentClass={clusterChildTopicNestIndent(cluster)}
+          hideTitle={hideTopicTitle}
+          ancestorTitle={hideTopicTitle ? subject.title : undefined}
+          navKind="topic"
+          navId={topic.slug}
+        />
+      );
+    });
+  });
+}
 
 export const SubjectRow = memo(function SubjectRow({
   trackId,
@@ -2091,26 +2166,7 @@ export const SubjectRow = memo(function SubjectRow({
               ))}
             </>
           ) : subject.flatNav ? (
-            subject.clusters.flatMap((cluster) =>
-              cluster.topics.map((topic) => {
-                const hideTopicTitle = isRedundantSubjectTopicNavRow(
-                  subject.title,
-                  topic.title,
-                );
-                return (
-                  <TopicRow
-                    key={topic.slug}
-                    trackId={trackId}
-                    topic={topic}
-                    compact
-                    hideTitle={hideTopicTitle}
-                    ancestorTitle={hideTopicTitle ? subject.title : undefined}
-                    navKind="topic"
-                    navId={topic.slug}
-                  />
-                );
-              }),
-            )
+            flatNavTopicRows(trackId, subject, subject.clusters)
           ) : (
             sidebarClustersForSubject(subject.clusters)
           )}

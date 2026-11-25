@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   measureNavChromeInset,
+  pinnedPathStackCoverBottomPx,
   resolveStickyTopPx,
   shouldReleaseStickyScope,
   STICKY_TOP_SELF_VAR,
@@ -12,6 +13,23 @@ import {
 
 test("measureNavChromeInset returns 0 when chrome is missing", () => {
   assert.equal(measureNavChromeInset(null), 0);
+});
+
+test("pinnedPathStackCoverBottomPx uses sticky stack height, not document offset", () => {
+  const gap = 6;
+  const deepSubject = pinnedPathStackCoverBottomPx(
+    [{ stickyTop: 92, height: 32, shifted: false, relativeTop: 280 }],
+    gap,
+  );
+  assert.equal(deepSubject, 92 + 32 + gap);
+  const trackAndSubject = pinnedPathStackCoverBottomPx(
+    [
+      { stickyTop: 50, height: 36, shifted: false, relativeTop: 50 },
+      { stickyTop: 92, height: 32, shifted: false, relativeTop: 280 },
+    ],
+    gap,
+  );
+  assert.equal(trackAndSubject, 92 + 32 + gap);
 });
 
 test("shouldReleaseStickyScope is true when the next track reaches the stack", () => {

@@ -83,6 +83,7 @@ import {
   useScopedTrackOpen,
   useSidebarFoldScope,
 } from "../context/sidebarContext";
+import { NAV_TRACK_CHILD_LIST_CLASS } from "../constants/sidebarLayout";
 import { SearchHitList } from "./SearchHitList";
 import { ClusterRow, SubjectRow, TopicRow } from "./sidebarRows";
 import { SidebarNavChrome } from "./SidebarNavChrome";
@@ -639,7 +640,7 @@ const TrackGroup = memo(function TrackGroup({
         </Link>
       )}
       <NavFold open={hasSidebarChildren && trackOpen} instant={searching} unbox>
-        <ul className="mt-1.5 ml-1.5 space-y-0.5 border-l-2 border-yellow-200 pl-2 dark:border-yellow-800">
+        <ul className={NAV_TRACK_CHILD_LIST_CLASS}>
           {searching ? (
             <SearchHitList
               hits={searchHits.hits}

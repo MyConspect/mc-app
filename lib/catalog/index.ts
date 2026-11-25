@@ -617,6 +617,7 @@ const SUBJECTS_BASE: readonly Subject[] = [
     title: "Web APIs",
     blurb: "HTTP, REST, auth, and real-time.",
     track: "frontend",
+    flatNav: true,
     clusters: [
       { id: "core", title: "Core", blurb: "Internet stack and HTTP." },
       {
@@ -781,7 +782,7 @@ const SUBJECTS_BASE: readonly Subject[] = [
     clusters: [
       {
         id: "core",
-        title: "Core",
+        title: "Message broker",
         blurb: "Broker fundamentals and selection.",
       },
       {
@@ -799,7 +800,7 @@ const SUBJECTS_BASE: readonly Subject[] = [
     clusters: [
       {
         id: "core",
-        title: "Core",
+        title: "Cloud services",
         blurb: "Cloud fundamentals and provider comparison.",
       },
       {
@@ -834,16 +835,21 @@ const SUBJECTS_BASE: readonly Subject[] = [
         blurb: "Objects, commits, and everyday workflow.",
       },
       {
-        id: "collaboration",
-        title: "Collaboration",
-        blurb: "Branches, remotes, and team practices.",
+        id: "branching",
+        title: "Branching",
+        blurb: "Branches, merges, remotes, and collaboration.",
+      },
+      {
+        id: "team",
+        title: "Team",
+        blurb: "Recovery, team practices, hooks, and advanced Git.",
       },
       { id: "interview", title: "Interview", blurb: "Q&A and shell appendix." },
     ],
   },
   {
     slug: "core",
-    title: "Core",
+    title: "Intro",
     blurb:
       "What computation is, plus programming paradigms and logic programming.",
     track: "computer-science",
@@ -2721,7 +2727,7 @@ const TOPICS_BASE: Topic[] = [
   grouped(
     "message-broker-core",
     "12_message_broker_core.md",
-    "Core",
+    "Message broker",
     "Broker fundamentals, queue vs log, and broker selection.",
     "advanced",
     "message-broker",
@@ -2757,7 +2763,7 @@ const TOPICS_BASE: Topic[] = [
   grouped(
     "cloud-core",
     "16_cloud_core.md",
-    "Core",
+    "Cloud services",
     "IaaS/PaaS/SaaS, regions, shared responsibility, and provider comparison.",
     "advanced",
     "cloud",
@@ -2824,7 +2830,7 @@ const TOPICS_BASE: Topic[] = [
     "Branches, merges, remotes, and collaboration.",
     "other",
     "git",
-    "collaboration",
+    "branching",
   ),
   grouped(
     "git-team",
@@ -2833,7 +2839,7 @@ const TOPICS_BASE: Topic[] = [
     "Recovery, team practices, hooks, and advanced Git.",
     "other",
     "git",
-    "collaboration",
+    "team",
   ),
   grouped(
     "git-interview",
