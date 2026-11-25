@@ -12,6 +12,7 @@ import {
 import { persistNavRootSection } from "@/lib/nav/rootSectionPreference";
 import { useHandbookLocation } from "../hooks/useHandbookLocation";
 import { dispatchSidebarCollapseTracks } from "../hooks/useSidebarOpen";
+import { queueHandbookHref } from "../utils/hash";
 
 export function SectionSwitcher({
   sections,
@@ -43,6 +44,7 @@ export function SectionSwitcher({
     persistNavRootSection(sectionId);
     setOptimisticSection({ section: sectionId, fromPath: pathname });
     const href = sectionSwitchHref(sections, pathForSection, sectionId);
+    queueHandbookHref(href, pathname);
     if (href === pathname || href === pathForSection) {
       router.refresh();
       return;
@@ -54,7 +56,7 @@ export function SectionSwitcher({
     <div
       role="radiogroup"
       aria-label={chrome.sectionNav}
-      className="flex h-8 rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-800"
+      className="flex h-7 rounded-md bg-zinc-100 p-0.5 md:h-8 dark:bg-zinc-800"
     >
       <SectionButton
         checked={activeSection === "conspect"}

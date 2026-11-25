@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useMemo, useSyncExternalStore } from "react";
+import { useLayoutEffect, useMemo, useSyncExternalStore } from "react";
+import { shouldUsePendingNavPath } from "@/lib/nav/pendingHighlight";
 import { resolveConceptId } from "@/lib/nav/conceptHash";
 import { hashIdFrom } from "@/lib/nav/navUtils";
 import { useTopicNavConcepts } from "@/components/topic/context/TopicNavConceptsContext";
@@ -15,6 +16,7 @@ import {
   handbookLocation,
   subscribeHash,
   subscribePendingPath,
+  clearPendingPathHash,
 } from "../utils/hash";
 
 export function useHandbookLocation() {
@@ -30,13 +32,21 @@ export function useHandbookLocation() {
     getPendingHash,
     getServerPendingHash,
   );
-  const highlightPathname = pendingPathname || pathname;
+  const usePending = shouldUsePendingNavPath(pathname, pendingPathname);
+
+  useLayoutEffect(() => {
+    if (pendingPathname && !usePending) {
+      clearPendingPathHash();
+    }
+  }, [pathname, pendingPathname, usePending]);
+
+  const highlightPathname = usePending ? pendingPathname : pathname;
   const location = useMemo(() => {
-    if (pendingPathname) {
+    if (usePending) {
       return { pathname: pendingPathname, hash: pendingHash };
     }
     return handbookLocation(pathname, hash);
-  }, [pathname, hash, pendingPathname, pendingHash]);
+  }, [pathname, hash, pendingPathname, pendingHash, usePending]);
   const topicConcepts = useTopicNavConcepts();
   const rawConceptId = hashIdFrom(location.hash);
   const resolvedFromTopic = topicConcepts

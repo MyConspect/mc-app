@@ -889,6 +889,7 @@ article.concept-detail-article .concept-detail-body-scroll {
 
 @media (max-width: 639px) {
   #handbook-main:has(article.concept-detail-article) > main {
+    /* Breadcrumbs sit directly above main — no extra pt-5 band */
     padding-top: 0;
     padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   }
@@ -898,7 +899,7 @@ article.concept-detail-article .concept-detail-body-scroll {
   #handbook-main:has(article.concept-detail-article) > main.handbook-topic-main,
   #handbook-main:has(article.concept-detail-article)
     > main.handbook-subject-main {
-    padding-top: 1.25rem;
+    padding-top: 0;
     padding-bottom: 1rem;
   }
 }

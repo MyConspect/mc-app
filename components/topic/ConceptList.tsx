@@ -227,16 +227,13 @@ export function ConceptList({
   }, [concepts, mode, pathname, query, queryEdited]);
 
   useLayoutEffect(() => {
-    if (flat || activeConcept || !interviewAccordionDrilldown) {
+    if (resolvedConceptId) {
+      return;
+    }
+    if (flat || !interviewAccordionDrilldown) {
       resetHandbookReadingScroll();
     }
-  }, [
-    activeConcept,
-    flat,
-    interviewAccordionDrilldown,
-    pathname,
-    resolvedConceptId,
-  ]);
+  }, [flat, interviewAccordionDrilldown, pathname, resolvedConceptId]);
 
   if (concepts.length === 0) {
     return (
@@ -479,10 +476,6 @@ function ConceptDetail({
 
   const hasOptionalDepth = conceptHasOptionalDepth(concept);
   const conceptDepth = useConceptDepth();
-
-  useLayoutEffect(() => {
-    resetHandbookReadingScroll();
-  }, [concept.id]);
 
   if (!concept.html) {
     return (

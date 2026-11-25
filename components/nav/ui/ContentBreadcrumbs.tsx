@@ -74,11 +74,14 @@ export function ContentBreadcrumbs({
       main.style.removeProperty(HANDBOOK_STICKY_INSET_VAR);
       return;
     }
+    let lastHeight = 0;
     const sync = () => {
-      main.style.setProperty(
-        HANDBOOK_STICKY_INSET_VAR,
-        `${bar.offsetHeight}px`,
-      );
+      const height = bar.offsetHeight;
+      if (Math.abs(height - lastHeight) < 1) {
+        return;
+      }
+      lastHeight = height;
+      main.style.setProperty(HANDBOOK_STICKY_INSET_VAR, `${height}px`);
     };
     sync();
     const observer = new ResizeObserver(sync);

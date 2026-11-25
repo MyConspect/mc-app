@@ -58,7 +58,7 @@ export function BookmarksPanel({
   const hasActiveBookmark = bookmarks.some(isActive);
 
   return (
-    <section className="border-b border-zinc-200 pb-3 dark:border-zinc-800">
+    <section className="border-b border-zinc-200 pb-3 max-md:pt-0 dark:border-zinc-800">
       <div className={`group ${trackHeaderClass(hasActiveBookmark)}`}>
         <button
           type="button"

@@ -83,6 +83,8 @@ import {
 import {
   closeNavSoon,
   navPathHighlighted,
+  navTopicRowFocusedHighlight,
+  navTrackSubjectPathHighlight,
   navPathPinned,
   NAV_ROW_GAP,
   rowClass,
@@ -160,7 +162,7 @@ function openClusterNavigateInSidebar(
     });
   }
   followHandbookHref(navigateHref, pathname, goToPath);
-  closeNavSoon(onNavigate);
+  closeNavSoon(onNavigate, cluster.topics.length > 0 || topicHref !== null);
 }
 
 function nestedClusterFoldMatches(
@@ -471,7 +473,7 @@ const ConceptGroupRow = memo(function ConceptGroupRow({
             patchFold(trackId, { clusterKey: key, topicHref: topic.href });
           }
           followHandbookHref(navigateHref, pathname, goToPath);
-          closeNavSoon(onNavigate);
+          closeNavSoon(onNavigate, concepts.length > 0);
         }}
         data-search-hit={isHitCluster ? "true" : undefined}
         aria-current={groupHashActive ? "location" : undefined}
@@ -771,7 +773,7 @@ const SectionTopicLink = memo(function SectionTopicLink({
             topicHref: showTopicFold ? topic.href : null,
           });
           followHandbookHref(topic.href, pathname, goToPath);
-          closeNavSoon(onNavigate);
+          closeNavSoon(onNavigate, showTopicFold);
         }}
         className={linkClass}
       >
@@ -1105,7 +1107,7 @@ export const TopicRow = memo(function TopicRow({
       nestedOnPath ||
       hubConceptActive ||
       hubClusterOpen ||
-      topicDrillOpen);
+      (topicDrillOpen && active));
   const mobileLeaf = topicIsMobileNavLeaf(
     active,
     highlightPathname,
@@ -1254,15 +1256,19 @@ export const TopicRow = memo(function TopicRow({
           patchFold(trackId, {
             topicHref: showTopicFold ? topic.href : null,
           });
-          closeNavSoon(onNavigate);
           followHandbookHref(topic.href, pathname, goToPath);
+          closeNavSoon(onNavigate, showTopicFold);
         }}
         data-search-hit={isFirstTopic ? "true" : undefined}
         aria-current={active ? "page" : undefined}
         aria-expanded={showTopicFold ? topicOpen : undefined}
         className={`${(compact ? rowClassNested : rowClass)(
           navPathHighlighted(
-            isHitTopic || active || topicDrillOpen,
+            navTopicRowFocusedHighlight(
+              isHitTopic,
+              active,
+              topicDrillOpen,
+            ),
             onPath,
             stackPathPins,
           ),
@@ -1473,7 +1479,11 @@ export const ClusterRow = memo(function ClusterRow({
             }
             patchFold(trackId, { clusterKey: key });
             queueHandbookHref(navigateHref);
-            closeNavSoon(onNavigate);
+            closeNavSoon(
+              onNavigate,
+              conspectClusterExpandsInSidebar(cluster) ||
+                cluster.topics.length > 1,
+            );
           }}
           data-search-hit={isHitCluster ? "true" : undefined}
           aria-current={active ? "location" : undefined}
@@ -1829,7 +1839,7 @@ export const SectionRow = memo(function SectionRow({
           }
           patchFold(trackId, { sectionKey: key, clusterKey: null });
           queueHandbookHref(`${subjectPath}#${section.id}`);
-          closeNavSoon(onNavigate);
+          closeNavSoon(onNavigate, isNavSectionCollapsible(section));
         }}
         data-search-hit={isHitSection ? "true" : undefined}
         aria-expanded={sectionOpen}
@@ -1888,7 +1898,7 @@ export const SubjectRow = memo(function SubjectRow({
   const subjectOnPath = isOnSubjectPath(highlightPathname, subject);
   const active =
     sectionId === "interviews"
-      ? isActiveHref(highlightPathname, subjectNavHref) || subjectOnPath
+      ? isActiveHref(highlightPathname, subjectNavHref)
       : isActiveHref(highlightPathname, subject.href);
   const subjectForceClosed = isSubjectForceClosed(
     subject.href,
@@ -2002,47 +2012,20 @@ export const SubjectRow = memo(function SubjectRow({
             typeof window !== "undefined" ? window.location.hash : "",
           );
 
-          if (subjectOpen && !searching && onSubjectHub) {
+          if (subjectOpen && !searching) {
             pinNavElement(event.currentTarget, {
               hold: false,
               scrollIntoView: false,
             });
-            if (hubHash.length === 0) {
-              patchFold(trackId, {
-                subjectHref: closedKey,
-                clusterKey: null,
-                sectionKey: null,
-                topicHref: null,
-              });
-              return;
+            patchFold(trackId, {
+              subjectHref: closedKey,
+              clusterKey: null,
+              sectionKey: null,
+              topicHref: null,
+            });
+            if (onSubjectHub && hubHash.length > 0) {
+              applySameDocumentHref(pathname, "", pathname);
             }
-            patchFold(trackId, {
-              subjectHref: subject.href,
-              clusterKey: null,
-              sectionKey: null,
-              topicHref: null,
-            });
-            followHandbookHref(subjectNavHref, pathname, goToPath);
-            closeNavSoon(
-              onNavigate,
-              sectionId === "conspect" && subjectHasNavChildren,
-            );
-            return;
-          }
-
-          if (subjectOpen && !searching && !onSubjectHub) {
-            pinNavForHref(event.currentTarget, pathname, subjectNavHref);
-            patchFold(trackId, {
-              subjectHref: subject.href,
-              clusterKey: null,
-              sectionKey: null,
-              topicHref: null,
-            });
-            followHandbookHref(subjectNavHref, pathname, goToPath);
-            closeNavSoon(
-              onNavigate,
-              sectionId === "conspect" && subjectHasNavChildren,
-            );
             return;
           }
 
@@ -2057,17 +2040,18 @@ export const SubjectRow = memo(function SubjectRow({
           }
           if (!onSubjectHub) {
             followHandbookHref(subjectNavHref, pathname, goToPath);
-            closeNavSoon(
-              onNavigate,
-              sectionId === "conspect" && subjectHasNavChildren,
-            );
+            closeNavSoon(onNavigate, subjectHasNavChildren);
           }
         }}
         data-search-hit={isHitSubject ? "true" : undefined}
         aria-current={active ? "page" : undefined}
         aria-expanded={subjectOpen}
         className={`${rowClass(
-          navPathHighlighted(isHitSubject || active, onPath, stackPathPins),
+          navTrackSubjectPathHighlight(
+            isHitSubject || active,
+            onPath,
+            stackPathPins,
+          ),
           pinPath,
         )} ${NAV_ROW_GAP}`}
       >

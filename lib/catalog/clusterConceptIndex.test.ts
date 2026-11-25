@@ -8,7 +8,7 @@ test("computer-science Core hub lists Core concepts on the subject index", () =>
   assert.ok(core);
   const sections = subjectClusterSectionsForLocale("en", core);
   assert.equal(sections.length, 1);
-  assert.equal(sections[0]?.cluster.title, "Core");
+  assert.equal(sections[0]?.cluster.title, "Intro");
   assert.ok((sections[0]?.items.length ?? 0) > 0);
   assert.match(sections[0]?.headingHref ?? "", /computer-science$/);
   const titles = sections[0]?.items.map((item) => item.title) ?? [];

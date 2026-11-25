@@ -1,4 +1,5 @@
 import {
+  getCluster,
   getSubject,
   getTopic,
   getTrack,
@@ -6,6 +7,7 @@ import {
   subjectHref,
   topicHref,
   trackHref,
+  type Topic,
 } from "@/lib/catalog";
 import { catalogBlurb } from "@/lib/i18n/catalog";
 import { withLocale } from "@/lib/i18n/paths";
@@ -53,10 +55,187 @@ import {
   clusterForConceptInSubject,
   clusterTrailCrumbs,
   conceptById,
-  isTopicAliasCluster,
   omitTopicCrumbForSubjectAlias,
   subjectHubClusterCrumbs,
 } from "./shared";
+
+function clusterNavTopicRoots(
+  cluster: NavCluster,
+): readonly NavTopic[] {
+  return [
+    ...cluster.topics,
+    ...(cluster.nestedClusters?.flatMap((nested) => nested.topics) ?? []),
+  ];
+}
+
+function findNavTopicBySlug(
+  groups: readonly NavGroup[],
+  slug: string,
+): NavTopic | undefined {
+  for (const group of groups) {
+    for (const entry of group.entries) {
+      if (entry.kind !== "subject") {
+        continue;
+      }
+      for (const cluster of navSubjectClusters(entry.subject)) {
+        for (const root of clusterNavTopicRoots(cluster)) {
+          const visit = (topic: NavTopic): NavTopic | undefined => {
+            if (topic.slug === slug) {
+              return topic;
+            }
+            for (const nested of topic.nestedTopics ?? []) {
+              const hit = visit(nested);
+              if (hit) {
+                return hit;
+              }
+            }
+            return undefined;
+          };
+          const hit = visit(root);
+          if (hit) {
+            return hit;
+          }
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+function findNavTopicOnPath(
+  groups: readonly NavGroup[],
+  pathname: string,
+): NavTopic | undefined {
+  for (const group of groups) {
+    for (const entry of group.entries) {
+      if (entry.kind !== "subject") {
+        continue;
+      }
+      for (const cluster of navSubjectClusters(entry.subject)) {
+        for (const root of clusterNavTopicRoots(cluster)) {
+          const visitExact = (topic: NavTopic): NavTopic | undefined => {
+            if (isActiveHref(pathname, topic.href)) {
+              return topic;
+            }
+            for (const nested of topic.nestedTopics ?? []) {
+              const hit = visitExact(nested);
+              if (hit) {
+                return hit;
+              }
+            }
+            return undefined;
+          };
+          const exact = visitExact(root);
+          if (exact) {
+            return exact;
+          }
+        }
+        for (const root of clusterNavTopicRoots(cluster)) {
+          const trail = navTopicTrailAtPath(root, pathname);
+          if (trail?.length) {
+            return trail[trail.length - 1];
+          }
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+function catalogTopicFromPathname(pathname: string): Topic | undefined {
+  const { path } = stripLocalePrefix(pathname);
+  const { rest: logicalPath } = peelSectionPrefix(path);
+  const segments = logicalPath.slice(1).split("/").filter(Boolean);
+  const trackSlug = segments[0];
+  const topicSlug = segments[1];
+  if (!trackSlug || !topicSlug || !isTrackId(trackSlug)) {
+    return undefined;
+  }
+  return getTopic(trackSlug, topicSlug);
+}
+
+function catalogGroupedTopicCrumbs(
+  home: Crumb,
+  group: NavGroup,
+  subject: NavSubject,
+  topic: Topic,
+  pathname: string,
+  hashId: string,
+  locale: ReturnType<typeof localeFromPathname>,
+  navGroups: readonly NavGroup[],
+): readonly Crumb[] | undefined {
+  if (topic.grouping?.subject !== subject.slug) {
+    return undefined;
+  }
+  const catalogSubject = getSubject(group.id, subject.slug);
+  if (!catalogSubject) {
+    return undefined;
+  }
+  const trail = catalogTopicTrailCrumbs(
+    group,
+    catalogSubject,
+    topic,
+    pathname,
+    locale,
+  );
+  const navTopic =
+    findNavTopicBySlug(navGroups, topic.slug) ??
+    navSubjectClusters(subject)
+      .flatMap((cluster) => cluster.topics)
+      .find((item) => item.slug === topic.slug);
+  if (navTopic) {
+    return withConcept(home, trail, navTopic, hashId);
+  }
+  return [...[home], ...trail];
+}
+
+function catalogTopicTrailCrumbs(
+  group: NavGroup,
+  subject: NonNullable<ReturnType<typeof getSubject>>,
+  topic: Topic,
+  pathname: string,
+  locale: ReturnType<typeof localeFromPathname>,
+): readonly Crumb[] {
+  const cluster = topic.grouping
+    ? getCluster(subject, topic.grouping.cluster)
+    : undefined;
+  const trail: Crumb[] = [
+    {
+      label: catalogBlurb(locale, group.title),
+      href: navGroupCrumbHref(group, pathname),
+    },
+    {
+      label: catalogBlurb(locale, subject.title),
+      href: navSubjectCrumbHref(
+        group,
+        {
+          slug: subject.slug,
+          href: withLocale(locale, subjectHref(subject)),
+        },
+        pathname,
+      ),
+    },
+  ];
+  if (cluster && !subject.flatNav && cluster.title.trim()) {
+    trail.push({
+      label: catalogBlurb(locale, cluster.title),
+      href: withLocale(locale, `${subjectHref(subject)}#${cluster.id}`),
+    });
+  }
+  if (
+    !cluster ||
+    !areRedundantNavTitles(
+      catalogBlurb(locale, cluster.title),
+      catalogBlurb(locale, topic.title),
+    )
+  ) {
+    trail.push({
+      label: catalogBlurb(locale, topic.title),
+      href: withLocale(locale, topicHref(topic)),
+    });
+  }
+  return trail;
+}
 
 export function crumbsForPath(
   groups: readonly NavGroup[],
@@ -222,8 +401,7 @@ export function crumbsForPath(
             if (
               clusterHit &&
               !isConceptGroupSectionId(hashId) &&
-              clusterHit.cluster.id === hashId &&
-              !isTopicAliasCluster(clusterHit.cluster)
+              clusterHit.cluster.id === hashId
             ) {
               const clusterCrumbs = subjectHubClusterCrumbs(
                 clusterHit.cluster,
@@ -272,8 +450,24 @@ export function crumbsForPath(
               { label: entry.subject.title },
             ];
           }
+          const catalogTopic = catalogTopicFromPathname(pathname);
+          if (catalogTopic?.grouping?.subject === entry.subject.slug) {
+            const catalogCrumbs = catalogGroupedTopicCrumbs(
+              home,
+              group,
+              entry.subject,
+              catalogTopic,
+              pathname,
+              hashId,
+              locale,
+              loopGroups,
+            );
+            if (catalogCrumbs) {
+              return catalogCrumbs;
+            }
+          }
           for (const cluster of navSubjectClusters(entry.subject)) {
-            for (const root of cluster.topics) {
+            for (const root of clusterNavTopicRoots(cluster)) {
               const trail = navTopicTrailAtPath(root, pathname);
               if (!trail?.length) {
                 continue;
@@ -439,6 +633,24 @@ export function crumbsForPath(
             href: subjectCrumbHref,
           },
         ];
+      }
+      if (subject && trackGroup) {
+        const trail = catalogTopicTrailCrumbs(
+          trackGroup,
+          subject,
+          topic,
+          pathname,
+          locale,
+        );
+        const navTopic =
+          findNavTopicBySlug(loopGroups, topic.slug) ??
+          findNavTopicBySlug(groups, topic.slug) ??
+          findNavTopicOnPath(loopGroups, pathname) ??
+          findNavTopicOnPath(groups, pathname);
+        if (navTopic) {
+          return withConcept(home, trail, navTopic, hashId);
+        }
+        return [...[home], ...trail];
       }
       return [
         home,

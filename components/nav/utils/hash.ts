@@ -75,7 +75,7 @@ function notifyPendingPathListeners() {
   }
 }
 
-function clearPendingPathHash() {
+export function clearPendingPathHash() {
   if (!pendingPathHash) {
     return;
   }

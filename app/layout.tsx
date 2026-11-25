@@ -3,16 +3,10 @@ import { Analytics } from "@vercel/analytics/next";
 import { ResourcesAutoRefresh } from "@/components/dev/ResourcesAutoRefresh";
 import { ConceptHashBootScript } from "@/components/nav/ConceptHashBootScript";
 import { ThemeBootScript } from "@/components/nav/ThemeBootScript";
-import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+import { buildRootMetadata } from "@/lib/siteMetadata";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: SITE_NAME,
-    template: `%s · ${SITE_NAME}`,
-  },
-  description: SITE_DESCRIPTION,
-};
+export const metadata: Metadata = buildRootMetadata();
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

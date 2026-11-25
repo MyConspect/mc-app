@@ -5,6 +5,7 @@ import {
   useContext,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -120,13 +121,30 @@ export function ConceptFooterActionsRegistrar(props: ConceptHeaderActionProps) {
     ],
   );
 
+  const publishedRef = useRef<ConceptHeaderActionProps | null>(null);
+
   useLayoutEffect(() => {
     if (!active) {
-      setActions(null);
+      if (publishedRef.current !== null) {
+        publishedRef.current = null;
+        setActions(null);
+      }
       return;
     }
+    if (
+      publishedRef.current?.conceptId === actions.conceptId &&
+      publishedRef.current?.title === actions.title &&
+      publishedRef.current?.showBack === actions.showBack &&
+      publishedRef.current?.showNext === actions.showNext
+    ) {
+      return;
+    }
+    publishedRef.current = actions;
     setActions(actions);
-    return () => setActions(null);
+    return () => {
+      publishedRef.current = null;
+      setActions(null);
+    };
   }, [active, actions, setActions]);
 
   return null;

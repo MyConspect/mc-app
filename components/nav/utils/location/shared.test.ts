@@ -47,3 +47,28 @@ test("subjectHubClusterCrumbs adds title-twin cluster on subject hub hash", () =
   assert.equal(crumbs[0]?.label, "Layout");
   assert.equal(crumbs[0]?.href, `${subjectHref}#layout`);
 });
+
+test("subjectHubClusterCrumbs resolves title-twin cluster on prefixed subject hub", () => {
+  const subjectHref = "/en/frontend/javascript";
+  const crumbs = subjectHubClusterCrumbs(
+    {
+      id: "browser",
+      title: "Browser",
+      href: "/en/frontend/javascript#browser",
+      topics: [
+        {
+          slug: "js-browser",
+          href: "/en/frontend/javascript#browser",
+          title: "Browser",
+          blurb: "",
+          concepts: [],
+        },
+      ],
+    },
+    { href: subjectHref },
+    "/en/conspect/frontend/javascript",
+  );
+  assert.equal(crumbs.length, 1);
+  assert.equal(crumbs[0]?.label, "Browser");
+  assert.equal(crumbs[0]?.href, `${subjectHref}#browser`);
+});
