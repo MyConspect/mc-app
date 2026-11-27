@@ -19,6 +19,13 @@ const tracedBuildOnly = [
 ];
 
 const nextConfig: NextConfig = {
+  // Next.js 16 defaults to static staleTime 300s → frequent ISR on Vercel Hobby.
+  experimental: {
+    staleTimes: {
+      dynamic: 0,
+      static: 31_536_000,
+    },
+  },
   outputFileTracingExcludes: {
     "/*": tracedBuildOnly,
     "/**": tracedBuildOnly,

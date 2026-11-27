@@ -66,5 +66,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/en/:path*", "/ru/:path*"],
+  matcher: ["/en((?!/_next).*)", "/ru((?!/_next).*)"],
 };
