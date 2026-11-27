@@ -136,7 +136,7 @@ export function HandbookShell({
     [deferredQuery, mode, queryEdited],
   );
   const searching = query.trim().length > 0;
-  const enrichedSections = useEnrichedNavSections(sections, mode === "notes");
+  const enrichedSections = useEnrichedNavSections(sections, false);
   const groups = useMemo(
     () => allNavGroups(enrichedSections),
     [enrichedSections],

@@ -10,6 +10,9 @@ import {
   siteLastUpdatedIso,
 } from "@/lib/siteLastUpdated";
 
+/** Content changes only on deploy — avoid time-based ISR revalidation. */
+export const revalidate = false;
+
 export function generateStaticParams() {
   return localeStaticParams();
 }
