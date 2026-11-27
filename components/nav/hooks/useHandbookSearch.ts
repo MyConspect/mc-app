@@ -37,7 +37,9 @@ export function useHandbookSearch(
     setQuery(stored.query);
     setMode(stored.mode);
   }, []);
-  const notesCorpus = useSearchCorpus(mode === "notes");
+  const notesCorpus = useSearchCorpus(
+    mode === "notes" && query.trim().length > 0,
+  );
   const searchGroups = useMemo(
     () => sectionSearchGroups(groups, notesCorpus, mode),
     [groups, notesCorpus, mode],

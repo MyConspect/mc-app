@@ -24,6 +24,19 @@ const nextConfig: NextConfig = {
     "/**": tracedBuildOnly,
   },
   serverExternalPackages: ["sanitize-html", "marked", "shiki"],
+  async headers() {
+    return [
+      {
+        source: "/search-index/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [...handbookRedirects()];
   },
